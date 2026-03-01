@@ -24,6 +24,7 @@ function App() {
         <Route path="/home/conta/:idAluno" element={<Conta/>}/>
 
         <Route path="/home/telapagamento/:idplano" element={<TelaPagamento/>}/>
+        <Route path="/home/telapagamento/" element={<TelaPagamento/>}/>
 
         <Route path="/home/administrativo" element={<Administrativo/>}/>
 

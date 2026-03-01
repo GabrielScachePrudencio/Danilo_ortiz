@@ -362,7 +362,9 @@ export default function TelaPagamento() {
       obterAluno(ida);
       pegarDadosMensalidadeAlunoPorId(ida);
     }
-    pegarPlano();
+    if (idplano) {
+        pegarPlano();
+    }
   }, []);
   
   async function pegarDadosMensalidadeAlunoPorId(ida){
@@ -373,7 +375,9 @@ export default function TelaPagamento() {
             console.log("dados da conta: ", data);
             setMensalidadeParcelasDTOS(data);   
         }else{
-            setErro("mensalidade não encontrada");
+          if(ida !== undefined){
+            setErro("");
+          } 
         }
     } catch (error) {
         setErro(error);
@@ -447,54 +451,63 @@ export default function TelaPagamento() {
     }
   }
 
-  quando pagar uma parcela ela tem que salvar na tabela de pagamentos com o id da parcela criar essa coluna
-  fazer com que na conta aparece as parcelas ja pagas
+ //fazer com que na conta aparece as parcelas ja pagas
+  //quando pagar uma parcela ela tem que salvar na tabela de pagamentos com o id da parcela criar essa coluna
+  
+  
   async function confirmarPagamentoParcela() {
   setLoading(true);
 
   try {
-    // 1. Pegamos a parcela que está em aberto no DTO que veio do Back
-    const parcelaAtual = MensalidadeParcelasDTOS?.parcelas?.[0];
+    const parcelaAtual =
+      MensalidadeParcelasDTOS?.parcelas?.[
+        MensalidadeParcelasDTOS.parcelas.length - 1
+      ];
 
     if (!parcelaAtual) {
       mostrarToast("Erro: Parcela não localizada.", false);
-      setLoading(false);
       return;
     }
 
-    // 2. Montamos o DTO de Pagamento que agrupa tudo
-    // Este objeto casa com o que o Back precisa para salvar nas tabelas 'pagamentos' e 'mensalidades_parcelas'
-    const pagamentoCompletoDTO = {
+    const pagamentoDTO = {
       alunoId: Number(idAluno),
+      nomeAluno: aluno?.nome || "",
+
       planoId: Number(idplano),
-      formaPagamento: metodoPag, // pix, boleto, cartao
-      valorPago: parcelaAtual.valor,
-      
-      // O DTO da Parcela com o status que você quer
-      parcela: {
-        id: parcelaAtual.id,
-        valor: parcelaAtual.valor,
-        dataVencimento: parcelaAtual.dataVencimento,
-        status: "FINALIZADO"
-      }
+      nomePlano: plano?.nome || "",
+
+      data: new Date().toISOString(),
+
+      valor: parcelaAtual.valor,
+
+      parcelaId: parcelaAtual.id,
+
+      mpPaymentId: null,
+      codigoVenda: "",
+
+      statusLiberacao: "FINALIZADO",
+
+      formaPagamento: metodoPag,
     };
 
-    const res = await fetch(`http://localhost:8080/pagamentos`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(pagamentoCompletoDTO),
-    });
+    const res = await fetch(
+      "http://localhost:8080/mensalidades/pagarParcela",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(pagamentoDTO),
+      }
+    );
 
     if (res.ok) {
       mostrarToast("Pagamento Finalizado com Sucesso!", true);
-      // Redireciona para o perfil do aluno após 2 segundos
       setTimeout(() => navigate(`/home/${idAluno}`), 2000);
     } else {
-      mostrarToast("Erro ao processar o pagamento no servidor.", false);
+      mostrarToast("Erro ao processar pagamento.", false);
     }
   } catch (error) {
-    console.error("Erro na requisição:", error);
-    mostrarToast("Erro de conexão com o servidor.", false);
+    console.error(error);
+    mostrarToast("Erro de conexão.", false);
   } finally {
     setLoading(false);
   }
@@ -536,16 +549,19 @@ export default function TelaPagamento() {
 
  
 
-  /* ── carregando ── */
-  if (!plano && !erro) {
+  /* 
+  ── carregando ── 
+  if (!plano || !erro || idplano ) {
     return (
       <div style={{ ...S.page, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ fontSize: "0.7rem", letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(240,236,228,0.25)" }}>
-          Carregando plano...
-        </p>
+      <p style={{ fontSize: "0.7rem", letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(240,236,228,0.25)" }}>
+      Carregando plano...
+      </p>
       </div>
     );
   }
+  
+  */
 
   return (
     <div style={S.page}>
@@ -570,7 +586,6 @@ export default function TelaPagamento() {
 
         {erro && <p className="erro-msg">{erro}</p>}
 
-        {plano && (
           <>
              {/* ── RESUMO DO PLANO OU PARCELA ── */}
               {aluno?.planoAtual?.id === 0 || !MensalidadeParcelasDTOS?.parcelas ? (
@@ -587,10 +602,10 @@ export default function TelaPagamento() {
                 <>
                   <p style={S.sectionLabel}>Resumo da Parcela</p>
                   <div style={S.grid}>
-                    <InfoBox label="ID Parcela" value={MensalidadeParcelasDTOS.parcelas[0]?.id} />
-                    <InfoBox label="Vencimento" value={new Date(MensalidadeParcelasDTOS.parcelas[0]?.dataVencimento).toLocaleDateString('pt-BR')} />
-                    <InfoBox label="Status" value={MensalidadeParcelasDTOS.parcelas[0]?.status} />
-                    <InfoBox label="Valor" value={formatarValor(MensalidadeParcelasDTOS.parcelas[0]?.valor)} big />
+                    <InfoBox label="ID Parcela" value={MensalidadeParcelasDTOS.parcelas[MensalidadeParcelasDTOS.parcelas.length-1]?.id} />
+                    <InfoBox label="Vencimento" value={new Date(MensalidadeParcelasDTOS.parcelas[MensalidadeParcelasDTOS.parcelas.length-1]?.dataVencimento).toLocaleDateString('pt-BR')} />
+                    <InfoBox label="Status" value={MensalidadeParcelasDTOS.parcelas[MensalidadeParcelasDTOS.parcelas.length-1]?.status} />
+                    <InfoBox label="Valor" value={formatarValor(MensalidadeParcelasDTOS.parcelas[MensalidadeParcelasDTOS.parcelas.length-1]?.valor)} big />
                   </div>
                 </>
               )}
@@ -625,7 +640,7 @@ export default function TelaPagamento() {
               </div>
               {
                 aluno?.planoAtual?.id === 0 || !MensalidadeParcelasDTOS?.parcelas ? (
-                  <p style={S.totalValor}>{formatarValor(plano.valor)}</p>
+                  <p style={S.totalValor}>{formatarValor(plano?.valor)}</p>
                 ): (
                   <p style={S.totalValor}>{formatarValor(MensalidadeParcelasDTOS.parcelas[0].valor)}</p>
                 )
@@ -633,25 +648,33 @@ export default function TelaPagamento() {
             </div>
 
             {/* ── AÇÕES ── */}
-            <button
-              style={{ ...S.btnPrimary, opacity: loading ? 0.65 : 1 }}
-              onClick={confirmarPagamento}
-              disabled={loading}
-              onMouseEnter={(e) => { if (!loading) { e.target.style.background = "transparent"; e.target.style.color = "#c4a064"; } }}
-              onMouseLeave={(e) => { e.target.style.background = "#c4a064"; e.target.style.color = "#0a0a0a"; }}
-            >
-              {loading ? "Processando..." : `Confirmar Pagamento — ${formatarValor(plano.valor)}`}
-            </button>
-            <button
-              style={S.btnSecondary}
-              onClick={() => navigate("/")}
-              onMouseEnter={(e) => { e.target.style.color = "#f0ece4"; e.target.style.borderColor = "rgba(240,236,228,0.4)"; }}
-              onMouseLeave={(e) => { e.target.style.color = "rgba(240,236,228,0.35)"; e.target.style.borderColor = "rgba(240,236,228,0.1)"; }}
-            >
-              Cancelar
-            </button>
+        <button
+          style={{ ...S.btnPrimary, opacity: loading ? 0.65 : 1 }}
+          onClick={
+            aluno?.planoAtual?.id === 0 || !MensalidadeParcelasDTOS?.parcelas
+              ? confirmarPagamento
+              : confirmarPagamentoParcela
+          }
+          disabled={loading}
+          onMouseEnter={(e) => { if (!loading) { e.target.style.background = "transparent"; e.target.style.color = "#c4a064"; } }}
+          onMouseLeave={(e) => { e.target.style.background = "#c4a064"; e.target.style.color = "#0a0a0a"; }}
+        >
+          {loading ? "Processando..." : (
+            aluno?.planoAtual?.id === 0 || !MensalidadeParcelasDTOS?.parcelas 
+              ? `Confirmar Assinatura — ${formatarValor(plano?.valor)}`
+              : `Pagar Parcela — ${formatarValor(MensalidadeParcelasDTOS.parcelas[0]?.valor)}`
+          )}
+        </button>
+
+        <button
+          style={S.btnSecondary}
+          onClick={() => navigate("/")}
+          onMouseEnter={(e) => { e.target.style.color = "#f0ece4"; e.target.style.borderColor = "rgba(240,236,228,0.4)"; }}
+          onMouseLeave={(e) => { e.target.style.color = "rgba(240,236,228,0.35)"; e.target.style.borderColor = "rgba(240,236,228,0.1)"; }}
+        >
+          Cancelar
+        </button>
           </>
-        )}
       </main>
 
       {/* ── TOAST ── */}

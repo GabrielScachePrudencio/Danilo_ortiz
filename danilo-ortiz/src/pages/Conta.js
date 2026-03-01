@@ -433,6 +433,11 @@ export default function Conta() {
     }
   }
 
+    function formatarValor(valor) {
+        if (!valor && valor !== 0) return "—";
+        return Number(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+
   function mostrarToast(msg, ok) {
     setToast({ msg, ok });
     setTimeout(() => setToast(null), 3000);
@@ -558,10 +563,10 @@ export default function Conta() {
             <div style={{...S.parcelaCard, marginTop: 0}}>
               <span style={S.parcelaLabel}>Próxima Parcela</span>
               <div style={S.parcelaValor}>
-                R$ {MensalidadeParcelasDTOS.parcelas[0].valor.toFixed(2).replace('.', ',')}
+                R$ {MensalidadeParcelasDTOS.parcelas[MensalidadeParcelasDTOS.parcelas.length-1].valor.toFixed(2).replace('.', ',')}
               </div>
               <p style={{ ...S.planoTexto, fontSize: '0.7rem', margin: "4px 0" }}>
-                Vencimento: <span style={{color: '#f0ece4'}}>{new Date(MensalidadeParcelasDTOS.parcelas[0].dataVencimento).toLocaleDateString('pt-BR')}</span>
+                Vencimento: <span style={{color: '#f0ece4'}}>{new Date(MensalidadeParcelasDTOS.parcelas[MensalidadeParcelasDTOS.parcelas.length-1].dataVencimento).toLocaleDateString('pt-BR')}</span>
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
                 <span style={{
@@ -574,7 +579,7 @@ export default function Conta() {
                     color: MensalidadeParcelasDTOS.parcelas[0].status === 'PENDENTE' ? '#e05555' : '#6fcf7a',
                     fontWeight: 'bold', textTransform: 'uppercase'
                 }}>
-                  {MensalidadeParcelasDTOS.parcelas[0].status}
+                  {MensalidadeParcelasDTOS.parcelas[MensalidadeParcelasDTOS.parcelas.length-1].status}
                 </span>
               </div>
             </div>
@@ -590,6 +595,59 @@ export default function Conta() {
       {/* ── CONTEÚDO ── */}
       <main style={S.content}>
         {erro && <p className="erro-msg">{erro}</p>}
+
+        {/* todas as parcelas */}
+        {/* ── HISTÓRICO DE PARCELAS ── */}
+        <p style={S.sectionLabel}>Últimos meses / Parcelas</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 48 }}>
+        {MensalidadeParcelasDTOS.parcelas && MensalidadeParcelasDTOS.parcelas.map((p, index) => (
+            <div 
+            key={p.id} 
+            style={{
+                ...S.infoBox, 
+                display: "grid", 
+                gridTemplateColumns: "50px 1fr 1fr 120px", 
+                alignItems: "center",
+                padding: "16px 24px",
+                opacity: p.status === 'FINALIZADO' ? 0.7 : 1, // Parcela paga fica levemente opaca
+                borderLeft: p.status === 'FINALIZADO' ? "2px solid #6fcf7a" : "2px solid #c4a064"
+            }}
+            >
+            {/* ID ou Número */}
+            <span style={{ ...S.infoLabel, marginBottom: 0 }}>#{index + 1}</span>
+            
+            {/* Data */}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={S.infoLabel}>Vencimento</span>
+                <span style={S.infoValue}>{new Date(p.dataVencimento).toLocaleDateString('pt-BR')}</span>
+            </div>
+
+            {/* Valor */}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={S.infoLabel}>Valor</span>
+                <span style={{ ...S.infoValue, color: "#c4a064", fontWeight: 600 }}>
+                {formatarValor(p.valor)}
+                </span>
+            </div>
+
+            {/* Status */}
+            <div style={{ textAlign: 'right' }}>
+                <span style={{
+                fontSize: '0.65rem',
+                fontWeight: 800,
+                letterSpacing: '0.1em',
+                padding: '4px 10px',
+                borderRadius: '4px',
+                background: p.status === 'FINALIZADO' ? 'rgba(111, 207, 122, 0.1)' : 'rgba(196, 160, 100, 0.1)',
+                color: p.status === 'FINALIZADO' ? '#6fcf7a' : '#c4a064',
+                textTransform: 'uppercase'
+                }}>
+                {p.status}
+                </span>
+            </div>
+            </div>
+        ))}
+        </div>
 
         {/* Dados pessoais (editáveis) */}
         <p style={S.sectionLabel}>Dados Pessoais</p>
