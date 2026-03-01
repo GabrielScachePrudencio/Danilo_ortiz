@@ -35,4 +35,6 @@ public class Mensalidade {
     private String statusLiberacao;
 
     private Integer numero_parcelas_restantes;
+
+    private BigDecimal valorParcela;
 }

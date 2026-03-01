@@ -1,5 +1,6 @@
 package com.danilo.DaniloOrtiz.repository;
 
+import com.danilo.DaniloOrtiz.model.Aluno;
 import com.danilo.DaniloOrtiz.model.Mensalidade;
 import com.danilo.DaniloOrtiz.model.Mensalidades_parcelas;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,5 +15,8 @@ public interface Mensalidades_parcelasRepository extends JpaRepository<Mensalida
             Mensalidade mensalidade,
             List<String> status
     );
+    Mensalidades_parcelas findById(Long id);
+    Mensalidades_parcelas findByMensalidadeAndNumeroParcela(Mensalidade mensalidade, Integer numeroParcela);
+
 }
 

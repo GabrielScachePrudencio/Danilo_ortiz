@@ -1,6 +1,7 @@
 package com.danilo.DaniloOrtiz.controller;
 
 import com.danilo.DaniloOrtiz.model.dto.MensalidadeComParcelasDTO;
+import com.danilo.DaniloOrtiz.model.dto.PagamentoCompletoDTO;
 import com.danilo.DaniloOrtiz.service.MensalidadeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,5 +24,18 @@ public class MensalidadeController {
 
         return ResponseEntity.ok(mensalidadeComParcelasDTO);
     }
+
+    @PostMapping("/pagarParcela")
+    public ResponseEntity<Boolean> pagarParcela(@RequestBody PagamentoCompletoDTO PagamentoCompletoDTO){
+        boolean resultado = mensalidadeService.pagarParcela(PagamentoCompletoDTO);
+
+        if(!resultado){
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok().build();
+
+    }
+
 
 }

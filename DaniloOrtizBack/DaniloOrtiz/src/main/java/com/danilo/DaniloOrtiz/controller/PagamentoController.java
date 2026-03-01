@@ -28,9 +28,7 @@ public class PagamentoController {
     @PostMapping
     public ResponseEntity<Pagamento> novoPagamento(@RequestBody Pagamento pagamento){
 
-        pagamento.setStatusPagamento("PENDENTE");
-
-        Pagamento p = pagamentoService.novoPagamento(pagamento);
+        Pagamento p = pagamento;
 
         if(p == null){
             return ResponseEntity.badRequest().build();
@@ -50,11 +48,13 @@ public class PagamentoController {
         mensalidade.setDataFim(
                 p.getDataCriacao().plusMonths(planoEscolhido.getDuracaomeses()).toLocalDate()
         );
+
         mensalidade.setValorMensalidade(planoEscolhido.getValor());
         mensalidade.setStatusLiberacao("DESATIVADO");
         mensalidade.setNumero_parcelas_restantes(
                 planoEscolhido.getDuracaomeses().intValue()
         );
+
 
         Mensalidade mensalidadeResultado = mensalidadeService.add(mensalidade);
 
@@ -65,6 +65,10 @@ public class PagamentoController {
         // 4️⃣ Criar todas parcelas como PENDENTE
         int totalParcelas = mensalidadeResultado.getNumero_parcelas_restantes();
         double valorParcela = mensalidadeResultado.getValorMensalidade().intValue() / totalParcelas;
+
+        //add o valor da parcela na mensalidade
+        mensalidade.setValorParcela(new BigDecimal(valorParcela));
+        mensalidadeService.save(mensalidadeResultado);
 
         for(int i = 1; i <= totalParcelas; i++){
 

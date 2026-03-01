@@ -17,8 +17,20 @@ public class Mensalidades_parcelasService {
         return mensalidadesParcelasRepository.save(mensalidades_parcelas);
     }
 
+    public Mensalidades_parcelas save(Mensalidades_parcelas mensalidades_parcelas){
+        return mensalidadesParcelasRepository.save(mensalidades_parcelas);
+    }
+
+    public Mensalidades_parcelas findById(Long id){
+        return mensalidadesParcelasRepository.findById(id);
+    }
+
     public List<Mensalidades_parcelas> findAllByMensalidade(Mensalidade mensalidade){
         return mensalidadesParcelasRepository.findAllByMensalidade(mensalidade);
+    }
+
+    public Mensalidades_parcelas findByMensalidadeAndNumeroParcela(Mensalidade mensalidade, Integer numeroParcela){
+        return mensalidadesParcelasRepository.findByMensalidadeAndNumeroParcela(mensalidade, numeroParcela);
     }
 
     public List<Mensalidades_parcelas> findAllByMensalidadePendenteFinalizado(Mensalidade mensalidade){

@@ -22,6 +22,10 @@ public class Pagamento {
     @JoinColumn(name = "plano_id")
     private Plano plano;
 
+    @ManyToOne
+    @JoinColumn(name = "parcela_id")
+    private Mensalidades_parcelas mensalidades_parcelas;
+
     @Column(name = "mp_payment_id", unique = true)
     private String mpPaymentId;
 
@@ -39,5 +43,6 @@ public class Pagamento {
     @Column(name = "data_criacao")
     private LocalDateTime dataCriacao = LocalDateTime.now();
 
+    @Column(name = "status_pagamento")
     private String statusPagamento;
 }
