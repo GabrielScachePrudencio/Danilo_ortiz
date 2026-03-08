@@ -7,7 +7,7 @@ export default function Conta(){
 
     const [erro, setErro] = useState();
 
-    const url = "http://localhost:8080/alunos";
+    const url = "http://192.168.15.19:8080/alunos";
 
     //useEffect(() => {
     //    pegarAlunoPorId();

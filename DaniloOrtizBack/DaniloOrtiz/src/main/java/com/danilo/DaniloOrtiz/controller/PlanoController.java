@@ -13,7 +13,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/planos")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
+//@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "*")
+
 public class PlanoController {
     private final PlanoService planoservice;
 

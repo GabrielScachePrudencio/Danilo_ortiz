@@ -357,8 +357,11 @@ export default function Conta() {
   const [salvando, setSalvando]   = useState(false);
   const [toast, setToast]         = useState(null); // { msg, ok }
 
-  const url = "http://localhost:8080/alunos";
-  const urlMensalidade = "http://localhost:8080/mensalidades";
+  //const url = "http://localhost:8080/alunos";
+  //const urlMensalidade = "http://localhost:8080/mensalidades";
+
+  const url = "http://192.168.15.19:8080/alunos";
+  const urlMensalidade = "http://192.168.15.19:8080/mensalidades";
 
   useEffect(() => { 
     setEmailLogado(localStorage.getItem("email"));

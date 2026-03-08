@@ -8,7 +8,8 @@ import Administrativo from "./pages/Administrativo";
 import Conta from "./pages/Conta";
 import Login from "./pages/Login";
 import TelaPagamento from "./pages/TelaPagamento";
-
+import ErroPagamento from "./pages/ErroPagamento";
+import CorretoPagamento from "./pages/CorretoPagamento";
 
 
 
@@ -22,6 +23,8 @@ function App() {
         <Route path="/login/:idplano" element={<Login/>}/>
 
         <Route path="/home/conta/:idAluno" element={<Conta/>}/>
+        <Route path="/home/telapagamento/erro" element={<ErroPagamento/>}/>
+        <Route path="/home/telapagamento/correto" element={<CorretoPagamento/>}/>
 
         <Route path="/home/telapagamento/:idplano" element={<TelaPagamento/>}/>
         <Route path="/home/telapagamento/" element={<TelaPagamento/>}/>

@@ -6,8 +6,10 @@ import com.danilo.DaniloOrtiz.model.dto.MensalidadeComParcelasDTO;
 import com.danilo.DaniloOrtiz.model.dto.PagamentoCompletoDTO;
 import com.danilo.DaniloOrtiz.model.dto.ParcelaDTO;
 import com.danilo.DaniloOrtiz.model.mapper.MensalidadeComParcelasMapper;
+import com.danilo.DaniloOrtiz.pagamentoAPI.ApiMercadoPago;
 import com.danilo.DaniloOrtiz.repository.MensalidadeRepository;
 import com.danilo.DaniloOrtiz.repository.Mensalidades_parcelasRepository;
+import com.mercadopago.resources.preference.Preference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,7 @@ public class MensalidadeService {
     private final PagamentoService pagamentoService;
     private final AlunoService alunoService;
     private final PlanoService planoService;
+
 
     public Mensalidade add(Mensalidade mensalidade){
         Aluno aluno = alunoService.findById(mensalidade.getAluno().getId());
@@ -62,8 +65,16 @@ public class MensalidadeService {
         return mensalidadeCompletaComParcelas;
     }
 
+
+    public Preference abrirPagamento(PagamentoCompletoDTO pagamentoCompletoDTO){
+        Preference preference = ApiMercadoPago.gerarPagamento(pagamentoCompletoDTO, pagamentoCompletoDTO.getIdPagamento());
+
+        return preference;
+    }
+
+
     @Transactional
-    public boolean pagarParcela(PagamentoCompletoDTO mensalidadeComParcelasDTO){
+    public boolean addParcelaNaoPaga(PagamentoCompletoDTO mensalidadeComParcelasDTO){
 //        Mexer na tabela pagamentos:
 //        - add com vlaor da parcela e id parcela
 //        - não criar na hora que vc escolhe o plano na tabela de pagamentos
@@ -91,6 +102,7 @@ public class MensalidadeService {
 
         if(mensalidades_parcelas == null) return false;
 
+
         //inserindo em pagamentos
         Pagamento pagamentoIncompleto = new Pagamento();
         pagamentoIncompleto.setAluno(aluno);
@@ -100,19 +112,31 @@ public class MensalidadeService {
         pagamentoIncompleto.setCodigoVenda(mensalidadeComParcelasDTO.getCodigoVenda());
         pagamentoIncompleto.setValorPago(mensalidadeComParcelasDTO.getValor());
         pagamentoIncompleto.setMensalidades_parcelas(mensalidades_parcelas);
-        pagamentoIncompleto.setPago(true);
+        pagamentoIncompleto.setPago(false);
         pagamentoIncompleto.setFormaPagamento(mensalidadeComParcelasDTO.getFormaPagamento());
-        pagamentoIncompleto.setStatusPagamento("FINALIZADO");
+        pagamentoIncompleto.setStatusPagamento("PENDENTE");
+
+
+        //api mercado pago
+        pagamentoIncompleto.setId_mercadopago("");
+        pagamentoIncompleto.setStatusPagamento("");
+        pagamentoIncompleto.setMetodo_pagamento_mercadopago("");
+
 
         Pagamento pagamentoCompleto = pagamentoService.novoPagamento((pagamentoIncompleto));
 
         if(pagamentoCompleto == null) return  false;
 
 
+        //ver se o objeto vai receber o id do pagamento
+        //eesse metodo tem que chaamr primeiro para alterar esse valor do dto
+        //antes de ir para o metodo de abrir
+        mensalidadeComParcelasDTO.setIdPagamento(pagamentoCompleto.getId());
+
 
 
         // atualizar parcela
-        mensalidades_parcelas.setStatus("FINALIZADO");
+        mensalidades_parcelas.setStatus("PENDENTE");
         mensalidades_parcelas.setPagamento(pagamentoCompleto);
         mensalidadesParcelasService.save(mensalidades_parcelas);
 
@@ -128,8 +152,8 @@ public class MensalidadeService {
 
         if (proximaParcela != null) {
             proximaParcela.setStatus("PENDENTE");
+            mensalidadesParcelasService.save(proximaParcela);
         }
-        mensalidadesParcelasService.save(proximaParcela);
 
 
         // atualizar mensalidade
@@ -139,7 +163,7 @@ public class MensalidadeService {
                 mensalidade.getNumero_parcelas_restantes() - 1
         );
 
-        mensalidade.setStatusLiberacao("ATIVADO");
+        mensalidade.setStatusLiberacao("DESATIVADO");
 
         save(mensalidade);
 
@@ -149,6 +173,38 @@ public class MensalidadeService {
         return true;
 
     }
+
+
+    @Transactional
+    public void confirmarPagamentoDoWebHook(Long idpagamentoInterno, String mpId, String statusMp, String pagamentoMp){
+        Pagamento pagamento = pagamentoService.findById(idpagamentoInterno);
+
+        if(pagamento != null && !"FINALIZADO".equals(pagamento.getStatusPagamento())){
+            // 2. Atualiza os dados do Mercado Pago na sua tabela
+            pagamento.setId_mercadopago(mpId);
+            pagamento.setStatus_mercadopago(statusMp);
+            pagamento.setMetodo_pagamento_mercadopago(pagamentoMp);
+            pagamento.setStatusPagamento("FINALIZADO"); // ou o status que veio do MP
+            pagamento.setPago(true);
+            pagamentoService.save(pagamento); // Salva a alteração
+
+            Mensalidades_parcelas parcela = pagamento.getMensalidades_parcelas();
+            parcela.setStatus("FINALIZADO");
+            mensalidadesParcelasService.save(parcela);
+
+            // 4. Ativa a Mensalidade
+            Mensalidade mensalidade = parcela.getMensalidade();
+            mensalidade.setStatusLiberacao("ATIVADO");
+            save(mensalidade);
+
+            System.out.println("Pagamento " + idpagamentoInterno + " confirmado com sucesso!");
+        }
+
+    }
+
+
+
+
 
 
 

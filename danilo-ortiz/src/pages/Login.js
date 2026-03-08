@@ -274,7 +274,7 @@ export default function Login() {
     limpar();
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8080/alunos/login", {
+      const res = await fetch("http://192.168.15.19:8080/alunos/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formLogin),
@@ -300,7 +300,7 @@ export default function Login() {
     limpar();
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8080/alunos", {
+      const res = await fetch("http://192.168.15.19:8080/alunos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formCadastro),

@@ -12,6 +12,8 @@ import java.util.List;
 @Data
 public class PagamentoCompletoDTO {
 
+    private Long idPagamento;
+
     private Long alunoId;
 
     private String nomeAluno;

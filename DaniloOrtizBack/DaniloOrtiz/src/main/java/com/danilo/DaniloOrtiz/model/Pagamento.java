@@ -45,4 +45,12 @@ public class Pagamento {
 
     @Column(name = "status_pagamento")
     private String statusPagamento;
+
+
+    //mercadopago
+    private String id_mercadopago;
+    private String status_mercadopago;
+    private String metodo_pagamento_mercadopago;
+
+
 }

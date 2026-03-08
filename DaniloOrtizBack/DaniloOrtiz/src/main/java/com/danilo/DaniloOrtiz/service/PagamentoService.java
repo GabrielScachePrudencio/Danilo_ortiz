@@ -18,5 +18,12 @@ public class PagamentoService {
         return p;
     }
 
+    public Pagamento findById(Long id){
+        return pagamentoRepository.findById(id);
+    }
+
+    public Pagamento save(Pagamento p){
+        return pagamentoRepository.save(p);
+    }
 
 }

@@ -348,9 +348,9 @@ export default function TelaPagamento() {
   const [erro, setErro]               = useState(null);
   const [toast, setToast]             = useState(null);
 
-  const url = "http://localhost:8080/planos";
-  const urlalunos = "http://localhost:8080/alunos";
-  const urlmensalidade = "http://localhost:8080/mensalidades";
+  const url = "http://192.168.15.19:8080/planos";
+  const urlalunos = "http://192.168.15.19:8080/alunos";
+  const urlmensalidade = "http://192.168.15.19:8080/mensalidades";
 
   useEffect(() => {
     setEmailLogado(localStorage.getItem("email"));
@@ -423,7 +423,7 @@ export default function TelaPagamento() {
     setLoading(true);
     try {
       // Adapte o endpoint conforme sua API
-      const res = await fetch(`http://localhost:8080/pagamentos`, {
+      const res = await fetch(`http://192.168.15.19:8080/pagamentos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -491,7 +491,7 @@ export default function TelaPagamento() {
     };
 
     const res = await fetch(
-      "http://localhost:8080/mensalidades/pagarParcela",
+      "http://192.168.15.19:8080/mensalidades/abrirPagamento",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -500,6 +500,8 @@ export default function TelaPagamento() {
     );
 
     if (res.ok) {
+      const urlPagamento = await res.text(); 
+      window.location.href = urlPagamento;
       mostrarToast("Pagamento Finalizado com Sucesso!", true);
       setTimeout(() => navigate(`/home/${idAluno}`), 2000);
     } else {

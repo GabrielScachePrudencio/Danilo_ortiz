@@ -10,7 +10,9 @@ export default function Home() {
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(true);
 
-  const url = "http://localhost:8080/planos";
+  //const url = "http://localhost:8080/planos";
+  const url = "http://192.168.15.19:8080/planos";
+ 
 
   const atualizarStatusLogin = () => {
     const email = localStorage.getItem("email");

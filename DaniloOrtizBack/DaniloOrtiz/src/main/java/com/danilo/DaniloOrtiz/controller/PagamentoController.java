@@ -17,7 +17,8 @@ import java.math.BigDecimal;
 @RestController
 @RequestMapping("/pagamentos")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
+//@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "*")
 public class PagamentoController {
 
     private final PagamentoService pagamentoService;
