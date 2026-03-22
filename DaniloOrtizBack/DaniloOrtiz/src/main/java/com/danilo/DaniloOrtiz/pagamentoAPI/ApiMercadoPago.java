@@ -1,6 +1,8 @@
 package com.danilo.DaniloOrtiz.pagamentoAPI;
 
 import com.danilo.DaniloOrtiz.model.dto.PagamentoCompletoDTO;
+import com.danilo.DaniloOrtiz.repository.ConfiguracaoRepository;
+import com.danilo.DaniloOrtiz.service.ConfiguracaoService;
 import com.mercadopago.MercadoPagoConfig;
 import com.mercadopago.client.payment.PaymentClient;
 import com.mercadopago.client.preference.*;
@@ -8,16 +10,20 @@ import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
+@RequiredArgsConstructor
 public class ApiMercadoPago {
+    private static ConfiguracaoService configuracaoServiceStatic;
 
     private static final String ACCESS_TOKEN = System.getenv("MP_ACCESS_TOKEN") != null
             ? System.getenv("MP_ACCESS_TOKEN")
             : "MP_ACCESS_TOKEN";
-
 
 
     public static void main(String[] args) {
@@ -25,7 +31,14 @@ public class ApiMercadoPago {
     }
 
     public static Preference gerarPagamento(PagamentoCompletoDTO pagamentoCompletoDTO, Long idPagamentoInterno) {
-        MercadoPagoConfig.setAccessToken(ACCESS_TOKEN);
+//        MercadoPagoConfig.setAccessToken(ACCESS_TOKEN);
+
+        //ver se ele esta pegando o token correto e se ta funcioando
+        MercadoPagoConfig.setAccessToken(
+                configuracaoServiceStatic.getConfiguracao()
+                        .get()
+                        .getMPACCESSTOKEN()
+        );
 
         PreferenceClient cliente = new PreferenceClient();
 
@@ -36,10 +49,18 @@ public class ApiMercadoPago {
                 .currencyId("BRL")
                 .build();
 
+//        PreferenceBackUrlsRequest backUrlsRequest = PreferenceBackUrlsRequest.builder()
+//                .success("http://201.95.94.106:3000/home/telapagamento/correto")
+//                .failure("http://201.95.94.106:3000/home/telapagamento/erro")
+//                .pending("http://201.95.94.106:3000/home/telapagamento/pendente")
+//                .build();
+
+        //rodar ngrok na porta 3000 ou seja o front
+        //VERIFICAR SE O IP MUDOU AGORA 201.95.93.192
         PreferenceBackUrlsRequest backUrlsRequest = PreferenceBackUrlsRequest.builder()
-                .success("https://localhost:3000/home/telapagamento/correto")
-                .failure("https://localhost:3000/home/telapagamento/erro")
-                .pending("https://localhost:3000/home/telapagamento/erro")
+                .success("https://0368-201-95-93-192.ngrok-free.app/home/telapagamento/correto")
+                .failure("https://0368-201-95-93-192.ngrok-free.app/home/telapagamento/erro")
+                .pending("https://0368-201-95-93-192.ngrok-free.app/home/telapagamento/pendente")
                 .build();
 
         PreferenceRequest request = PreferenceRequest.builder()
@@ -47,7 +68,7 @@ public class ApiMercadoPago {
                 .backUrls(backUrlsRequest)
                 .externalReference(idPagamentoInterno.toString())
                 // grok .notificationUrl("https://7057-201-95-94-106.ngrok-free.app/v1/pagamentos/notifications")
-                .notificationUrl("https://5811-201-95-94-106.ngrok-free.app/v1/pagamentos/notifications")
+                .notificationUrl("http://201.95.93.192:3001/v1/pagamentos/notifications")
                 .autoReturn("approved")
                 .build();
 
@@ -68,7 +89,12 @@ public class ApiMercadoPago {
     }
 
     public static String consultarPagamento(Long paymentId) {
-        MercadoPagoConfig.setAccessToken(ACCESS_TOKEN);
+//        MercadoPagoConfig.setAccessToken(ACCESS_TOKEN);
+        MercadoPagoConfig.setAccessToken(
+                configuracaoServiceStatic.getConfiguracao()
+                        .get()
+                        .getMPACCESSTOKEN()
+        );
         PaymentClient client = new PaymentClient();
 
         try {
@@ -90,7 +116,13 @@ public class ApiMercadoPago {
     }
 
     public static Payment getPaymentDetails(Long paymentId) {
-        MercadoPagoConfig.setAccessToken(ACCESS_TOKEN);
+        //MercadoPagoConfig.setAccessToken(ACCESS_TOKEN);
+        MercadoPagoConfig.setAccessToken(
+                configuracaoServiceStatic.getConfiguracao()
+                        .get()
+                        .getMPACCESSTOKEN()
+        );
+
         PaymentClient client = new PaymentClient();
 
         try {

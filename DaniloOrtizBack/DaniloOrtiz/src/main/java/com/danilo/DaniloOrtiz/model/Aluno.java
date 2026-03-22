@@ -36,7 +36,7 @@ public class Aluno {
     private Plano planoAtual; // você já tem essa classe
 
     @Column(name = "status_assinatura")
-    private String statusAssinatura = "INATIVO";
+    private String statusAssinatura = "DESATIVADO";
 
     @Column(name = "data_cadastro")
     private LocalDateTime dataCadastro = LocalDateTime.now();

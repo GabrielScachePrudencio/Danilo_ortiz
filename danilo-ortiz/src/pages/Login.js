@@ -233,6 +233,14 @@ export default function Login() {
   const navigate = useNavigate();
   const { idplano } = useParams();
 
+  const url =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "192.168.15.19"
+    ? "http://192.168.15.19:3001/alunos"
+    : "http://201.95.94.106:3001/alunos";
+
+
+
   const [modo, setModo] = useState(null); // null | "login" | "cadastro"
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState(null);
@@ -274,7 +282,7 @@ export default function Login() {
     limpar();
     setLoading(true);
     try {
-      const res = await fetch("http://192.168.15.19:8080/alunos/login", {
+      const res = await fetch(url+"/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formLogin),
@@ -300,7 +308,7 @@ export default function Login() {
     limpar();
     setLoading(true);
     try {
-      const res = await fetch("http://192.168.15.19:8080/alunos", {
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formCadastro),

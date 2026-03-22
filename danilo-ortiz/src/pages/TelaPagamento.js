@@ -348,9 +348,38 @@ export default function TelaPagamento() {
   const [erro, setErro]               = useState(null);
   const [toast, setToast]             = useState(null);
 
-  const url = "http://192.168.15.19:8080/planos";
-  const urlalunos = "http://192.168.15.19:8080/alunos";
-  const urlmensalidade = "http://192.168.15.19:8080/mensalidades";
+  //const url = "http://192.168.15.19:8080/planos";
+  //const urlalunos = "http://192.168.15.19:8080/alunos";
+  //const urlmensalidade = "http://192.168.15.19:8080/mensalidades";
+  //const urlpagamentos = "http://192.168.15.19:8080/pagamentos";
+  //const urlabrirmensalidadespagamento = "http://192.168.15.19:8080/mensalidades/abrirPagamento";
+  
+  const url =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "192.168.15.19"
+      ? "http://192.168.15.19:3001/planos"
+    : "http://201.95.94.106:3001/planos";
+
+  const urlalunos = window.location.hostname === "localhost" ||
+    window.location.hostname === "192.168.15.19"
+      ? "http://192.168.15.19:3001/alunos"
+      : "http://201.95.94.106:3001/alunos";
+
+  const urlmensalidade = window.location.hostname === "localhost" ||
+    window.location.hostname === "192.168.15.19"
+      ? "http://192.168.15.19:3001/mensalidades"
+      : "http://201.95.94.106:3001/mensalidades";
+
+  const urlpagamentos = window.location.hostname === "localhost" ||
+    window.location.hostname === "192.168.15.19"
+      ? "http://192.168.15.19:3001/pagamentos"
+      : "http://201.95.94.106:3001/pagamentos";
+
+  const urlabrirmensalidadespagamento = window.location.hostname === "localhost" ||
+    window.location.hostname === "192.168.15.19"
+      ? "http://192.168.15.19:3001/mensalidades/abrirPagamento"
+      : "http://201.95.94.106:3001/mensalidades/abrirPagamento";
+
 
   useEffect(() => {
     setEmailLogado(localStorage.getItem("email"));
@@ -404,7 +433,7 @@ export default function TelaPagamento() {
       const res = await fetch(`${urlalunos}/${ida}`);
       if (res.ok) {
         const data = await res.json();
-        console.log("aluno", data);
+        console.log("aluno na tela pagamentos ", data);
         setAluno(data);
       } else {
         setErro("Aluno não encontrado no banco.");
@@ -423,7 +452,7 @@ export default function TelaPagamento() {
     setLoading(true);
     try {
       // Adapte o endpoint conforme sua API
-      const res = await fetch(`http://192.168.15.19:8080/pagamentos`, {
+      const res = await fetch(urlpagamentos, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -491,7 +520,7 @@ export default function TelaPagamento() {
     };
 
     const res = await fetch(
-      "http://192.168.15.19:8080/mensalidades/abrirPagamento",
+      urlabrirmensalidadespagamento,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

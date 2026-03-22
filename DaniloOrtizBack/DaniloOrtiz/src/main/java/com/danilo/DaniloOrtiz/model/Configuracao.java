@@ -28,4 +28,6 @@ public class Configuracao {
     @Column(name = "data_atualizacao")
     private LocalDateTime dataAtualizacao = LocalDateTime.now();
 
+    @Column(name = "MP_ACCESS_TOKEN")
+    private String MPACCESSTOKEN;
 }

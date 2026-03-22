@@ -9,7 +9,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AlunoDTO {
     private Long id;
+    private String nome;
     private String email;
+    private String statusAssinatura;
+    private Boolean criouContaSisrun;
     private String senha;
 
 }

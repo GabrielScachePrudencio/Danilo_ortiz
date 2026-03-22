@@ -3,6 +3,7 @@ package com.danilo.DaniloOrtiz.controller;
 
 import com.danilo.DaniloOrtiz.model.Aluno;
 import com.danilo.DaniloOrtiz.model.dto.AlunoDTO;
+import com.danilo.DaniloOrtiz.model.dto.AlunoPorPlanoDTO;
 import com.danilo.DaniloOrtiz.service.AlunoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,8 +23,45 @@ public class AlunoController {
 
     @GetMapping
     public ResponseEntity<List<AlunoDTO>> todosAlunos() {
-        return ResponseEntity.ok(alunoService.findAll());
+        List<AlunoDTO> alunoDTOS = alunoService.findAll();
+
+        if(alunoDTOS == null) return ResponseEntity.notFound().build();
+
+        return ResponseEntity.ok(alunoDTOS);
     }
+
+    @GetMapping("/qtdd-aluno-por-plano")
+    public ResponseEntity<List<AlunoPorPlanoDTO>> qtddplanoaluno(){
+        List<AlunoPorPlanoDTO> lista = alunoService.QtddAlunosPorPlano();
+
+        if(lista==null) return ResponseEntity.notFound().build();
+
+        return ResponseEntity.ok(lista);
+    }
+
+
+    @PostMapping("/atualizar-status-aluno/{id}")
+    public ResponseEntity<Boolean> atualizarStatusAluno(@PathVariable Long id){
+        boolean res = alunoService.atualizarStatus(id);
+
+        if(!res){
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/atualizar-status-contasisrun-aluno/{id}")
+    public ResponseEntity<Boolean> atualizarStatusContaSisrunAluno(@PathVariable Long id){
+        boolean res = alunoService.atualizarStatusSisrun(id);
+
+        if(!res){
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(res);
+    }
+
 
     @PostMapping
     public ResponseEntity<AlunoDTO> addAluno(@RequestBody Aluno aluno) {

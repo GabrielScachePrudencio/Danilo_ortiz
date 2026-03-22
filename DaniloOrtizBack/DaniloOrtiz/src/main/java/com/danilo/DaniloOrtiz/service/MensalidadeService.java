@@ -197,6 +197,14 @@ public class MensalidadeService {
             mensalidade.setStatusLiberacao("ATIVADO");
             save(mensalidade);
 
+
+            //ativa o aluno se ja não estiver
+            Aluno aluno = alunoService.findById(pagamento.getAluno().getId());
+            if(aluno.getStatusAssinatura().equalsIgnoreCase("DESATIVADO")){
+                aluno.setStatusAssinatura("ATIVADO");
+            }
+            alunoService.add(aluno);
+
             System.out.println("Pagamento " + idpagamentoInterno + " confirmado com sucesso!");
         }
 
