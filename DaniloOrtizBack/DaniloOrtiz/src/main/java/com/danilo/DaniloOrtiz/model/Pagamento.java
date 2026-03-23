@@ -46,6 +46,7 @@ public class Pagamento {
     @Column(name = "status_pagamento")
     private String statusPagamento;
 
+    private Integer parcelas;
 
     //mercadopago
     private String id_mercadopago;

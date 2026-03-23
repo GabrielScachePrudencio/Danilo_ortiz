@@ -2,7 +2,9 @@ package com.danilo.DaniloOrtiz.controller;
 
 import com.danilo.DaniloOrtiz.model.dto.MensalidadeComParcelasDTO;
 import com.danilo.DaniloOrtiz.model.dto.PagamentoCompletoDTO;
+import com.danilo.DaniloOrtiz.model.dto.ParcelaDetalheDTO;
 import com.danilo.DaniloOrtiz.service.MensalidadeService;
+import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +30,18 @@ public class MensalidadeController {
         return ResponseEntity.ok(mensalidadeComParcelasDTO);
     }
 
+
+    // Retorna detalhes da parcela + dados do pagamento interno + consulta MP
+    @GetMapping("/parcela/{idParcela}")
+    public ResponseEntity<ParcelaDetalheDTO> verificarParcela(
+            @PathVariable Long idParcela) {
+
+        ParcelaDetalheDTO dto = mensalidadeService.verificarParcela(idParcela);
+
+        if (dto == null) return ResponseEntity.notFound().build();
+
+        return ResponseEntity.ok(dto);
+    }
 
 
     @PostMapping("/abrirPagamento")

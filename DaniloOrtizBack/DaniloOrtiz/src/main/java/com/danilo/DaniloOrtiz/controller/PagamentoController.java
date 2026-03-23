@@ -4,6 +4,7 @@ import com.danilo.DaniloOrtiz.model.Mensalidade;
 import com.danilo.DaniloOrtiz.model.Mensalidades_parcelas;
 import com.danilo.DaniloOrtiz.model.Pagamento;
 import com.danilo.DaniloOrtiz.model.Plano;
+import com.danilo.DaniloOrtiz.model.dto.PagamentoCompletoDTO;
 import com.danilo.DaniloOrtiz.service.MensalidadeService;
 import com.danilo.DaniloOrtiz.service.Mensalidades_parcelasService;
 import com.danilo.DaniloOrtiz.service.PagamentoService;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/pagamentos")
@@ -29,33 +31,56 @@ public class PagamentoController {
     @PostMapping
     public ResponseEntity<Pagamento> novoPagamento(@RequestBody Pagamento pagamento){
 
-        Pagamento p = pagamento;
-
-        if(p == null){
+        if(pagamento == null){
             return ResponseEntity.badRequest().build();
         }
 
-        Plano planoEscolhido = planoService.buscarPorId(p.getPlano().getId());
+        Plano planoEscolhido = planoService.buscarPorId(pagamento.getPlano().getId());
 
         if(planoEscolhido == null){
             return ResponseEntity.badRequest().build();
         }
 
+        // 🔹 pega parcelas do front
+        int totalParcelas = pagamento.getParcelas() != null ? pagamento.getParcelas() : 1;
+
+        // 🔹 valores
+        BigDecimal valorMensal = planoEscolhido.getValor();
+        BigDecimal valorTotal = valorMensal.multiply(
+                BigDecimal.valueOf(planoEscolhido.getDuracaomeses())
+        );
+
+        BigDecimal valorParcela;
+
+        if(totalParcelas == 1){
+            // à vista
+            valorParcela = valorTotal;
+        } else {
+            // mensal
+            valorParcela = valorMensal;
+        }
+
+        // 🔹 cria mensalidade
         Mensalidade mensalidade = new Mensalidade();
 
-        mensalidade.setAluno(p.getAluno());
+        mensalidade.setAluno(pagamento.getAluno());
         mensalidade.setPlano(planoEscolhido);
-        mensalidade.setDataInicio(p.getDataCriacao().toLocalDate());
+
+        mensalidade.setDataInicio(pagamento.getDataCriacao().toLocalDate());
+
         mensalidade.setDataFim(
-                p.getDataCriacao().plusMonths(planoEscolhido.getDuracaomeses()).toLocalDate()
+                pagamento.getDataCriacao()
+                        .plusMonths(planoEscolhido.getDuracaomeses())
+                        .toLocalDate()
         );
 
-        mensalidade.setValorMensalidade(planoEscolhido.getValor());
+        mensalidade.setValorMensalidade(valorMensal);
+        mensalidade.setValorParcela(valorParcela);
+
         mensalidade.setStatusLiberacao("DESATIVADO");
-        mensalidade.setNumero_parcelas_restantes(
-                planoEscolhido.getDuracaomeses().intValue()
-        );
 
+        // 🔥 agora usa o que veio do front
+        mensalidade.setNumero_parcelas_restantes(totalParcelas);
 
         Mensalidade mensalidadeResultado = mensalidadeService.add(mensalidade);
 
@@ -63,20 +88,14 @@ public class PagamentoController {
             return ResponseEntity.badRequest().build();
         }
 
-        // 4️⃣ Criar todas parcelas como PENDENTE
-        int totalParcelas = mensalidadeResultado.getNumero_parcelas_restantes();
-        double valorParcela = mensalidadeResultado.getValorMensalidade().intValue() / totalParcelas;
-
-        //add o valor da parcela na mensalidade
-        mensalidade.setValorParcela(new BigDecimal(valorParcela));
-        mensalidadeService.save(mensalidadeResultado);
-
+        // 🔹 cria parcelas
         for(int i = 1; i <= totalParcelas; i++){
 
             Mensalidades_parcelas m = new Mensalidades_parcelas();
+
             m.setMensalidade(mensalidadeResultado);
             m.setNumeroParcela(i);
-            m.setValor(new BigDecimal(valorParcela));
+            m.setValor(valorParcela);
 
             m.setDataVencimento(
                     mensalidadeResultado.getDataInicio()
@@ -93,6 +112,12 @@ public class PagamentoController {
             mensalidadesParcelasService.add(m);
         }
 
-        return ResponseEntity.ok(p);
+        return ResponseEntity.ok(pagamento);
+    }
+
+    @GetMapping("/ultimas-vendas")
+    public ResponseEntity<List<PagamentoCompletoDTO>> buscarUltimasVendas() {
+        List<PagamentoCompletoDTO> vendas = pagamentoService.listarUltimasVendas();
+        return ResponseEntity.ok(vendas);
     }
 }

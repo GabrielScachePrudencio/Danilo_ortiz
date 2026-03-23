@@ -5,10 +5,12 @@ import com.danilo.DaniloOrtiz.model.*;
 import com.danilo.DaniloOrtiz.model.dto.MensalidadeComParcelasDTO;
 import com.danilo.DaniloOrtiz.model.dto.PagamentoCompletoDTO;
 import com.danilo.DaniloOrtiz.model.dto.ParcelaDTO;
+import com.danilo.DaniloOrtiz.model.dto.ParcelaDetalheDTO;
 import com.danilo.DaniloOrtiz.model.mapper.MensalidadeComParcelasMapper;
 import com.danilo.DaniloOrtiz.pagamentoAPI.ApiMercadoPago;
 import com.danilo.DaniloOrtiz.repository.MensalidadeRepository;
 import com.danilo.DaniloOrtiz.repository.Mensalidades_parcelasRepository;
+import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -209,6 +211,68 @@ public class MensalidadeService {
         }
 
     }
+
+    public ParcelaDetalheDTO verificarParcela(Long idParcela) {
+
+        Mensalidades_parcelas parcela = mensalidadesParcelasService.findById(idParcela);
+        if (parcela == null) return null;
+
+        ParcelaDetalheDTO.ParcelaDetalheDTOBuilder builder = ParcelaDetalheDTO.builder()
+                .id(parcela.getId())
+                .numeroParcela(parcela.getNumeroParcela())
+                .valor(parcela.getValor())
+                .dataVencimento(parcela.getDataVencimento().toLocalDate())
+                .status(parcela.getStatus());
+
+        Pagamento pagamento = parcela.getPagamento();
+
+        if (pagamento != null) {
+            builder
+                    .pagamentoInternoId(pagamento.getId())
+                    .statusPagamento(pagamento.getStatusPagamento())
+                    .formaPagamento(pagamento.getFormaPagamento())
+                    .codigoVenda(pagamento.getCodigoVenda())
+                    .valorPago(pagamento.getValorPago())
+                    .pago(pagamento.getPago());
+
+            String mpIdStr = pagamento.getId_mercadopago();
+
+            if (mpIdStr != null && !mpIdStr.isBlank()) {
+                try {
+                    Long mpId = Long.parseLong(mpIdStr);
+                    Payment mpPayment = ApiMercadoPago.consultarPagamento(mpId);
+
+                    if (mpPayment != null) {
+                        builder
+                                .mpPaymentId(mpPayment.getId())
+                                .mpStatus(mpPayment.getStatus())
+                                .mpStatusDetail(mpPayment.getStatusDetail())
+                                .mpValorTransacao(mpPayment.getTransactionAmount())
+                                .mpDataAprovacao(mpPayment.getDateApproved())
+                                .mpMetodoPagamento(
+                                        mpPayment.getPaymentMethodId() != null
+                                                ? mpPayment.getPaymentMethodId()
+                                                : pagamento.getMetodo_pagamento_mercadopago()
+                                );
+                    } else {
+                        builder.mpErro("Pagamento não encontrado no Mercado Pago");
+                    }
+
+                } catch (NumberFormatException e) {
+                    builder.mpErro("ID do Mercado Pago inválido: " + mpIdStr);
+                } catch (Exception e) {
+                    builder.mpErro("Erro ao consultar Mercado Pago: " + e.getMessage());
+                }
+            } else {
+                // Pagamento registrado mas webhook ainda não trouxe o id do MP
+                builder.mpErro("Aguardando confirmação do Mercado Pago");
+            }
+        }
+        // pagamento == null → parcela sem pagamento iniciado; retorna só dados básicos
+
+        return builder.build();
+    }
+
 
 
 

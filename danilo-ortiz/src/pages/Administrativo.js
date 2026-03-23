@@ -7,21 +7,6 @@ const BASE_URL =
         ? "http://192.168.15.19:3001"
         : "http://201.95.94.106:3001";
 
-// ─── mock data para desenvolver antes do back estar pronto ──────────────────
-const MOCK_ALUNOS = [
-    { id: 1, nome: "Ana Souza",     email: "ana@email.com",   statusAssinatura: "ATIVADO",    criouContaSisrun: true,  plano: "MENSAL" },
-    { id: 2, nome: "Bruno Lima",    email: "bruno@email.com", statusAssinatura: "DESATIVADO", criouContaSisrun: false, plano: "TRIMESTRAL" },
-    { id: 3, nome: "Carla Dias",    email: "carla@email.com", statusAssinatura: "ATIVADO",    criouContaSisrun: true,  plano: "ANUAL" },
-    { id: 4, nome: "Diego Melo",    email: "diego@email.com", statusAssinatura: "ATIVADO",    criouContaSisrun: false, plano: "MENSAL" },
-    { id: 5, nome: "Eva Torres",    email: "eva@email.com",   statusAssinatura: "DESATIVADO", criouContaSisrun: true,  plano: "SEMESTRAL" },
-];
-
-const MOCK_RELATORIO = [
-    { plano: "MENSAL",      quantidade: 42, receita: 2520 },
-    { plano: "TRIMESTRAL",  quantidade: 18, receita: 3060 },
-    { plano: "SEMESTRAL",   quantidade: 9,  receita: 2700 },
-    { plano: "ANUAL",       quantidade: 14, receita: 8400 },
-];
 
 // ─── estilos em objeto para não depender de CSS externo ─────────────────────
 const S = {
@@ -337,7 +322,7 @@ function MockOrFetch(url, mockData) {
 export default function Conta() {
     const navigate = useNavigate();
 
-    const [aba, setAba] = useState("alunos"); // "alunos" | "relatorio" | "token"
+    const [aba, setAba] = useState("alunos"); // "alunos" | "relatorio" | "token" | "Vendas"
     const [erro, setErro] = useState("");
 
     // ── alunos ──────────────────────────────────────────────────────────────
@@ -356,6 +341,9 @@ export default function Conta() {
     const [tokenInput, setTokenInput]     = useState("");
     const [tokenStatus, setTokenStatus]   = useState(null); // null | "ok" | "erro"
     const [salvandoToken, setSalvandoToken] = useState(false);
+
+    //vendas 
+    const [vendas, setVendas] = useState([]);
 
     // ── fetch alunos ────────────────────────────────────────────────────────
     async function pegarAlunos() {
@@ -377,6 +365,8 @@ export default function Conta() {
         }
     }
 
+
+    
     async function pegarRelatorio() {
         try {
             const res = await fetch(BASE_URL+"/alunos/qtdd-aluno-por-plano", {
@@ -414,13 +404,37 @@ export default function Conta() {
             setErro("Erro ao configuracoes.");
         }
     }
-    
 
+    async function pegarUltimasVendas() {
+        try {
+            setCarregando(true);
+            const res = await fetch(BASE_URL + "/pagamentos/ultimas-vendas", {
+                method: "GET"
+            });
+            
+            if (res.ok) {
+                const data = await res.json();
+                console.log("Pagamentos", data);
+                setVendas(data);
+            } else {
+                setErro("Erro ao buscar últimas vendas");
+            }
+        } catch (error) {
+            setErro("Falha na conexão ao buscar vendas.");
+        } finally {
+            setCarregando(false);
+        }
+    }
+
+    // Atualize o useEffect para carregar as vendas ao iniciar ou quando mudar de aba
     useEffect(() => {
         pegarAlunos();
         pegarRelatorio();
         pegarTokenAtual();
+        pegarUltimasVendas();
     }, []);
+        
+
 
     // ── busca ────────────────────────────────────────────────────────────────
     const alunosFiltrados = inputBusca.trim()
@@ -503,6 +517,7 @@ export default function Conta() {
                     {[
                         { key: "alunos",    label: "Alunos"    },
                         { key: "relatorio", label: "Relatório" },
+                        { key: "vendas",    label: "Últimas Vendas" }, // Nova opção
                         { key: "token",     label: "Token MP"  },
                     ].map(({ key, label }) => (
                         <button key={key} style={S.tab(aba === key)} onClick={() => setAba(key)}>
@@ -510,7 +525,6 @@ export default function Conta() {
                         </button>
                     ))}
                     <button className="btn-sair" onClick={() => navigate("/")}>Voltar</button>
-
                 </div>
             </div>
 
@@ -687,6 +701,66 @@ export default function Conta() {
                         </div>
                     </>
                 )}
+
+                {/* ══ ABA ÚLTIMAS VENDAS ══════════════════════════════════════════════ */}
+            {aba === "vendas" && (
+            <>
+                <p style={S.sectionTitle}>Histórico de Pagamentos</p>
+<table style={S.table}>
+    <thead>
+        <tr>
+            {["Data", "Aluno", "Plano", "Valor", "Status", "ID Mercado Pago", "Método"].map((h) => (
+                <th key={h} style={S.th}>{h}</th>
+            ))}
+        </tr>
+    </thead>
+    <tbody>
+        {carregando ? (
+            <tr><td colSpan={7} style={{ ...S.td, color: "#555", textAlign: "center" }}>carregando…</td></tr>
+        ) : vendas.length === 0 ? (
+            <tr><td colSpan={7} style={{ ...S.td, color: "#555", textAlign: "center" }}>nenhuma venda encontrada</td></tr>
+        ) : vendas.map((v, idx) => (
+            <tr key={v.idPagamento || idx}>
+                {/* 1. Data */}
+                <td style={S.td}>
+                    {v.data ? new Date(v.data).toLocaleDateString('pt-BR') : "—"}
+                </td>
+
+                {/* 2. Aluno */}
+                <td style={S.td}>{v.nomeAluno}</td>
+
+                {/* 3. Plano */}
+                <td style={{ ...S.td, color: "#e8b44c" }}>{v.nomePlano || "—"}</td>
+
+                {/* 4. Valor */}
+                <td style={S.td}>
+                    R$ {v.valor ? v.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : "0,00"}
+                </td>
+
+                {/* 5. Status */}
+                <td style={S.td}>
+                    <span style={S.badge(v.statusLiberacao === 'approved' ? 'ATIVADO' : 'DESATIVADO')}>
+                        {v.statusLiberacao === 'approved' ? 'APROVADO' : v.statusLiberacao}
+                    </span>
+                </td>
+
+                {/* 6. ID Mercado Pago */}
+                <td style={{ ...S.td, fontSize: 10, color: '#666' }}>
+                    {v.mpPaymentId || "—"}
+                </td>
+
+                {/* 7. Método */}
+                <td style={S.td}>
+                    {v.formaPagamento === 'account_money' ? 'Saldo MP' : 
+                     v.formaPagamento === 'pix' ? 'PIX' : 
+                     v.formaPagamento || "—"}
+                </td>
+            </tr>
+        ))}
+    </tbody>
+</table>
+                    </>
+                )}  
             </div>
 
             {/* ── modal confirmação status ─────────────────────────────────── */}

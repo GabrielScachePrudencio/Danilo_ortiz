@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { use, useEffect, useState } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 
 /* ─── estilos locais ─────────────────────────────────────────────────── */
 const S = {
@@ -304,11 +304,7 @@ const S = {
   }),
 };
 
-const METODOS = [
-  { id: "pix",    nome: "Pix",           icone: "⚡", desc: "Aprovação imediata" },
-  { id: "boleto", nome: "Boleto",         icone: "📄", desc: "Vence em 3 dias úteis" },
-  { id: "cartao", nome: "Cartão",         icone: "💳", desc: "Crédito ou débito" },
-];
+
 
 function formatarValor(valor) {
   if (!valor && valor !== 0) return "—";
@@ -337,6 +333,11 @@ function InfoBox({ label, value, big }) {
 export default function TelaPagamento() {
   const navigate = useNavigate();
   const { idplano } = useParams();
+  const [searchParams] = useSearchParams();
+
+  const parcelas = Number(searchParams.get("parcelas"));
+  
+ 
 
   const [idAluno, setIdAluno] = useState();
   const [aluno, setAluno] = useState(null);
@@ -347,6 +348,39 @@ export default function TelaPagamento() {
   const [loading, setLoading]         = useState(false);
   const [erro, setErro]               = useState(null);
   const [toast, setToast]             = useState(null);
+
+const agora = new Date();
+
+const parcelaPendente = MensalidadeParcelasDTOS?.parcelas
+  ?.filter(p => p.status !== "FINALIZADO")
+  ?.sort((a, b) => new Date(a.dataVencimento) - new Date(b.dataVencimento))[0];
+
+let dentroDoPeriodo = false;
+
+if (parcelaPendente) {
+  const dataVencimento = new Date(parcelaPendente.dataVencimento);
+
+  const umMesAntes = new Date(dataVencimento);
+  umMesAntes.setMonth(umMesAntes.getMonth() - 1);
+
+  dentroDoPeriodo = agora >= umMesAntes && agora <= dataVencimento;
+}
+
+const jaTemPlanoAtivo =
+  aluno?.statusAssinatura === "ATIVADO" &&
+  new Date(MensalidadeParcelasDTOS?.dataFim) > agora &&
+  !!parcelaPendente &&
+  dentroDoPeriodo;
+
+
+const podePagarParcela =
+  !!parcelaPendente && dentroDoPeriodo;
+
+
+const valorTotal =
+  parcelas === 1
+    ? plano?.valor * plano?.duracaomeses // à vista
+    : plano?.valor; // mensal
 
   //const url = "http://192.168.15.19:8080/planos";
   //const urlalunos = "http://192.168.15.19:8080/alunos";
@@ -461,7 +495,11 @@ export default function TelaPagamento() {
           //mpPaymentId: "",
           formaPagamento: metodoPag,
           codigoVenda: "",
-          valorPago: plano.valor,
+//          valorPago: plano.valor,
+          valorPago: valorTotal,
+
+          parcelas: parcelas,
+
           pago: false,
           statusPagamento: "PENDENTE"
           }),
@@ -594,6 +632,38 @@ export default function TelaPagamento() {
   
   */
 
+if (aluno && jaTemPlanoAtivo && aluno?.planoAtual !== null) {
+  return (
+    <div style={S.page}>
+      <div style={S.bgGlow} />
+
+      <div style={{
+        ...S.content,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh"
+      }}>
+        <div style={S.gateCard}>
+          <p style={S.eyebrow}>Plano ativo</p>
+          <h2 style={S.gateTitulo}>Você já possui um plano</h2>
+
+          <p style={S.gateDesc}>
+            Seu plano atual ainda está ativo. Não é necessário realizar outro pagamento agora.
+          </p>
+
+          <button
+            style={S.btnPrimary}
+            onClick={() => navigate(`/`)}
+          >
+            Ir para minha área
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
   return (
     <div style={S.page}>
       <div style={S.bgGlow} />
@@ -624,7 +694,7 @@ export default function TelaPagamento() {
                   <p style={S.sectionLabel}>Resumo do Plano</p>
                   <div style={S.grid}>
                     <InfoBox label="Plano" value={plano?.nome} />
-                    <InfoBox label="Valor" value={formatarValor(plano?.valor)} big />
+                    <InfoBox label="Valor" value={formatarValor(valorTotal)} big />
                     <InfoBox label="Duração" value={plano?.duracaomeses ? `${plano.duracaomeses} meses` : "—"} />
                     <InfoBox label="Usuário" value={emailLogado} />
                   </div>
@@ -641,37 +711,16 @@ export default function TelaPagamento() {
                 </>
               )}
 
-            {/* ── MÉTODO DE PAGAMENTO ── */}
-            <p style={S.sectionLabel}>Método de Pagamento</p>
-            <div style={S.metodosGrid}>
-              {METODOS.map((m) => (
-                <div
-                  key={m.id}
-                  style={S.metodoCard(metodoPag === m.id)}
-                  onClick={() => setMetodoPag(m.id)}
-                  onMouseEnter={(e) => { if (metodoPag !== m.id) e.currentTarget.style.borderColor = "rgba(196,160,100,0.3)"; }}
-                  onMouseLeave={(e) => { if (metodoPag !== m.id) e.currentTarget.style.borderColor = "rgba(196,160,100,0.12)"; }}
-                >
-                  {metodoPag === m.id && <div style={S.metodoDot} />}
-                  <span style={S.metodoIcone}>{m.icone}</span>
-                  <span style={S.metodoNome}>{m.nome}</span>
-                  <span style={S.metodoDesc}>{m.desc}</span>
-                </div>
-              ))}
-            </div>
-
             {/* ── TOTAL ── */}
              
             <div style={S.totalBox}>
               <div>
                 <p style={S.totalLabel}>Total a pagar</p>
-                <p style={{ fontSize: "0.65rem", color: "rgba(196,160,100,0.35)", letterSpacing: "0.1em", marginTop: 4, textTransform: "uppercase" }}>
-                  via {METODOS.find((m) => m.id === metodoPag)?.nome}
-                </p>
+                
               </div>
               {
                 aluno?.planoAtual?.id === 0 || !MensalidadeParcelasDTOS?.parcelas ? (
-                  <p style={S.totalValor}>{formatarValor(plano?.valor)}</p>
+                  <p style={S.totalValor}>{formatarValor(valorTotal)}</p>
                 ): (
                   <p style={S.totalValor}>{formatarValor(MensalidadeParcelasDTOS.parcelas[0].valor)}</p>
                 )
@@ -680,19 +729,28 @@ export default function TelaPagamento() {
 
             {/* ── AÇÕES ── */}
         <button
-          style={{ ...S.btnPrimary, opacity: loading ? 0.65 : 1 }}
-          onClick={
-            aluno?.planoAtual?.id === 0 || !MensalidadeParcelasDTOS?.parcelas
-              ? confirmarPagamento
-              : confirmarPagamentoParcela
-          }
-          disabled={loading}
-          onMouseEnter={(e) => { if (!loading) { e.target.style.background = "transparent"; e.target.style.color = "#c4a064"; } }}
-          onMouseLeave={(e) => { e.target.style.background = "#c4a064"; e.target.style.color = "#0a0a0a"; }}
-        >
+            style={{ 
+              ...S.btnPrimary, 
+              opacity: loading || (!podePagarParcela && MensalidadeParcelasDTOS?.parcelas) ? 0.4 : 1,
+              cursor: (!podePagarParcela && MensalidadeParcelasDTOS?.parcelas) ? "not-allowed" : "pointer"
+            }}
+            onClick={() => {
+              // 👉 bloqueia tentativa manual
+              if (!podePagarParcela && MensalidadeParcelasDTOS?.parcelas) {
+                mostrarToast("Você ainda não pode pagar essa parcela.", false);
+                return;
+              }
+
+              aluno?.planoAtual?.id === 0 || !MensalidadeParcelasDTOS?.parcelas
+                ? confirmarPagamento()
+                : confirmarPagamentoParcela();
+            }}  
+            disabled={loading || (!podePagarParcela && MensalidadeParcelasDTOS?.parcelas)}
+          >
+
           {loading ? "Processando..." : (
             aluno?.planoAtual?.id === 0 || !MensalidadeParcelasDTOS?.parcelas 
-              ? `Confirmar Assinatura — ${formatarValor(plano?.valor)}`
+              ? `Confirmar Assinatura — ${formatarValor(valorTotal)}`
               : `Pagar Parcela — ${formatarValor(MensalidadeParcelasDTOS.parcelas[0]?.valor)}`
           )}
         </button>

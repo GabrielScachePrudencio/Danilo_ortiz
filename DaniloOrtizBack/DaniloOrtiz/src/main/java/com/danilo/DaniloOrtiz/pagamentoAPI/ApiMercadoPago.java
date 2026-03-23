@@ -17,9 +17,12 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class ApiMercadoPago {
     private static ConfiguracaoService configuracaoServiceStatic;
+
+    public ApiMercadoPago(ConfiguracaoService configuracaoService) {
+        ApiMercadoPago.configuracaoServiceStatic = configuracaoService;
+    }
 
     private static final String ACCESS_TOKEN = System.getenv("MP_ACCESS_TOKEN") != null
             ? System.getenv("MP_ACCESS_TOKEN")
@@ -31,54 +34,46 @@ public class ApiMercadoPago {
     }
 
     public static Preference gerarPagamento(PagamentoCompletoDTO pagamentoCompletoDTO, Long idPagamentoInterno) {
-//        MercadoPagoConfig.setAccessToken(ACCESS_TOKEN);
+        if (configuracaoServiceStatic == null) {
+            throw new RuntimeException("ConfiguracaoService NÃO foi injetado (static null)");
+        }
 
-        //ver se ele esta pegando o token correto e se ta funcioando
         MercadoPagoConfig.setAccessToken(
                 configuracaoServiceStatic.getConfiguracao()
-                        .get()
+                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
                         .getMPACCESSTOKEN()
         );
 
         PreferenceClient cliente = new PreferenceClient();
 
         PreferenceItemRequest item = PreferenceItemRequest.builder()
-            .title(pagamentoCompletoDTO.getNomePlano())
+                .title(pagamentoCompletoDTO.getNomePlano())
                 .quantity(1)
                 .unitPrice(pagamentoCompletoDTO.getValor())
                 .currencyId("BRL")
                 .build();
 
-//        PreferenceBackUrlsRequest backUrlsRequest = PreferenceBackUrlsRequest.builder()
-//                .success("http://201.95.94.106:3000/home/telapagamento/correto")
-//                .failure("http://201.95.94.106:3000/home/telapagamento/erro")
-//                .pending("http://201.95.94.106:3000/home/telapagamento/pendente")
-//                .build();
-
-        //rodar ngrok na porta 3000 ou seja o front
-        //VERIFICAR SE O IP MUDOU AGORA 201.95.93.192
         PreferenceBackUrlsRequest backUrlsRequest = PreferenceBackUrlsRequest.builder()
-                .success("https://0368-201-95-93-192.ngrok-free.app/home/telapagamento/correto")
-                .failure("https://0368-201-95-93-192.ngrok-free.app/home/telapagamento/erro")
-                .pending("https://0368-201-95-93-192.ngrok-free.app/home/telapagamento/pendente")
+                //rodar ngrok http 3000
+                // colocar o novo caminho
+                .success("https://a7ef-201-95-93-179.ngrok-free.app/home/telapagamento/correto")
+                .failure("https://a7ef-201-95-93-179.ngrok-free.app/home/telapagamento/erro")
+                .pending("https://a7ef-201-95-93-179.ngrok-free.app/home/telapagamento/pendente")
                 .build();
 
         PreferenceRequest request = PreferenceRequest.builder()
                 .items(List.of(item))
                 .backUrls(backUrlsRequest)
                 .externalReference(idPagamentoInterno.toString())
-                // grok .notificationUrl("https://7057-201-95-94-106.ngrok-free.app/v1/pagamentos/notifications")
-                .notificationUrl("http://201.95.93.192:3001/v1/pagamentos/notifications")
+
+                //aqui ver se o ip foi trocado pq ele vai pelo ip
+                .notificationUrl("http://201.95.93.179:3001/v1/pagamentos/notifications")
                 .autoReturn("approved")
                 .build();
 
         try {
             Preference preference = cliente.create(request);
-
-            System.out.println("Link de pagamento gerado: " + preference.getInitPoint());
-
             return preference;
-
         } catch (MPApiException e) {
             System.err.println("Erro API Mercado Pago: " + e.getApiResponse().getContent());
             return null;
@@ -88,13 +83,19 @@ public class ApiMercadoPago {
         }
     }
 
-    public static String consultarPagamento(Long paymentId) {
+
+    public static Payment consultarPagamento(Long paymentId) {
+        if (configuracaoServiceStatic == null) {
+            throw new RuntimeException("ConfiguracaoService NÃO foi injetado (static null)");
+        }
+
 //        MercadoPagoConfig.setAccessToken(ACCESS_TOKEN);
         MercadoPagoConfig.setAccessToken(
                 configuracaoServiceStatic.getConfiguracao()
-                        .get()
+                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
                         .getMPACCESSTOKEN()
         );
+
         PaymentClient client = new PaymentClient();
 
         try {
@@ -107,19 +108,23 @@ public class ApiMercadoPago {
             System.out.println("Valor: " + payment.getTransactionAmount());
             System.out.println("---------------------------");
 
-            return payment.getStatus();
+            return payment;
 
         } catch (MPException | MPApiException e) {
             System.err.println("Erro ao consultar pagamento: " + e.getMessage());
-            return "ERRO";
+            return null;
         }
     }
 
     public static Payment getPaymentDetails(Long paymentId) {
+        if (configuracaoServiceStatic == null) {
+            throw new RuntimeException("ConfiguracaoService NÃO foi injetado (static null)");
+        }
+
         //MercadoPagoConfig.setAccessToken(ACCESS_TOKEN);
         MercadoPagoConfig.setAccessToken(
                 configuracaoServiceStatic.getConfiguracao()
-                        .get()
+                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
                         .getMPACCESSTOKEN()
         );
 
