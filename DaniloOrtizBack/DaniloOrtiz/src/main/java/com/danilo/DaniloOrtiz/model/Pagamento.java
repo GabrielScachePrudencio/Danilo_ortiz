@@ -53,5 +53,6 @@ public class Pagamento {
     private String status_mercadopago;
     private String metodo_pagamento_mercadopago;
 
-
+    @Column(name = "envioEmailConfirmando")
+    private int envioEmailConfirmando;
 }

@@ -749,6 +749,7 @@ export default function Conta() {
   // modal de parcela
   const [parcelaSelecionada, setParcelaSelecionada]           = useState(null);
 
+/*
   const url =
     window.location.hostname === "localhost" || window.location.hostname === "192.168.15.19"
       ? "http://192.168.15.19:3001/alunos"
@@ -758,7 +759,19 @@ export default function Conta() {
     window.location.hostname === "localhost" || window.location.hostname === "192.168.15.19"
       ? "http://192.168.15.19:3001/mensalidades"
       : "http://201.95.94.106:3001/mensalidades";
+*/
+const isRailway = window.location.hostname.includes("railway.app");
 
+
+// fallback seguro (NUNCA gera undefined/...)
+//const API = isRailway   ? "https://backend-production-af1ab.up.railway.app"   : (process.env.REACT_APP_API_URL || "http://localhost:3001");
+  const API = isRailway   ? "http://localhost:3001"  : (process.env.REACT_APP_API_URL || "http://localhost:3001");
+
+  
+  
+  const url = API+"/alunos";
+  const urlMensalidade = API+"/mensalidades";
+  
   useEffect(() => {
     setEmailLogado(localStorage.getItem("email"));
     pegarAlunoPorId();

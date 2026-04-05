@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 // ─── IMAGENS via Unsplash ───────────────────────────────────────────────────
 const IMG_TRAINER2 = "https://images.unsplash.com/photo-1605296867304-46d5465a13f1?w=700&q=80&fit=crop";
-
+const isRailway = window.location.hostname.includes("railway.app");
 const DANILO_WHATSAPP = "5516996339294";
 const EXERCICIOS = [
   {
@@ -510,24 +510,50 @@ export default function Home() {
   // modal de parcelas
   const [modalPlano, setModalPlano]   = useState(null); // plano selecionado ou null
 
+  /*
   const url =
-    window.location.hostname === "localhost" || window.location.hostname === "192.168.15.19"
-      ? "http://192.168.15.19:3001/planos"
-      : "http://201.95.94.106:3001/planos";
-
+  window.location.hostname === "localhost" || window.location.hostname === "192.168.15.19"
+  ? "http://192.168.15.19:3001/planos"
+  : "http://201.95.94.106:3001/planos";
+  
   const urlAlunos =
-    window.location.hostname === "localhost" || window.location.hostname === "192.168.15.19"
-      ? "http://192.168.15.19:3001/alunos"
-      : "http://201.95.94.106:3001/alunos";
+  window.location.hostname === "localhost" || window.location.hostname === "192.168.15.19"
+  ? "http://192.168.15.19:3001/alunos"
+  : "http://201.95.94.106:3001/alunos";
+  
+  
+  const urlMensalidade =
+  window.location.hostname === "localhost" || window.location.hostname === "192.168.15.19"
+  ? "http://192.168.15.19:3001/mensalidades"
+  : "http://201.95.94.106:3001/mensalidades";
+  */
+  
+// 🔥 DEBUG API URL
+const RAW_API = process.env.REACT_APP_API_URL;
 
+console.log("==== DEBUG API CONFIG ====");
+console.log("process.env.REACT_APP_API_URL:", RAW_API);
+console.log("window.location.hostname:", window.location.hostname);
 
-      const urlMensalidade =
-    window.location.hostname === "localhost" || window.location.hostname === "192.168.15.19"
-      ? "http://192.168.15.19:3001/mensalidades"
-      : "http://201.95.94.106:3001/mensalidades";
+// fallback seguro (NUNCA gera undefined/...)
+//const API = isRailway   ? "https://backend-production-af1ab.up.railway.app"  : (process.env.REACT_APP_API_URL || "http://localhost:3001");
+const API = isRailway   ? "http://localhost:3001"  : (process.env.REACT_APP_API_URL || "http://localhost:3001");
 
+console.log("API FINAL USADA:", API);
+if (!RAW_API) {
+  console.warn("⚠️ ENV NÃO CARREGADA! usando fallback");
+}
+// monta URLs finais
+const url = `${API}/planos`;
+const urlAlunos = `${API}/alunos`;
+const urlMensalidade = `${API}/mensalidades`;
 
-  const syncLogin = () => {
+console.log("URL PLANOS:", url);
+console.log("URL ALUNOS:", urlAlunos);
+console.log("URL MENSALIDADE:", urlMensalidade);
+console.log("==== FIM DEBUG API ====");
+
+const syncLogin = () => {
     setEmailLogado(localStorage.getItem("email"));
     setIdLogado(localStorage.getItem("id"));
   };
@@ -542,14 +568,23 @@ export default function Home() {
       obterAluno(id);
     } 
 
-
     fetch(url)
-      .then((r) => r.json())
-      .then((d) => { setPlanos(d); setCarregando(false); })
-      .catch(() => { setErro("Erro ao carregar planos."); setCarregando(false); });
-
-    }, []);
-
+      .then((r) => {
+        console.log("STATUS /planos:", r.status);
+        console.log("URL CHAMADA REAL:", r.url);
+        return r.json();
+      })
+      .then((d) => {
+        console.log("DADOS RECEBIDOS:", d);
+        setPlanos(d);
+        setCarregando(false);
+      })
+      .catch((err) => {
+        console.error("ERRO FETCH PLANOS:", err);
+        setErro("Erro ao carregar planos.");
+        setCarregando(false);
+      });
+    }, [])
 
     async function confirmarTrocaStatusSisrun() {
       try {

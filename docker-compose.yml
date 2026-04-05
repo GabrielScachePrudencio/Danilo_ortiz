@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+
+  mysql:
+    image: mysql:8
+    container_name: mysql-container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dbdaniloortiz
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  backend:
+    build: ./DaniloOrtizBack/DaniloOrtiz
+    container_name: backend-container
+    depends_on:
+      - mysql
+    ports:
+      - "3001:3001"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/dbdaniloortiz
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+
+  frontend:
+    build: ./danilo-ortiz
+    container_name: frontend-container
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+volumes:
+  mysql_data:

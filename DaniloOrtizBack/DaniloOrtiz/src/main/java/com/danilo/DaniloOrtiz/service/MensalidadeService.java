@@ -1,13 +1,12 @@
 package com.danilo.DaniloOrtiz.service;
 
 
+import com.danilo.DaniloOrtiz.Emails.EmailService;
 import com.danilo.DaniloOrtiz.model.*;
-import com.danilo.DaniloOrtiz.model.dto.MensalidadeComParcelasDTO;
-import com.danilo.DaniloOrtiz.model.dto.PagamentoCompletoDTO;
-import com.danilo.DaniloOrtiz.model.dto.ParcelaDTO;
-import com.danilo.DaniloOrtiz.model.dto.ParcelaDetalheDTO;
+import com.danilo.DaniloOrtiz.model.dto.*;
 import com.danilo.DaniloOrtiz.model.mapper.MensalidadeComParcelasMapper;
 import com.danilo.DaniloOrtiz.pagamentoAPI.ApiMercadoPago;
+import com.danilo.DaniloOrtiz.pdfs.ComprovanteService;
 import com.danilo.DaniloOrtiz.repository.MensalidadeRepository;
 import com.danilo.DaniloOrtiz.repository.Mensalidades_parcelasRepository;
 import com.mercadopago.resources.payment.Payment;
@@ -27,7 +26,8 @@ public class MensalidadeService {
     private final PagamentoService pagamentoService;
     private final AlunoService alunoService;
     private final PlanoService planoService;
-
+    private final EmailService emailService;
+    private final ComprovanteService comprovanteService;
 
     public Mensalidade add(Mensalidade mensalidade){
         Aluno aluno = alunoService.findById(mensalidade.getAluno().getId());
@@ -181,6 +181,10 @@ public class MensalidadeService {
     public void confirmarPagamentoDoWebHook(Long idpagamentoInterno, String mpId, String statusMp, String pagamentoMp){
         Pagamento pagamento = pagamentoService.findById(idpagamentoInterno);
 
+        if (pagamento.getEnvioEmailConfirmando() == 1) {
+            return; // já enviou email, ignora
+        }
+
         if(pagamento != null && !"FINALIZADO".equals(pagamento.getStatusPagamento())){
             // 2. Atualiza os dados do Mercado Pago na sua tabela
             pagamento.setId_mercadopago(mpId);
@@ -188,6 +192,9 @@ public class MensalidadeService {
             pagamento.setMetodo_pagamento_mercadopago(pagamentoMp);
             pagamento.setStatusPagamento("FINALIZADO"); // ou o status que veio do MP
             pagamento.setPago(true);
+
+            pagamento.setEnvioEmailConfirmando(1);
+
             pagamentoService.save(pagamento); // Salva a alteração
 
             Mensalidades_parcelas parcela = pagamento.getMensalidades_parcelas();
@@ -208,6 +215,29 @@ public class MensalidadeService {
             alunoService.add(aluno);
 
             System.out.println("Pagamento " + idpagamentoInterno + " confirmado com sucesso!");
+
+            //envia o email de confirmação
+
+            byte[] pdf = comprovanteService.gerarComprovante(
+                    aluno.getNome(),
+                    pagamento.getPlano().getNome(),
+                    pagamento.getValorPago().toString(),
+                    pagamento.getId().toString()
+            );
+
+            String html = "<h2>Pagamento confirmado ✔</h2>" +
+                    "<p>Seu pagamento foi aprovado com sucesso.</p>";
+
+            emailService.enviarComAnexo(
+                    aluno.getEmail(),
+                    html,
+                    pdf
+            );
+
+            // ✅ SÓ marca depois que enviou
+            pagamento.setEnvioEmailConfirmando(1);
+            pagamentoService.save(pagamento);
+
         }
 
     }

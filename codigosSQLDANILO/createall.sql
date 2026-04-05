@@ -9,8 +9,11 @@ CREATE TABLE configuracoes (
     sobre_voce TEXT,
     texto_informativo TEXT,
     whatsapp_suporte VARCHAR(20),
-    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    MP_ACCESS_TOKEN varchar(256)
 );
+
+
 
 -- 2. TABELA DE PLANOS
 CREATE TABLE planos (
@@ -31,7 +34,7 @@ CREATE TABLE alunos (
     tipo_usuario VARCHAR(50) DEFAULT 'ALUNO', -- 'ALUNO' ou 'ADMIN'
     criou_conta_sisrun BOOLEAN DEFAULT FALSE,
     plano_atual_id INTEGER REFERENCES planos(id),
-    status_assinatura VARCHAR(50) DEFAULT 'INATIVO', -- 'ATIVO', 'INATIVO', 'PENDENTE'
+    status_assinatura VARCHAR(50) DEFAULT 'DESATIVADO', -- 'ATIVO', 'INATIVO', 'PENDENTE'
     data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CPF varchar(10),
     CNPJ varchar(10),
@@ -64,9 +67,7 @@ CREATE TABLE pagamentos (
 );
 
 
-alter table pagamentos add column id_mercadopago varchar(30);
-alter table pagamentos add column status_mercadopago varchar(30);
-alter table pagamentos add column metodo_pagamento_mercadopago varchar(30);
+alter table pagamentos add column a varchar(30);
 
 
 -- 5. TABELA DE MENSALIDADES (Controle de acesso)

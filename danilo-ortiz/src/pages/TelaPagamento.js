@@ -388,7 +388,8 @@ const valorTotal =
   //const urlpagamentos = "http://192.168.15.19:8080/pagamentos";
   //const urlabrirmensalidadespagamento = "http://192.168.15.19:8080/mensalidades/abrirPagamento";
   
-  const url =
+  /**
+    const url =
     window.location.hostname === "localhost" ||
     window.location.hostname === "192.168.15.19"
       ? "http://192.168.15.19:3001/planos"
@@ -413,7 +414,25 @@ const valorTotal =
     window.location.hostname === "192.168.15.19"
       ? "http://192.168.15.19:3001/mensalidades/abrirPagamento"
       : "http://201.95.94.106:3001/mensalidades/abrirPagamento";
+   */
+// Pega a URL do Railway definida na variável REACT_APP_API_URL.
+// Se não existir (no seu PC), usa o IP do seu Wi-Fi.
 
+const isRailway = window.location.hostname.includes("railway.app");
+
+
+// fallback seguro (NUNCA gera undefined/...)
+//const API = isRailway   ? "https://backend-production-af1ab.up.railway.app"  : (process.env.REACT_APP_API_URL || "http://localhost:3001");
+const API = isRailway   ? "http://localhost:3001"  : (process.env.REACT_APP_API_URL || "http://localhost:3001");
+
+  
+const BASE_URL = API;
+
+const url = `${BASE_URL}/planos`;
+const urlalunos = `${BASE_URL}/alunos`;
+const urlmensalidade = `${BASE_URL}/mensalidades`;
+const urlpagamentos = `${BASE_URL}/pagamentos`;
+const urlabrirmensalidadespagamento = `${BASE_URL}/mensalidades/abrirPagamento`;
 
   useEffect(() => {
     setEmailLogado(localStorage.getItem("email"));

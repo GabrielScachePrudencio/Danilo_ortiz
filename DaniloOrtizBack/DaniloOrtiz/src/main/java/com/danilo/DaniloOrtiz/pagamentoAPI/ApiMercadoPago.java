@@ -56,9 +56,9 @@ public class ApiMercadoPago {
         PreferenceBackUrlsRequest backUrlsRequest = PreferenceBackUrlsRequest.builder()
                 //rodar ngrok http 3000
                 // colocar o novo caminho
-                .success("https://a7ef-201-95-93-179.ngrok-free.app/home/telapagamento/correto")
-                .failure("https://a7ef-201-95-93-179.ngrok-free.app/home/telapagamento/erro")
-                .pending("https://a7ef-201-95-93-179.ngrok-free.app/home/telapagamento/pendente")
+                .success("https://0630-177-118-190-232.ngrok-free.app/home/telapagamento/correto")
+                .failure("https://0630-177-118-190-232.ngrok-free.app/home/telapagamento/erro")
+                .pending("https://0630-177-118-190-232.ngrok-free.app/home/telapagamento/pendente")
                 .build();
 
         PreferenceRequest request = PreferenceRequest.builder()
@@ -67,7 +67,7 @@ public class ApiMercadoPago {
                 .externalReference(idPagamentoInterno.toString())
 
                 //aqui ver se o ip foi trocado pq ele vai pelo ip
-                .notificationUrl("http://201.95.93.179:3001/v1/pagamentos/notifications")
+                .notificationUrl("http://177.118.190.232:3001/v1/pagamentos/notifications")
                 .autoReturn("approved")
                 .build();
 

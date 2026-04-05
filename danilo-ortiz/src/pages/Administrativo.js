@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const BASE_URL =
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "192.168.15.19"
-        ? "http://192.168.15.19:3001"
-        : "http://201.95.94.106:3001";
+//const BASE_URL = window.location.hostname === "localhost" ||     window.location.hostname === "192.168.15.19"         ? "http://192.168.15.19:3001"        : "http://201.95.94.106:3001";
 
+
+const isRailway = window.location.hostname.includes("railway.app");
+
+
+// fallback seguro (NUNCA gera undefined/...)
+//const API = isRailway   ? "https://backend-production-af1ab.up.railway.app"  : (process.env.REACT_APP_API_URL || "http://localhost:3001");
+  const API = isRailway   ? "http://localhost:3001"  : (process.env.REACT_APP_API_URL || "http://localhost:3001");
+
+  const BASE_URL = API;
 
 // ─── estilos em objeto para não depender de CSS externo ─────────────────────
 const S = {
