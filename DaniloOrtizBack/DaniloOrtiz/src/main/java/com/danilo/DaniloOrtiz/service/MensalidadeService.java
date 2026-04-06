@@ -15,8 +15,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +32,7 @@ public class MensalidadeService {
     private final PlanoService planoService;
     private final EmailService emailService;
     private final ComprovanteService comprovanteService;
+    private final MensalidadeCanceladaService mensalidadeCanceladaService;
 
     public Mensalidade add(Mensalidade mensalidade){
         Aluno aluno = alunoService.findById(mensalidade.getAluno().getId());
@@ -50,6 +55,88 @@ public class MensalidadeService {
 
 
 
+    @Transactional
+    public boolean cancelarMensalidade(Long idAluno, Long idQuemCancelou) {
+        Aluno aluno = alunoService.findById(idAluno);
+        if (aluno == null) return false;
+
+        Mensalidade mensalidade = mensalidadeRepository
+                .findTopByAlunoOrderByDataInicioDesc(aluno);
+        if (mensalidade == null) return false;
+
+        List<Mensalidades_parcelas> todasParcelas =
+                mensalidadesParcelasService.findAllByMensalidade(mensalidade);
+
+        // ── parcelas pagas e canceladas ──────────────────────────────────────
+        List<Mensalidades_parcelas> pagas = todasParcelas.stream()
+                .filter(p -> "FINALIZADO".equals(p.getStatus()))
+                .toList();
+
+        List<Mensalidades_parcelas> aCancelar = todasParcelas.stream()
+                .filter(p -> !"FINALIZADO".equals(p.getStatus()))
+                .toList();
+
+        // ── data fim efetiva = último vencimento pago ────────────────────────
+        LocalDate dataFimEfetiva = pagas.stream()
+                .map(p -> p.getDataVencimento().toLocalDate())
+                .max(Comparator.naturalOrder())
+                .orElse(mensalidade.getDataInicio()); // se não pagou nada, usa início
+
+        // ── snapshot para auditoria ──────────────────────────────────────────
+        String idsPagas = pagas.stream()
+                .map(p -> String.valueOf(p.getId()))
+                .collect(Collectors.joining(","));
+
+        String idsCanceladas = aCancelar.stream()
+                .map(p -> String.valueOf(p.getId()))
+                .collect(Collectors.joining(","));
+
+        Aluno quemCancelou = alunoService.findById(idQuemCancelou);
+
+        MensalidadeCancelada registro = MensalidadeCancelada.builder()
+                .alunoId(aluno.getId())
+                .nomeAluno(aluno.getNome())
+                .emailAluno(aluno.getEmail())
+                .planoId(mensalidade.getPlano() != null ? mensalidade.getPlano().getId() : null)
+                .nomePlano(mensalidade.getPlano() != null ? mensalidade.getPlano().getNome() : "—")
+                .mensalidadeId(mensalidade.getId())
+                .dataInicio(mensalidade.getDataInicio())
+                .dataFim(mensalidade.getDataFim())
+                .dataFimEfetiva(dataFimEfetiva)
+                .valorMensalidade(mensalidade.getValorMensalidade())
+                .valorParcela(mensalidade.getValorParcela())
+                .totalParcelasContratadas(todasParcelas.size())
+                .parcelasPagas(pagas.size())
+                .parcelasRestantesNoCancelamento(aCancelar.size())
+                .parcelasPagasIds(idsPagas)
+                .parcelasCanceladasIds(idsCanceladas)
+                .dataCancelamento(LocalDateTime.now())
+                .canceladoPorAlunoId(idQuemCancelou)
+                .canceladoPorNome(quemCancelou != null ? quemCancelou.getNome() : "sistema")
+                .motivoCancelamento("MANUAL")
+                .build();
+
+        mensalidadeCanceladaService.salvar(registro);
+
+        // ── cancela as parcelas pendentes ────────────────────────────────────
+        for (Mensalidades_parcelas p : aCancelar) {
+            p.setStatus("CANCELADO");
+            mensalidadesParcelasService.save(p);
+        }
+
+        // ── atualiza mensalidade ─────────────────────────────────────────────
+        mensalidade.setStatusLiberacao("CANCELADO");
+        mensalidade.setDataFim(dataFimEfetiva);   // ajusta para o último mês pago
+        mensalidade.setPlano(null);               // plano null na mensalidade
+        save(mensalidade);
+
+        // ── atualiza aluno ───────────────────────────────────────────────────
+        aluno.setStatusAssinatura("DESATIVADO");
+        aluno.setPlanoAtual(null);                // plano null no aluno
+        alunoService.add(aluno);
+
+        return true;
+    }
 
     public MensalidadeComParcelasDTO mensalidadeCompletaPorIdAluno(Long id){
         Aluno aluno = alunoService.findById(id);

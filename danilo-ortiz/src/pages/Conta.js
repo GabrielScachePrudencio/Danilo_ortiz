@@ -785,6 +785,30 @@ const isRailway = window.location.hostname.includes("railway.app");
       else setErro("Aluno não encontrado no banco.");
     } catch { setErro("Erro de conexão com o servidor."); }
   }
+  async function cancelarPlano() {
+  const confirmou = window.confirm(
+    "Tem certeza que deseja cancelar seu plano? Seu acesso será desativado imediatamente."
+  );
+  if (!confirmou) return;
+
+  try {
+    const res = await fetch(
+      `${urlMensalidade}/cancelar-mensalidade/${idAluno}?idQuemCancelou=${idAluno}`,
+      { method: "POST" }
+    );
+
+    if (res.ok) {
+      mostrarToast("Plano cancelado com sucesso.", true);
+      // Recarrega os dados do aluno para refletir o novo status
+      await pegarAlunoPorId();
+      await pegarDadosMensalidadeAlunoPorId();
+    } else {
+      mostrarToast("Erro ao cancelar plano.", false);
+    }
+  } catch {
+    mostrarToast("Erro de conexão ao cancelar.", false);
+  }
+}
 
   async function pegarDadosMensalidadeAlunoPorId() {
     try {
@@ -970,6 +994,40 @@ const isRailway = window.location.hostname.includes("railway.app");
               )}
             </div>
           )}
+
+        {/* Botão cancelar — só aparece se o plano estiver ativo */}
+{MensalidadeParcelasDTOS?.statusLiberacao === "ATIVADO" && (
+  <button
+    onClick={cancelarPlano}
+    style={{
+      alignSelf: "flex-start",
+      marginTop: 8,
+      fontFamily: "'Barlow', sans-serif",
+      fontWeight: 600,
+      fontSize: "0.7rem",
+      letterSpacing: "0.15em",
+      textTransform: "uppercase",
+      padding: "9px 18px",
+      background: "transparent",
+      color: "#e05555",
+      border: "1px solid rgba(224,85,85,0.35)",
+      cursor: "pointer",
+      transition: "all 0.2s",
+    }}
+    onMouseEnter={(e) => {
+      e.target.style.background = "rgba(224,85,85,0.08)";
+      e.target.style.borderColor = "rgba(224,85,85,0.7)";
+    }}
+    onMouseLeave={(e) => {
+      e.target.style.background = "transparent";
+      e.target.style.borderColor = "rgba(224,85,85,0.35)";
+    }}
+  >
+    Cancelar Plano
+  </button>
+)}
+
+
         </div>
 
         {/* card próxima parcela */}

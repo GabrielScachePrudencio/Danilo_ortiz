@@ -30,6 +30,17 @@ public class MensalidadeController {
         return ResponseEntity.ok(mensalidadeComParcelasDTO);
     }
 
+    @PostMapping("/cancelar-mensalidade/{idAluno}")
+    public ResponseEntity<Boolean> cancelarMensalidade(
+            @PathVariable Long idAluno,
+            @RequestParam Long idQuemCancelou) {
+
+        boolean resultado = mensalidadeService.cancelarMensalidade(idAluno, idQuemCancelou);
+
+        if (!resultado) return ResponseEntity.badRequest().build();
+
+        return ResponseEntity.ok(true);
+    }
 
     // Retorna detalhes da parcela + dados do pagamento interno + consulta MP
     @GetMapping("/parcela/{idParcela}")

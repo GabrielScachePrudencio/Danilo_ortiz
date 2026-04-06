@@ -56,9 +56,9 @@ public class ApiMercadoPago {
         PreferenceBackUrlsRequest backUrlsRequest = PreferenceBackUrlsRequest.builder()
                 //rodar ngrok http 3000
                 // colocar o novo caminho
-                .success("https://0630-177-118-190-232.ngrok-free.app/home/telapagamento/correto")
-                .failure("https://0630-177-118-190-232.ngrok-free.app/home/telapagamento/erro")
-                .pending("https://0630-177-118-190-232.ngrok-free.app/home/telapagamento/pendente")
+                .success("https://2847-177-118-190-232.ngrok-free.app/home/telapagamento/correto")
+                .failure("https://2847-177-118-190-232.ngrok-free.app/home/telapagamento/erro")
+                .pending("https://2847-177-118-190-232.ngrok-free.app/home/telapagamento/pendente")
                 .build();
 
         PreferenceRequest request = PreferenceRequest.builder()

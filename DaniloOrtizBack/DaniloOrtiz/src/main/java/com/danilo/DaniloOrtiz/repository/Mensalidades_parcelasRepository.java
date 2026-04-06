@@ -5,6 +5,7 @@ import com.danilo.DaniloOrtiz.model.Mensalidade;
 import com.danilo.DaniloOrtiz.model.Mensalidades_parcelas;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -17,6 +18,9 @@ public interface Mensalidades_parcelasRepository extends JpaRepository<Mensalida
     );
     Mensalidades_parcelas findById(Long id);
     Mensalidades_parcelas findByMensalidadeAndNumeroParcela(Mensalidade mensalidade, Integer numeroParcela);
+    List<Mensalidades_parcelas> findByStatusAndDataVencimentoBefore(
+            String status, LocalDateTime dataVencimento
+    );
 
 }
 
