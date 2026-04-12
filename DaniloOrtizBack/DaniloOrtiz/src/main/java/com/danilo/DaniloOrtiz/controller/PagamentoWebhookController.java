@@ -1,6 +1,5 @@
 package com.danilo.DaniloOrtiz.controller;
 
-
 import com.danilo.DaniloOrtiz.pagamentoAPI.ApiMercadoPago;
 import com.danilo.DaniloOrtiz.service.MensalidadeService;
 import com.mercadopago.resources.payment.Payment;
@@ -21,7 +20,7 @@ public class PagamentoWebhookController {
     public ResponseEntity<Void> receberNotificacao(
             @RequestParam(value = "topic", required = false) String topic,
             @RequestParam(value = "id", required = false) String id,
-            @RequestBody(required = false) Map<String, Object> body // Use Map para ler o JSON
+            @RequestBody(required = false) Map<String, Object> body
     ) {
         try {
             String resourceId = id;
@@ -38,15 +37,32 @@ public class PagamentoWebhookController {
 
                 Payment payment = ApiMercadoPago.getPaymentDetails(Long.parseLong(resourceId));
 
-
                 if ("approved".equals(payment.getStatus())) {
                     System.out.println("Pagamento Aprovado! Baixando mensalidade...");
+
                     String status = payment.getStatus();
-                    String idInternoStr = payment.getExternalReference();
                     String formaPagamento = payment.getPaymentMethodId().toString();
-                    Long idInternolong = Long.parseLong(idInternoStr);
-                    mensalidadeService.confirmarPagamentoDoWebHook(idInternolong, resourceId, status, formaPagamento);                }
+                    String externalRef = payment.getExternalReference();
+
+                    if (externalRef != null && externalRef.startsWith("parcela:")) {
+                        // ✅ Pagamento transparente (PIX, cartão, boleto)
+                        // externalReference vem como "parcela:123"
+                        Long parcelaId = Long.parseLong(externalRef.replace("parcela:", ""));
+                        System.out.println("Confirmando por parcelaId: " + parcelaId);
+                        mensalidadeService.confirmarPagamentoPorParcelaId(parcelaId, resourceId, status, formaPagamento);
+
+                    } else if (externalRef != null) {
+                        // ✅ Pagamento antigo via Preference (continua funcionando)
+                        // externalReference vem como o ID do Pagamento interno
+                        Long idInterno = Long.parseLong(externalRef);
+                        System.out.println("Confirmando por idInterno: " + idInterno);
+                        mensalidadeService.confirmarPagamentoDoWebHook(idInterno, resourceId, status, formaPagamento);
+
+                    } else {
+                        System.err.println("externalReference nulo — não foi possível confirmar pagamento.");
+                    }
                 }
+            }
 
         } catch (Exception e) {
             System.err.println("Erro ao processar webhook: " + e.getMessage());
@@ -54,6 +70,4 @@ public class PagamentoWebhookController {
 
         return ResponseEntity.ok().build();
     }
-
-
 }

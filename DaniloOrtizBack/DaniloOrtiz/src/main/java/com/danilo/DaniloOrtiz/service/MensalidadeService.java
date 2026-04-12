@@ -9,6 +9,7 @@ import com.danilo.DaniloOrtiz.pagamentoAPI.ApiMercadoPago;
 import com.danilo.DaniloOrtiz.pdfs.ComprovanteService;
 import com.danilo.DaniloOrtiz.repository.MensalidadeRepository;
 import com.danilo.DaniloOrtiz.repository.Mensalidades_parcelasRepository;
+import com.danilo.DaniloOrtiz.repository.PagamentoRepository;
 import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class MensalidadeService {
     private final MensalidadeRepository mensalidadeRepository;
     private final Mensalidades_parcelasService mensalidadesParcelasService;
     private final PagamentoService pagamentoService;
+    private final PagamentoRepository pagamentoRepository;
     private final AlunoService alunoService;
     private final PlanoService planoService;
     private final EmailService emailService;
@@ -52,7 +54,6 @@ public class MensalidadeService {
     public Mensalidade save(Mensalidade m){
         return mensalidadeRepository.save(m);
     }
-
 
 
     @Transactional
@@ -390,7 +391,76 @@ public class MensalidadeService {
         return builder.build();
     }
 
+    @Transactional
+    public void confirmarPagamentoPorParcelaId(Long parcelaId, String mpId, String statusMp, String pagamentoMp) {
+        Mensalidades_parcelas parcela = mensalidadesParcelasService.findById(parcelaId);
 
+        if (parcela == null) {
+            System.err.println("Parcela não encontrada: " + parcelaId);
+            return;
+        }
+
+        // Busca o pagamento — primeiro tenta pelo vínculo da parcela,
+        // se não achar busca pelo mpPaymentId (caso o vínculo ainda não foi salvo)
+        Pagamento pagamento = parcela.getPagamento();
+
+        if (pagamento == null) {
+            System.out.println("Pagamento não vinculado na parcela, buscando por mpPaymentId: " + mpId);
+            pagamento = pagamentoService.findByMpPaymentId(mpId);
+        }
+
+        if (pagamento == null) {
+            System.err.println("Pagamento não encontrado nem por parcela nem por mpPaymentId: " + mpId);
+            return;
+        }
+
+        if (pagamento.getEnvioEmailConfirmando() == 1) {
+            return;
+        }
+
+        if (!"FINALIZADO".equals(pagamento.getStatusPagamento())) {
+            pagamento.setId_mercadopago(mpId);
+            pagamento.setStatus_mercadopago(statusMp);
+            pagamento.setMetodo_pagamento_mercadopago(pagamentoMp);
+            pagamento.setMpPaymentId(mpId);
+            pagamento.setStatusPagamento("FINALIZADO");
+            pagamento.setPago(true);
+            pagamento.setEnvioEmailConfirmando(1);
+
+            // Garante o vínculo com a parcela
+            pagamento.setMensalidades_parcelas(parcela);
+            pagamentoService.save(pagamento);
+
+            parcela.setStatus("FINALIZADO");
+            parcela.setPagamento(pagamento); // garante vínculo
+            mensalidadesParcelasService.save(parcela);
+
+            Mensalidade mensalidade = parcela.getMensalidade();
+            mensalidade.setStatusLiberacao("ATIVADO");
+            save(mensalidade);
+
+            Aluno aluno = alunoService.findById(pagamento.getAluno().getId());
+            if (aluno.getStatusAssinatura().equalsIgnoreCase("DESATIVADO")) {
+                aluno.setStatusAssinatura("ATIVADO");
+            }
+            alunoService.add(aluno);
+
+            System.out.println("Parcela " + parcelaId + " confirmada com sucesso!");
+
+            byte[] pdf = comprovanteService.gerarComprovante(
+                    aluno.getNome(),
+                    pagamento.getPlano().getNome(),
+                    pagamento.getValorPago().toString(),
+                    pagamento.getId().toString()
+            );
+
+            emailService.enviarComAnexo(
+                    aluno.getEmail(),
+                    "<h2>Pagamento confirmado ✔</h2><p>Seu pagamento foi aprovado com sucesso.</p>",
+                    pdf
+            );
+        }
+    }
 
 
 

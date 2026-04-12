@@ -1,10 +1,14 @@
 package com.danilo.DaniloOrtiz.pagamentoAPI;
 
 import com.danilo.DaniloOrtiz.model.dto.PagamentoCompletoDTO;
+import com.danilo.DaniloOrtiz.model.dto.PagamentoTransparenteDTO;
 import com.danilo.DaniloOrtiz.repository.ConfiguracaoRepository;
 import com.danilo.DaniloOrtiz.service.ConfiguracaoService;
 import com.mercadopago.MercadoPagoConfig;
+import com.mercadopago.client.common.IdentificationRequest;
 import com.mercadopago.client.payment.PaymentClient;
+import com.mercadopago.client.payment.PaymentCreateRequest;
+import com.mercadopago.client.payment.PaymentPayerRequest;
 import com.mercadopago.client.preference.*;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
@@ -56,9 +60,9 @@ public class ApiMercadoPago {
         PreferenceBackUrlsRequest backUrlsRequest = PreferenceBackUrlsRequest.builder()
                 //rodar ngrok http 3000
                 // colocar o novo caminho
-                .success("https://2847-177-118-190-232.ngrok-free.app/home/telapagamento/correto")
-                .failure("https://2847-177-118-190-232.ngrok-free.app/home/telapagamento/erro")
-                .pending("https://2847-177-118-190-232.ngrok-free.app/home/telapagamento/pendente")
+                .success("https://360f-200-232-159-68.ngrok-free.app/home/telapagamento/correto")
+                .failure("https://360f-200-232-159-68.ngrok-free.app/home/telapagamento/erro")
+                .pending("https://360f-200-232-159-68.ngrok-free.app/home/telapagamento/pendente")
                 .build();
 
         PreferenceRequest request = PreferenceRequest.builder()
@@ -67,7 +71,7 @@ public class ApiMercadoPago {
                 .externalReference(idPagamentoInterno.toString())
 
                 //aqui ver se o ip foi trocado pq ele vai pelo ip
-                .notificationUrl("http://177.118.190.232:3001/v1/pagamentos/notifications")
+                .notificationUrl("http://200.232.159.68:3001/v1/pagamentos/notifications")
                 .autoReturn("approved")
                 .build();
 
@@ -145,6 +149,100 @@ public class ApiMercadoPago {
         } catch (MPException | MPApiException e) {
             System.err.println("Erro ao consultar pagamento: " + e.getMessage());
             return null;
+        }
+    }
+
+
+    //metodo novo
+    public static Payment criarPagamentoTransparente(
+            PagamentoTransparenteDTO dto,
+            com.danilo.DaniloOrtiz.model.Aluno aluno
+    ) {
+        if (configuracaoServiceStatic == null) {
+            throw new RuntimeException("ConfiguracaoService NÃO foi injetado");
+        }
+
+        MercadoPagoConfig.setAccessToken(
+                configuracaoServiceStatic.getConfiguracao()
+                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
+                        .getMPACCESSTOKEN()
+        );
+
+        PaymentClient client = new PaymentClient();
+
+        // ── Monta o pagador ──────────────────────────────────────────────
+        PaymentPayerRequest.PaymentPayerRequestBuilder payerBuilder =
+                PaymentPayerRequest.builder()
+                        .email(aluno.getEmail())
+                        .firstName(aluno.getNome());
+
+        // CPF — obrigatório para PIX e Boleto, recomendado para cartão
+        String cpf = aluno.getCPF();
+        if (cpf != null && !cpf.isBlank()) {
+            payerBuilder.identification(
+                    IdentificationRequest.builder()
+                            .type("CPF")
+                            .number(cpf.replaceAll("[^0-9]", "")) // remove pontos/traços
+                            .build()
+            );
+        }
+
+        // ── Monta a requisição base ──────────────────────────────────────
+        PaymentCreateRequest.PaymentCreateRequestBuilder reqBuilder =
+                PaymentCreateRequest.builder()
+                        .transactionAmount(dto.getValor())
+                        .description("Plano academia — parcela")
+                        .payer(payerBuilder.build())
+                        // externalReference guarda o ID da parcela interna
+                        // para o webhook conseguir confirmar depois
+                        .externalReference("parcela:" + dto.getParcelaId())
+                        .notificationUrl("http://200.232.159.68:3001/v1/pagamentos/notifications");
+
+
+        // ── Lógica por método de pagamento ──────────────────────────────
+        switch (dto.getFormaPagamento().toLowerCase()) {
+
+            case "credit_card":
+                // Token gerado pelo SDK do MP no frontend (nunca o número real)
+                reqBuilder
+                        .token(dto.getCardToken())
+                        .installments(dto.getNumeroParcelas() != null ? dto.getNumeroParcelas() : 1)
+                        .paymentMethodId(dto.getPaymentMethodId()); // "visa", "master", "elo"...
+                break;
+
+            case "pix":
+                reqBuilder.paymentMethodId("pix");
+                // PIX tem vencimento de 30 minutos por padrão no MP
+                // Não precisa de token
+                break;
+
+            case "boleto":
+                reqBuilder.paymentMethodId("bolbradesco"); // boleto Bradesco (mais comum)
+                // Você pode trocar por "bolsantander" se preferir
+                break;
+
+            default:
+                throw new IllegalArgumentException(
+                        "Método de pagamento inválido: " + dto.getFormaPagamento()
+                );
+        }
+
+        try {
+            Payment payment = client.create(reqBuilder.build());
+
+            System.out.println("=== PAGAMENTO TRANSPARENTE CRIADO ===");
+            System.out.println("ID MP: " + payment.getId());
+            System.out.println("Status: " + payment.getStatus());
+            System.out.println("Método: " + dto.getFormaPagamento());
+
+            return payment;
+
+        } catch (MPApiException e) {
+            System.err.println("Erro API MP: " + e.getApiResponse().getContent());
+            throw new RuntimeException("Erro Mercado Pago: " + e.getApiResponse().getContent());
+        } catch (MPException e) {
+            System.err.println("Erro MP: " + e.getMessage());
+            throw new RuntimeException("Erro ao criar pagamento: " + e.getMessage());
         }
     }
 

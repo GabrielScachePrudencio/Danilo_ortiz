@@ -21,7 +21,9 @@ public class PagamentoService {
         Pagamento p = pagamentoRepository.save(pagamento);
         return p;
     }
-
+    public Pagamento findByMpPaymentId(String mpPaymentId) {
+        return pagamentoRepository.findByMpPaymentId(mpPaymentId).orElse(null);
+    }
     public Pagamento findById(Long id){
         return pagamentoRepository.findById(id);
     }
