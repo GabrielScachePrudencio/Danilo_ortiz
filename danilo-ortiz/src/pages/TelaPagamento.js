@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { loadMercadoPago } from "@mercadopago/sdk-js";
+//import { loadMercadoPago } from "@mercadopago/sdk-js";
 
 // ─── PUBLIC KEY do Mercado Pago ───────────────────────────────────────
 // Troque por sua Public Key de TESTE (começa com TEST-...)
@@ -332,8 +332,9 @@ export default function TelaPagamento() {
   const parcelasParam = Number(searchParams.get("parcelas") || 1);
 
   // ── Estado geral
-  const [emailLogado] = useState(() => localStorage.getItem("email"));
-  const [idAluno] = useState(() => localStorage.getItem("id"));
+  const token = localStorage.getItem("token");
+  const [emailLogado, setEmailLogado] = useState(null);
+  const [idAluno, setIdAluno] = useState(null);
   const [aluno, setAluno] = useState(null);
   const [plano, setPlano] = useState(null);
   const [mensalidadeDTO, setMensalidadeDTO] = useState(null);
@@ -379,37 +380,101 @@ export default function TelaPagamento() {
     new Date(mensalidadeDTO.dataFim) > agora &&
     !!parcelaPendente;
 
-  // ── Efeitos
+  /* / ── Efeitos
   useEffect(() => {
-    // Inicializa SDK do Mercado Pago
-    loadMercadoPago().then(() => {
-      mpRef.current = new window.MercadoPago(MP_PUBLIC_KEY);
+  // Carrega o SDK v1 do MP via script — não exige montar campos no DOM
+  const script = document.createElement("script");
+  script.src = "https://sdk.mercadopago.com/js/v2";
+  script.async = true;
+  script.onload = () => {
+    mpRef.current = new window.MercadoPago(MP_PUBLIC_KEY, {
+      locale: "pt-BR",
     });
+    console.log("MP SDK carregado");
+  };
+  document.body.appendChild(script);
+ 
+  if (idAluno) {
+    buscarAluno(idAluno);
+    buscarMensalidade(idAluno);
+  }
+  if (idplano) buscarPlano();
+ 
+  return () => {
+    // limpa o script ao desmontar
+    document.body.removeChild(script);
+  };
+}, []);
+*/
+useEffect(() => {
+  if (!idAluno) return;
+  buscarAluno(idAluno);
+  buscarMensalidade(idAluno);
+}, [idAluno]);
 
-    if (idAluno) {
-      buscarAluno(idAluno);
-      buscarMensalidade(idAluno);
-    }
-    if (idplano) buscarPlano();
-  }, []);
+useEffect(() => {
+  // Carrega SDK do MP
+  const script = document.createElement("script");
+  script.src = "https://sdk.mercadopago.com/js/v2";
+  script.async = true;
+  script.onload = () => {
+    mpRef.current = new window.MercadoPago(MP_PUBLIC_KEY, { locale: "pt-BR" });
+  };
+  document.body.appendChild(script);
+
+  // Valida token e busca dados do usuário logado
+  if (!token) {
+    navigate(`/login/${idplano}`);
+    return;
+  }
+
+  fetch(`${API}/alunos/me`, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+    .then(res => {
+      if (!res.ok) {
+        localStorage.removeItem("token");
+        navigate(`/login/${idplano}`);
+        throw new Error("Não autenticado");
+      }
+      return res.json();
+    })
+    .then(data => {
+      setEmailLogado(data.email);
+      setIdAluno(data.id);
+    })
+    .catch(() => {});
+
+  if (idplano) buscarPlano();
+
+  return () => { document.body.removeChild(script); };
+}, []);
+
+
 
   async function buscarAluno(id) {
     try {
-      const res = await fetch(`${API}/alunos/${id}`);
+       const res = await fetch(`${API}/alunos/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }  // <-- adicionar
+      });
       if (res.ok) setAluno(await res.json());
     } catch { setErro("Erro ao buscar dados do aluno."); }
   }
 
   async function buscarMensalidade(id) {
     try {
-      const res = await fetch(`${API}/mensalidades/${id}`);
+    const res = await fetch(`${API}/mensalidades/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }  // <-- adicionar
+    });
       if (res.ok) setMensalidadeDTO(await res.json());
     } catch { /* sem mensalidade = nova assinatura */ }
   }
 
   async function buscarPlano() {
     try {
-      const res = await fetch(`${API}/planos/${idplano}`);
+      const res = await fetch(`${API}/planos/${idplano}`, {
+        headers: { Authorization: `Bearer ${token}` }  // <-- adicionar
+      });
       if (res.ok) setPlano(await res.json());
       else setErro("Plano não encontrado.");
     } catch { setErro("Erro de conexão."); }
@@ -438,9 +503,12 @@ export default function TelaPagamento() {
       let parcelaIdFinal = parcelaPendente?.id;
 
       if (ehNovaAssinatura) {
-        const resMens = await fetch(`${API}/pagamentos`, {
+          const resMens = await fetch(`${API}/pagamentos`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`  // <-- adicionar
+          },
           body: JSON.stringify({
             aluno: { id: Number(idAluno) },
             plano: { id: Number(idplano) },
@@ -459,7 +527,9 @@ export default function TelaPagamento() {
         }
 
         // Recarrega mensalidade para pegar o id da parcela gerada
-        const resMensAtual = await fetch(`${API}/mensalidades/${idAluno}`);
+        const resMensAtual = await fetch(`${API}/mensalidades/${idAluno}`, {
+          headers: { Authorization: `Bearer ${token}` }  // <-- adicionar
+        });
         if (resMensAtual.ok) {
           const dadosMens = await resMensAtual.json();
           const primeiraPendente = dadosMens?.parcelas
@@ -484,35 +554,56 @@ export default function TelaPagamento() {
       };
 
       // ── CARTÃO: gera token antes
-      if (metodo === "credit_card") {
-        if (!mpRef.current) { mostrarToast("SDK do Mercado Pago não carregou.", false); return; }
+      // ── CARTÃO: gera token antes
+        if (metodo === "credit_card") {
+          if (!mpRef.current) { mostrarToast("SDK do Mercado Pago não carregou.", false); return; }
 
-        const [expMes, expAno] = cartaoValidade.split("/");
-        let tokenData;
-        try {
-          tokenData = await mpRef.current.createCardToken({
-            cardNumber: cartaoNum.replace(/\s/g, ""),
-            cardholderName: cartaoNome.toUpperCase(),
-            expirationMonth: expMes,
-            expirationYear: "20" + expAno,
-            securityCode: cartaoCVV,
-            identificationType: "CPF",
-            identificationNumber: aluno?.cpf?.replace(/[^0-9]/g, "") || "",
-          });
-        } catch (mpErr) {
-          mostrarToast("Erro ao tokenizar cartão: " + (mpErr.message || "verifique os dados"), false);
-          return;
+          const [expMes, expAno] = cartaoValidade.split("/");
+            
+            if (!expMes || !expAno || cartaoNum.replace(/\s/g, "").length < 16) {
+              mostrarToast("Preencha todos os dados do cartão corretamente.", false);
+              setLoading(false);
+              return;
+            }
+            
+            let tokenData;
+            try {
+              // API correta para o SDK carregado via script
+              tokenData = await mpRef.current.createCardToken({
+                cardNumber:          cartaoNum.replace(/\s/g, ""),
+                cardholderName:      cartaoNome.toUpperCase(),
+                cardExpirationMonth: expMes,
+                cardExpirationYear:  "20" + expAno,
+                securityCode:        cartaoCVV,
+                identificationType:   "CPF",
+                identificationNumber: aluno?.cpf?.replace(/[^0-9]/g, "") || "",
+              });
+            } catch (mpErr) {
+              console.error("MP token error:", mpErr);
+              mostrarToast("Erro ao tokenizar cartão: " + (mpErr.message || "verifique os dados"), false);
+              setLoading(false);
+              return;
+            }
+            
+            if (!tokenData?.id) {
+              mostrarToast("Não foi possível gerar o token do cartão. Verifique os dados.", false);
+              setLoading(false);
+              return;
+            }
+            
+            payload.cardToken       = tokenData.id;
+            payload.paymentMethodId = bandeira;
+            payload.numeroParcelas  = parcelasCartao;
+
         }
-
-        payload.cardToken = tokenData.id;
-        payload.paymentMethodId = bandeira;
-        payload.numeroParcelas = parcelasCartao;
-      }
 
       // ── Chama o backend
       const res = await fetch(`${API}/mensalidades/abrirPagamentoTransparente`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`  // <-- adicionar
+        },
         body: JSON.stringify(payload),
       });
 

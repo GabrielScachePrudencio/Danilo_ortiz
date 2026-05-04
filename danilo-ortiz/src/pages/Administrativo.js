@@ -317,129 +317,144 @@ const S = {
     },
 };
 
+
 // ─── helpers ─────────────────────────────────────────────────────────────────
 function MockOrFetch(url, mockData) {
-    // Troca por fetch real quando o back estiver pronto
     return new Promise((res) => setTimeout(() => res(mockData), 400));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
 export default function Conta() {
+    const token = localStorage.getItem("token");
+    const [autenticado, setAutenticado] = useState(false);
+    const [verificando, setVerificando] = useState(true);
+
     const navigate = useNavigate();
 
-    const [aba, setAba] = useState("alunos"); // "alunos" | "relatorio" | "token" | "Vendas"
+    const [aba, setAba] = useState("alunos");
     const [erro, setErro] = useState("");
 
-    // ── alunos ──────────────────────────────────────────────────────────────
-    const [allAlunos, setAllAlunos]       = useState([]);
-    const [inputBusca, setInputBusca]     = useState("");
-    const [carregando, setCarregando]     = useState(false);
-    const [rowHover, setRowHover]         = useState(null);
-    const [modal, setModal]               = useState(null); // { tipo, id }
+    const [allAlunos, setAllAlunos]         = useState([]);
+    const [inputBusca, setInputBusca]       = useState("");
+    const [carregando, setCarregando]       = useState(false);
+    const [rowHover, setRowHover]           = useState(null);
+    const [modal, setModal]                 = useState(null);
 
-    // ── relatório ───────────────────────────────────────────────────────────
-    const [relatorio, setRelatorio]       = useState([]);
+    const [relatorio, setRelatorio]         = useState([]);
 
-    // ── token ───────────────────────────────────────────────────────────────
-
-    const [tokenAtual, setTokenAtual]     = useState("");
-    const [tokenInput, setTokenInput]     = useState("");
-    const [tokenStatus, setTokenStatus]   = useState(null); // null | "ok" | "erro"
+    const [tokenAtual, setTokenAtual]       = useState("");
+    const [tokenInput, setTokenInput]       = useState("");
+    const [tokenStatus, setTokenStatus]     = useState(null);
     const [salvandoToken, setSalvandoToken] = useState(false);
 
-    //vendas 
     const [vendas, setVendas] = useState([]);
 
-    // ── fetch alunos ────────────────────────────────────────────────────────
+    // ── único useEffect — valida token primeiro ──────────────────────────────
+    useEffect(() => {
+        if (!token) {
+            navigate("/login");
+            return;
+        }
+
+        fetch(`${BASE_URL}/alunos/me`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => {
+                if (!res.ok) {
+                    localStorage.removeItem("token");
+                    navigate("/login");
+                    throw new Error();
+                }
+                return res.json();
+            })
+            .then(data => {
+                    console.log("DADOS DO /alunos/me:", data);          // veja o objeto completo
+                    console.log("tipoUsuario:", data.tipoUsuario);       // veja o valor exato
+                    console.log("tipo:", typeof data.tipoUsuario);       // string? undefined?
+
+                /*
+                if (data.tipoUsuario !== "ADMIN") {
+                    console.log("!! ! CAIU AQUI !!")
+                    navigate("/");
+                    return;
+                } */
+                setAutenticado(true);
+                pegarAlunos();
+                pegarRelatorio();
+                pegarTokenAtual();
+                pegarUltimasVendas();
+            })
+            .catch(() => {})
+            .finally(() => setVerificando(false));
+    }, []);
+
+    // ── fetches ──────────────────────────────────────────────────────────────
     async function pegarAlunos() {
         try {
-            const res = await fetch(BASE_URL+"/alunos", {
-                method: "GET"
+            const res = await fetch(`${BASE_URL}/alunos`, {
+                headers: { Authorization: `Bearer ${token}` }
             });
-            
-            if(res.ok) {
+            if (res.ok) {
                 const data = await res.json();
-                console.log("all usuarios ", data );
                 setAllAlunos(data);
-            }else{
-                setErro("erro ao pegar usuarios");
+            } else {
+                setErro("Erro ao pegar usuários.");
             }
-           
         } catch (error) {
-            setErro(error)
+            setErro("Falha na conexão ao buscar alunos.");
         }
     }
 
-
-    
     async function pegarRelatorio() {
         try {
-            const res = await fetch(BASE_URL+"/alunos/qtdd-aluno-por-plano", {
-                method: "GET"
+            const res = await fetch(`${BASE_URL}/alunos/qtdd-aluno-por-plano`, {
+                headers: { Authorization: `Bearer ${token}` }
             });
-            
-            if(res.ok) {
+            if (res.ok) {
                 const data = await res.json();
-                console.log("all quantidade de alunos por planos ", data );
                 setRelatorio(data);
-            }else{
-                setErro("erro ao pegar usuarios");
-            }            
+            } else {
+                setErro("Erro ao carregar relatório.");
+            }
         } catch {
             setErro("Erro ao carregar relatório.");
         }
     }
 
     async function pegarTokenAtual() {
-         try {
-            const res = await fetch(BASE_URL+"/configuracao", {
-                method: "GET"
+        try {
+            const res = await fetch(`${BASE_URL}/configuracao`, {
+                headers: { Authorization: `Bearer ${token}` }
             });
-            console.log("RES:", res);
-
-            if(res.ok) {
+            if (res.ok) {
                 const data = await res.json();
-                console.log("DATA:", data);
-                console.log("configuracoes  ", data.mpaccesstoken );
                 setTokenAtual(data.mpaccesstoken);
-            }else{
-                setErro("erro ao pegar usuarios");
-            }            
+            } else {
+                setErro("Erro ao buscar configurações.");
+            }
         } catch {
-            setErro("Erro ao configuracoes.");
+            setErro("Erro ao buscar configurações.");
         }
     }
 
     async function pegarUltimasVendas() {
         try {
             setCarregando(true);
-            const res = await fetch(BASE_URL + "/pagamentos/ultimas-vendas", {
-                method: "GET"
+            const res = await fetch(`${BASE_URL}/pagamentos/ultimas-vendas`, {
+                headers: { Authorization: `Bearer ${token}` }
             });
-            
             if (res.ok) {
                 const data = await res.json();
-                console.log("Pagamentos", data);
                 setVendas(data);
             } else {
-                setErro("Erro ao buscar últimas vendas");
+                setErro("Erro ao buscar últimas vendas.");
             }
-        } catch (error) {
+        } catch {
             setErro("Falha na conexão ao buscar vendas.");
         } finally {
             setCarregando(false);
         }
     }
-
-    // Atualize o useEffect para carregar as vendas ao iniciar ou quando mudar de aba
-    useEffect(() => {
-        pegarAlunos();
-        pegarRelatorio();
-        pegarTokenAtual();
-        pegarUltimasVendas();
-    }, []);
-        
-
 
     // ── busca ────────────────────────────────────────────────────────────────
     const alunosFiltrados = inputBusca.trim()
@@ -449,11 +464,14 @@ export default function Conta() {
           )
         : allAlunos;
 
-    // ── ações de status ──────────────────────────────────────────────────────
+    // ── ações ────────────────────────────────────────────────────────────────
     async function confirmarTrocaStatus() {
         const id = modal.id;
         try {
-             await fetch(`${BASE_URL}/alunos/atualizar-status-aluno/${id}`, { method: "POST" });
+            await fetch(`${BASE_URL}/alunos/atualizar-status-aluno/${id}`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setAllAlunos((prev) =>
                 prev.map((u) =>
                     u.id === id
@@ -470,7 +488,10 @@ export default function Conta() {
 
     async function trocarSisrun(id) {
         try {
-            await fetch(`${BASE_URL}/alunos/atualizar-status-contasisrun-aluno/${id}`, { method: "POST" });
+            await fetch(`${BASE_URL}/alunos/atualizar-status-contasisrun-aluno/${id}`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setAllAlunos((prev) =>
                 prev.map((u) => u.id === id ? { ...u, criouContaSisrun: !u.criouContaSisrun } : u)
             );
@@ -479,19 +500,12 @@ export default function Conta() {
         }
     }
 
-    // ── salvar token ─────────────────────────────────────────────────────────
     async function salvarToken() {
         if (!tokenInput.trim()) return;
         setSalvandoToken(true);
         setTokenStatus(null);
         try {
-            // const res = await fetch(`${BASE_URL}/config/token-mercadopago`, {
-            //     method: "POST",
-            //     headers: { "Content-Type": "application/json" },
-            //     body: JSON.stringify({ token: tokenInput }),
-            // });
-            // if (!res.ok) throw new Error();
-            await new Promise((r) => setTimeout(r, 600)); // simula latência
+            await new Promise((r) => setTimeout(r, 600));
             setTokenAtual(tokenInput);
             setTokenInput("");
             setTokenStatus("ok");
@@ -502,15 +516,23 @@ export default function Conta() {
         }
     }
 
-    // ── relatório: totais ─────────────────────────────────────────────────────
+    // ── totais do relatório ──────────────────────────────────────────────────
     const totalAlunos  = relatorio.reduce((s, r) => s + r.quantidade, 0);
     const totalReceita = relatorio.reduce((s, r) => s + r.receita, 0);
     const maxQtd       = Math.max(...relatorio.map((r) => r.quantidade), 1);
 
+    // ── guards ───────────────────────────────────────────────────────────────
+    if (verificando) return (
+        <div style={{ ...S.root, alignItems: "center", justifyContent: "center" }}>
+            <span style={{ color: "#555", letterSpacing: "0.2em", fontSize: 12 }}>VERIFICANDO…</span>
+        </div>
+    );
+
+    if (!autenticado) return null;
+
     // ═══════════════════════════════════════════════════════════════════════
     return (
         <div style={S.root}>
-            {/* Google Font */}
             <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap');`}</style>
 
             {/* top bar */}
@@ -520,10 +542,10 @@ export default function Conta() {
                 </div>
                 <div style={S.tabs}>
                     {[
-                        { key: "alunos",    label: "Alunos"    },
-                        { key: "relatorio", label: "Relatório" },
-                        { key: "vendas",    label: "Últimas Vendas" }, // Nova opção
-                        { key: "token",     label: "Token MP"  },
+                        { key: "alunos",    label: "Alunos"         },
+                        { key: "relatorio", label: "Relatório"       },
+                        { key: "vendas",    label: "Últimas Vendas"  },
+                        { key: "token",     label: "Token MP"        },
                     ].map(({ key, label }) => (
                         <button key={key} style={S.tab(aba === key)} onClick={() => setAba(key)}>
                             {label}
@@ -560,7 +582,7 @@ export default function Conta() {
                         <table style={S.table}>
                             <thead>
                                 <tr>
-                                    {["ID", "Nome", "E-mail", "Status", "Sisrun",""].map((h) => (
+                                    {["ID", "Nome", "E-mail", "Status", "Sisrun", ""].map((h) => (
                                         <th key={h} style={S.th}>{h}</th>
                                     ))}
                                 </tr>
@@ -601,8 +623,7 @@ export default function Conta() {
                                         <td style={S.td}>
                                             <button
                                                 style={S.btnLink}
-                                                onClick={() => navigate(`/home/conta/${a.id}`)}
-
+                                                onClick={() => navigate(`/home/conta/${a.id}?admin=true`)}
                                             >
                                                 Ver
                                             </button>
@@ -707,65 +728,52 @@ export default function Conta() {
                     </>
                 )}
 
-                {/* ══ ABA ÚLTIMAS VENDAS ══════════════════════════════════════════════ */}
-            {aba === "vendas" && (
-            <>
-                <p style={S.sectionTitle}>Histórico de Pagamentos</p>
-<table style={S.table}>
-    <thead>
-        <tr>
-            {["Data", "Aluno", "Plano", "Valor", "Status", "ID Mercado Pago", "Método"].map((h) => (
-                <th key={h} style={S.th}>{h}</th>
-            ))}
-        </tr>
-    </thead>
-    <tbody>
-        {carregando ? (
-            <tr><td colSpan={7} style={{ ...S.td, color: "#555", textAlign: "center" }}>carregando…</td></tr>
-        ) : vendas.length === 0 ? (
-            <tr><td colSpan={7} style={{ ...S.td, color: "#555", textAlign: "center" }}>nenhuma venda encontrada</td></tr>
-        ) : vendas.map((v, idx) => (
-            <tr key={v.idPagamento || idx}>
-                {/* 1. Data */}
-                <td style={S.td}>
-                    {v.data ? new Date(v.data).toLocaleDateString('pt-BR') : "—"}
-                </td>
-
-                {/* 2. Aluno */}
-                <td style={S.td}>{v.nomeAluno}</td>
-
-                {/* 3. Plano */}
-                <td style={{ ...S.td, color: "#e8b44c" }}>{v.nomePlano || "—"}</td>
-
-                {/* 4. Valor */}
-                <td style={S.td}>
-                    R$ {v.valor ? v.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : "0,00"}
-                </td>
-
-                {/* 5. Status */}
-                <td style={S.td}>
-                    <span style={S.badge(v.statusLiberacao === 'approved' ? 'ATIVADO' : 'DESATIVADO')}>
-                        {v.statusLiberacao === 'approved' ? 'APROVADO' : v.statusLiberacao}
-                    </span>
-                </td>
-
-                {/* 6. ID Mercado Pago */}
-                <td style={{ ...S.td, fontSize: 10, color: '#666' }}>
-                    {v.mpPaymentId || "—"}
-                </td>
-
-                {/* 7. Método */}
-                <td style={S.td}>
-                    {v.formaPagamento === 'account_money' ? 'Saldo MP' : 
-                     v.formaPagamento === 'pix' ? 'PIX' : 
-                     v.formaPagamento || "—"}
-                </td>
-            </tr>
-        ))}
-    </tbody>
-</table>
+                {/* ══ ABA ÚLTIMAS VENDAS ══════════════════════════════════════ */}
+                {aba === "vendas" && (
+                    <>
+                        <p style={S.sectionTitle}>Histórico de Pagamentos</p>
+                        <table style={S.table}>
+                            <thead>
+                                <tr>
+                                    {["Data", "Aluno", "Plano", "Valor", "Status", "ID Mercado Pago", "Método"].map((h) => (
+                                        <th key={h} style={S.th}>{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {carregando ? (
+                                    <tr><td colSpan={7} style={{ ...S.td, color: "#555", textAlign: "center" }}>carregando…</td></tr>
+                                ) : vendas.length === 0 ? (
+                                    <tr><td colSpan={7} style={{ ...S.td, color: "#555", textAlign: "center" }}>nenhuma venda encontrada</td></tr>
+                                ) : vendas.map((v, idx) => (
+                                    <tr key={v.idPagamento || idx}>
+                                        <td style={S.td}>
+                                            {v.data ? new Date(v.data).toLocaleDateString("pt-BR") : "—"}
+                                        </td>
+                                        <td style={S.td}>{v.nomeAluno}</td>
+                                        <td style={{ ...S.td, color: "#e8b44c" }}>{v.nomePlano || "—"}</td>
+                                        <td style={S.td}>
+                                            R$ {v.valor ? v.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : "0,00"}
+                                        </td>
+                                        <td style={S.td}>
+                                            <span style={S.badge(v.statusLiberacao === "approved" ? "ATIVADO" : "DESATIVADO")}>
+                                                {v.statusLiberacao === "approved" ? "APROVADO" : v.statusLiberacao}
+                                            </span>
+                                        </td>
+                                        <td style={{ ...S.td, fontSize: 10, color: "#666" }}>
+                                            {v.mpPaymentId || "—"}
+                                        </td>
+                                        <td style={S.td}>
+                                            {v.formaPagamento === "account_money" ? "Saldo MP" :
+                                             v.formaPagamento === "pix" ? "PIX" :
+                                             v.formaPagamento || "—"}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </>
-                )}  
+                )}
             </div>
 
             {/* ── modal confirmação status ─────────────────────────────────── */}
@@ -781,9 +789,6 @@ export default function Conta() {
                     </div>
                 </div>
             )}
-
-          
-
         </div>
     );
 }

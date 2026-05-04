@@ -292,22 +292,33 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await fetch(url+"/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formLogin),
-      });
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formLogin),
+    });
 
-      if (res.status === 401) { setErro("E-mail ou senha incorretos."); return; }
-      if (!res.ok) { setErro("Erro no servidor. Tente novamente."); return; }
+    if (res.status === 401) {
+      setErro("E-mail ou senha incorretos.");
+      return;
+    }
 
-      const usuario = await res.json();
-      localStorage.setItem("email", usuario.email);
-      localStorage.setItem("id", usuario.id);
+    if (!res.ok) {
+      setErro("Erro no servidor. Tente novamente.");
+      return;
+    }
 
-      setSucesso("Login realizado!");
-      setTimeout(() => navigate(idplano ? `/home/telapagamento/${idplano}` : "/"), 800);
-    } catch {
-      setErro("Erro de conexão com o servidor.");
+    const token = await res.text();
+
+    console.log("TOKEN:", token);
+
+    localStorage.setItem("token", token);
+
+
+    setTimeout(() => navigate(idplano ? `/home/telapagamento/${idplano}` : "/"), 800);
+    } catch (e) {
+  console.error("ERRO REAL:", e);
+  setErro("Erro de conexão com o servidor.");
+
     } finally {
       setLoading(false);
     }

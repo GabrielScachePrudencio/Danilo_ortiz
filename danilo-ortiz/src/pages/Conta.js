@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 /* ─── estilos ─────────────────────────────────────────────────────────── */
 const S = {
@@ -734,8 +734,18 @@ function BannerSisrun({ nomeAluno, onAbrirTutorial }) {
 
 /* ─── página principal ────────────────────────────────────────────────── */
 export default function Conta() {
+
+  const [searchParams] = useSearchParams();
+
   const navigate = useNavigate();
-  const { idAluno } = useParams();
+//  const { idAluno } = useParams();
+const token = localStorage.getItem("token");
+const [idAluno, setIdAluno] = useState(null);
+  
+const { idAlunoE: idParam } = useParams();
+const isAdminView = searchParams.get("admin") === "true";
+
+
   const [emailLogado, setEmailLogado] = useState(null);
 
   const [aluno, setAluno]                                     = useState(null);
@@ -772,47 +782,84 @@ const isRailway = window.location.hostname.includes("railway.app");
   const url = API+"/alunos";
   const urlMensalidade = API+"/mensalidades";
   
+
+
   useEffect(() => {
-    setEmailLogado(localStorage.getItem("email"));
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    fetch(`${API}/alunos/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => {
+      if (!res.ok) {
+        localStorage.removeItem("token");
+        navigate("/login");
+        throw new Error();
+      }
+      return res.json();
+    })
+    .then(data => {
+      setEmailLogado(data.email);
+
+      // se é admin visualizando outro aluno, usa o id da URL
+      // se é o próprio aluno, usa o id do token
+      const idFinal = (isAdminView && idParam) ? Number(idParam) : data.id;
+      setIdAluno(idFinal);
+    })
+    .catch(() => {})
+}, []);
+
+  useEffect(() => {
+    if (!idAluno) return;
     pegarAlunoPorId();
     pegarDadosMensalidadeAlunoPorId();
-  }, []);
+  }, [idAluno]);
+
 
   async function pegarAlunoPorId() {
     try {
-      const res = await fetch(`${url}/${idAluno}`);
+      const res = await fetch(`${url}/${idAluno}`, {
+        headers: { Authorization: `Bearer ${token}` }  // <-- adicionar
+      });
+
       if (res.ok) { const d = await res.json(); setAluno(d); setEditado(d); }
       else setErro("Aluno não encontrado no banco.");
     } catch { setErro("Erro de conexão com o servidor."); }
   }
+
   async function cancelarPlano() {
-  const confirmou = window.confirm(
-    "Tem certeza que deseja cancelar seu plano? Seu acesso será desativado imediatamente."
-  );
-  if (!confirmou) return;
-
-  try {
-    const res = await fetch(
-      `${urlMensalidade}/cancelar-mensalidade/${idAluno}?idQuemCancelou=${idAluno}`,
-      { method: "POST" }
+    const confirmou = window.confirm(
+      "Tem certeza que deseja cancelar seu plano? Seu acesso será desativado imediatamente."
     );
+    if (!confirmou) return;
 
-    if (res.ok) {
-      mostrarToast("Plano cancelado com sucesso.", true);
-      // Recarrega os dados do aluno para refletir o novo status
-      await pegarAlunoPorId();
-      await pegarDadosMensalidadeAlunoPorId();
-    } else {
-      mostrarToast("Erro ao cancelar plano.", false);
+    try {
+      const res = await fetch(`${urlMensalidade}/cancelar-mensalidade/${idAluno}?idQuemCancelou=${idAluno}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }  // <-- adicionar
+      });
+
+      if (res.ok) {
+        mostrarToast("Plano cancelado com sucesso.", true);
+        // Recarrega os dados do aluno para refletir o novo status
+        await pegarAlunoPorId();
+        await pegarDadosMensalidadeAlunoPorId();
+      } else {
+        mostrarToast("Erro ao cancelar plano.", false);
+      }
+    } catch {
+      mostrarToast("Erro de conexão ao cancelar.", false);
     }
-  } catch {
-    mostrarToast("Erro de conexão ao cancelar.", false);
   }
-}
 
   async function pegarDadosMensalidadeAlunoPorId() {
     try {
-      const res = await fetch(`${urlMensalidade}/${idAluno}`);
+      const res = await fetch(`${urlMensalidade}/${idAluno}`, {
+        headers: { Authorization: `Bearer ${token}` }  // <-- adicionar
+      });
       if (res.ok) { const d = await res.json(); setMensalidadeParcelasDTOS(d); }
     } catch { /* silencioso */ }
   }
@@ -829,6 +876,7 @@ const isRailway = window.location.hostname.includes("railway.app");
   try {
     const res = await fetch(`${url}/atualizar-status-contasisrun-aluno/${idAluno}`, {
       method: "POST",
+      headers: { Authorization: `Bearer ${token}` }  // <-- adicionar
     });
 
     if (res.ok) {
@@ -853,9 +901,14 @@ const isRailway = window.location.hostname.includes("railway.app");
     setSalvando(true);
     try {
       const res = await fetch(`${url}/${idAluno}`, {
-        method: "PUT", headers: { "Content-Type": "application/json" },
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`  // <-- adicionar
+        },
         body: JSON.stringify(editado),
       });
+
       if (res.ok) {
         const updated = await res.json();
         setAluno(updated); setEditado(updated);

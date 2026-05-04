@@ -495,6 +495,9 @@ function ModalParcelas({ plano, onConfirmar, onFechar }) {
 
 // ─── COMPONENTE PRINCIPAL ───────────────────────────────────────────────────
 export default function Home() {
+  const token = localStorage.getItem("token");
+
+  
   const navigate = useNavigate();
 
   const [planos, setPlanos]           = useState([]);
@@ -559,37 +562,62 @@ const syncLogin = () => {
   };
 
   useEffect(() => {
-    const email = localStorage.getItem("email");
-    const id    = localStorage.getItem("id");
-    setEmailLogado(email);
-    setIdLogado(id);
-    if (id) {
-      pegarDadosMensalidadeAlunoPorId(id);
-      obterAluno(id);
-    } 
 
-    fetch(url)
-      .then((r) => {
-        console.log("STATUS /planos:", r.status);
-        console.log("URL CHAMADA REAL:", r.url);
-        return r.json();
-      })
-      .then((d) => {
-        console.log("DADOS RECEBIDOS:", d);
-        setPlanos(d);
+      if (!token) {
         setCarregando(false);
+        return;
+      }
+
+      fetch("http://localhost:3001/alunos/me", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       })
-      .catch((err) => {
-        console.error("ERRO FETCH PLANOS:", err);
-        setErro("Erro ao carregar planos.");
-        setCarregando(false);
-      });
-    }, [])
+        .then(res => {
+          if (!res.ok) throw new Error("Não autenticado");
+          return res.json();
+        })
+        .then(data => {
+          setEmailLogado(data.email);
+          setIdLogado(data.id);
+
+          // já aproveita:
+          pegarDadosMensalidadeAlunoPorId(data.id);
+          obterAluno(data.id);
+        })
+        .catch(() => {
+          localStorage.removeItem("token"); // token inválido
+        })
+        .finally(() => setCarregando(false));
+    }, []);
+
+
+
+    useEffect(() => {
+
+      fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+        .then(res => res.json())
+        .then(data => setPlanos(data))
+        .catch(() => setErro("Erro ao carregar planos"));
+    }, []);
+
+
 
     async function confirmarTrocaStatusSisrun() {
+      const token = localStorage.getItem("token");
+
+
       try {
         const res = await fetch(`${urlAlunos}/atualizar-status-contasisrun-aluno/${idLogado}`, {
           method: "POST",
+          headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`  // <-- adicionar
+        },
         });
 
         if (res.ok) {
@@ -618,14 +646,24 @@ const syncLogin = () => {
 
   async function obterAluno(id) {
     try {
-      const res = await fetch(`${urlAlunos}/${id}`);
+      const res = await fetch(`${urlAlunos}/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+
+      );
       if (res.ok) setAluno(await res.json());
     } catch { /* silencioso */ }
   }
 
   async function pegarDadosMensalidadeAlunoPorId(id) {
     try {
-      const res = await fetch(`${urlMensalidade}/${id}`);
+      const res = await fetch(`${urlMensalidade}/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       if (res.ok) { const d = await res.json(); setMensalidadeParcelasDTOS(d); }
     } catch { /* silencioso */ }
   }
@@ -779,7 +817,7 @@ const syncLogin = () => {
             )}
             {emailLogado ? (
               <>
-                <button className="nbtn nbtn-ghost" onClick={() => navigate(`/home/conta/${idLogado}`)}>
+                <button className="nbtn nbtn-ghost" onClick={() => navigate("/home/conta")}>
                   {emailLogado}
                 </button>
                 <button className="nbtn nbtn-ghost" onClick={deslogar}>Sair</button>

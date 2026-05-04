@@ -22,7 +22,9 @@ function App() {
         <Route path="/login" element={<Login/>}/>
         <Route path="/login/:idplano" element={<Login/>}/>
 
-        <Route path="/home/conta/:idAluno" element={<Conta/>}/>
+        <Route path="/home/conta/:idAlunoE" element={<Conta/>}/>
+        <Route path="/home/conta" element={<Conta />} />
+
         <Route path="/home/telapagamento/erro" element={<ErroPagamento/>}/>
         <Route path="/home/telapagamento/correto" element={<CorretoPagamento/>}/>
 

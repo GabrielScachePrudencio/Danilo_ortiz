@@ -13,6 +13,8 @@ import java.util.Optional;
 public interface AlunoRepository extends JpaRepository<Aluno, Integer> {
     Optional<Aluno> findByEmailAndSenha(String email, String senha);
 
+    Optional<Aluno> findByEmail(String email);
+
     Aluno findById(Long id);
 
     @Query("""

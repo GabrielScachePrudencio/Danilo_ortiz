@@ -4,9 +4,11 @@ package com.danilo.DaniloOrtiz.controller;
 import com.danilo.DaniloOrtiz.model.Aluno;
 import com.danilo.DaniloOrtiz.model.dto.AlunoDTO;
 import com.danilo.DaniloOrtiz.model.dto.AlunoPorPlanoDTO;
+import com.danilo.DaniloOrtiz.model.mapper.AlunoMapper;
 import com.danilo.DaniloOrtiz.service.AlunoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -20,6 +22,7 @@ import java.util.List;
 public class AlunoController {
 
     private final AlunoService alunoService;
+    private final AlunoMapper mapper;
 
     @GetMapping
     public ResponseEntity<List<AlunoDTO>> todosAlunos() {
@@ -28,6 +31,20 @@ public class AlunoController {
         if(alunoDTOS == null) return ResponseEntity.notFound().build();
 
         return ResponseEntity.ok(alunoDTOS);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<AlunoDTO> getMe(Authentication authentication) {
+
+        String email = authentication.getName(); // vem do token
+
+        Aluno aluno = alunoService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        AlunoDTO alunoDTO = mapper.toDTO(aluno);
+        alunoDTO.setSenha(null);
+
+        return ResponseEntity.ok(alunoDTO);
     }
 
     @GetMapping("/qtdd-aluno-por-plano")
@@ -85,16 +102,17 @@ public class AlunoController {
             return ResponseEntity.badRequest().body("Email e senha são obrigatórios");
         }
 
-        AlunoDTO aluno = alunoService.login(
+
+        String tokenCompleto = alunoService.loginComToken(
                 alunoDTO.getEmail(),
                 alunoDTO.getSenha()
         );
 
-        if(aluno == null){
+        if(tokenCompleto == null){
             return ResponseEntity.status(401).body("Credenciais inválidas");
         }
-        System.out.println("Login realizado com sucesso para: " + aluno.getEmail());
-        return ResponseEntity.ok(aluno);
+
+        return ResponseEntity.ok(tokenCompleto);
     }
 
 }
