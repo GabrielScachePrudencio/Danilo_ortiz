@@ -1,6 +1,7 @@
 package com.danilo.DaniloOrtiz.controller;
 
 import com.danilo.DaniloOrtiz.model.Aluno;
+import com.danilo.DaniloOrtiz.model.MensalidadeCancelada;
 import com.danilo.DaniloOrtiz.model.Mensalidades_parcelas;
 import com.danilo.DaniloOrtiz.model.Pagamento;
 import com.danilo.DaniloOrtiz.model.dto.*;
@@ -13,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.mercadopago.resources.payment.Payment;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/mensalidades")
 @RequiredArgsConstructor
@@ -24,6 +27,7 @@ public class MensalidadeController {
     private final AlunoService alunoService;
     private final Mensalidades_parcelasService mensalidadesParcelasService;
     private final PagamentoService pagamentoService;
+    private final MensalidadeCanceladaService mensalidadeCanceladaService;
 
     @GetMapping("/{idAluno}")
     public ResponseEntity<MensalidadeComParcelasDTO> buscarMensalidadePorIdAluno(@PathVariable Long idAluno){
@@ -35,6 +39,9 @@ public class MensalidadeController {
 
         return ResponseEntity.ok(mensalidadeComParcelasDTO);
     }
+
+
+
 
     @PostMapping("/cancelar-mensalidade/{idAluno}")
     public ResponseEntity<Boolean> cancelarMensalidade(
@@ -175,6 +182,14 @@ public class MensalidadeController {
             return ResponseEntity.internalServerError()
                     .body("Erro ao processar pagamento: " + e.getMessage());
         }
+
+
+
     }
 
+
+    @GetMapping("/canceladas")
+    public ResponseEntity<List<MensalidadeCancelada>> listarCanceladas() {
+        return ResponseEntity.ok(mensalidadeCanceladaService.listarTodas());
+    }
 }

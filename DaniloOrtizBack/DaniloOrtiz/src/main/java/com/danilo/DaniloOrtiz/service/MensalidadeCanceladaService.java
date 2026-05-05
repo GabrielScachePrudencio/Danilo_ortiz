@@ -17,6 +17,10 @@ public class MensalidadeCanceladaService {
         return repository.save(cancelada);
     }
 
+    public List<MensalidadeCancelada> listarTodas(){
+        return repository.findAll();
+    }
+
     public List<MensalidadeCancelada> buscarPorAluno(Long alunoId) {
         return repository.findByAlunoIdOrderByDataCancelamentoDesc(alunoId);
     }

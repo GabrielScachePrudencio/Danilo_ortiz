@@ -16,9 +16,10 @@ public class JwtUtil {
     private static final String SECRET = "minha-chave-super-secreta-com-32-caracteres";
     private static final Key KEY = Keys.hmacShaKeyFor(SECRET.getBytes());
 
-    public static String gerarToken(String email){
+    public static String gerarToken(String email, String tipoUsuario){
         return Jwts.builder()
                 .subject(email)
+                .claim("role", tipoUsuario)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 86400000)) // 1 dia
                 .signWith(KEY)
@@ -33,4 +34,15 @@ public class JwtUtil {
                 .getPayload()
                 .getSubject();
     }
+
+
+    public static String extrairRole(String token) {
+        return (String) Jwts.parser()
+                .verifyWith((SecretKey) KEY)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("role");
+    }
+
 }

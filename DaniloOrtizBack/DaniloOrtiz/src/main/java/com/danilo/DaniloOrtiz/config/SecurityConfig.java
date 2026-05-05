@@ -31,6 +31,17 @@ public class SecurityConfig {
                         .requestMatchers("/alunos/login").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST,"/alunos").permitAll()
                         .requestMatchers("/planos/**").permitAll()
+
+                        // 🔒 rotas exclusivas de ADMIN
+                        .requestMatchers("/alunos").hasRole("ADMIN")
+                        .requestMatchers("/alunos/qtdd-aluno-por-plano").hasRole("ADMIN")
+                        .requestMatchers("/alunos/atualizar-status-aluno/**").hasRole("ADMIN")
+                        .requestMatchers("/alunos/atualizar-status-contasisrun-aluno/**").hasRole("ADMIN")
+                        .requestMatchers("/pagamentos/ultimas-vendas").hasRole("ADMIN")
+                        .requestMatchers("/mensalidades/canceladas").hasRole("ADMIN")
+                        .requestMatchers("/configuracao").hasRole("ADMIN")
+
+
                         // 🔒 resto protegido
                         .anyRequest().authenticated()
                 )

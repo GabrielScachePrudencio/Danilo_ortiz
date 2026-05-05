@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.stereotype.Component;
@@ -51,19 +52,23 @@ public class JwtFilter extends OncePerRequestFilter {
 
             try {
                 String email = JwtUtil.validarToken(token);
+                String role = JwtUtil.extrairRole(token);
+
+                // monta a authority com prefixo ROLE_ que o Spring exige
+                List<SimpleGrantedAuthority> authorities = List.of(
+                        new SimpleGrantedAuthority("ROLE_" + (role != null ? role : "ALUNO"))
+                );
 
                 UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(email, null, List.of());
+                        new UsernamePasswordAuthenticationToken(email, null, authorities);
 
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
             } catch (Exception e){
-                // 🔥 NÃO bloqueia aqui
                 SecurityContextHolder.clearContext();
             }
         }
 
-        // 🔥 SEMPRE deixa o fluxo seguir
         filterChain.doFilter(request, response);
     }
 }

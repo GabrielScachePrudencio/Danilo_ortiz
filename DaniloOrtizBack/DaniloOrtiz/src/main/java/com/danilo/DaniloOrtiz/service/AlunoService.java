@@ -61,7 +61,7 @@ public class AlunoService {
         if(aluno == null) return null;
 
         if(encoder.matches(senha, aluno.getSenha())){
-            return JwtUtil.gerarToken(aluno.getEmail());
+            return JwtUtil.gerarToken(aluno.getEmail(), aluno.getTipoUsuario());
         }
 
         return null;

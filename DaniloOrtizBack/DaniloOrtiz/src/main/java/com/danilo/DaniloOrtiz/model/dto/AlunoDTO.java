@@ -16,5 +16,5 @@ public class AlunoDTO {
     private Boolean criouContaSisrun;
 
     private String senha;
-
+    private String tipoUsuario;
 }
