@@ -182,7 +182,7 @@ const SISRUN_STEPS = [
   },
 ];
 
-const DANILO_WHATSAPP = "5516996339294";
+const DANILO_WHATSAPP = "5516997551222";
 
 /* ─── helpers de cor/status ───────────────────────────────────────────── */
 function corStatus(status) {
@@ -803,7 +803,11 @@ const isRailway = window.location.hostname.includes("railway.app");
     })
     .then(data => {
       setEmailLogado(data.email);
-
+   
+      if (isAdminView && data.tipoUsuario !== "ADMIN") {
+        navigate("/home/conta");
+        return;
+      }
       // se é admin visualizando outro aluno, usa o id da URL
       // se é o próprio aluno, usa o id do token
       const idFinal = (isAdminView && idParam) ? Number(idParam) : data.id;

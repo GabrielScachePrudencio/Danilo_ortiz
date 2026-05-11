@@ -15,6 +15,12 @@ public class WebhookValidator {
      * Retorna true se legítimo, false se inválido/falso.
      */
     public static boolean validar(String xSignature, String xRequestId, String resourceId) {
+
+        System.out.println("SECRET usada: " + SECRET); // ← adicionar
+        System.out.println("xSignature: " + xSignature);
+        System.out.println("xRequestId: " + xRequestId);
+        System.out.println("resourceId: " + resourceId);
+
         if (xSignature == null || xRequestId == null) return false;
 
         try {

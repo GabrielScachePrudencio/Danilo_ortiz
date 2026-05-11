@@ -31,6 +31,7 @@ public class SecurityConfig {
                         .requestMatchers("/alunos/login").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST,"/alunos").permitAll()
                         .requestMatchers("/planos/**").permitAll()
+                        .requestMatchers("/v1/pagamentos/notifications").permitAll()
 
                         // 🔒 rotas exclusivas de ADMIN
                         .requestMatchers("/alunos").hasRole("ADMIN")

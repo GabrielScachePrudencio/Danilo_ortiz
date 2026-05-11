@@ -85,6 +85,11 @@ public class MensalidadeController {
     public ResponseEntity<?> abrirPagamentoTransparente(
             @RequestBody PagamentoTransparenteDTO dto
     ) {
+        System.out.println("=== PAYLOAD RECEBIDO ===");
+        System.out.println("alunoId: " + dto.getAlunoId());
+        System.out.println("parcelaId: " + dto.getParcelaId());
+        System.out.println("valor recebido do front: " + dto.getValor());
+        System.out.println("formaPagamento: " + dto.getFormaPagamento());
         try {
             // 1. Busca aluno e parcela no banco
             Aluno aluno = alunoService.findById(dto.getAlunoId());
@@ -99,6 +104,7 @@ public class MensalidadeController {
 
             // 2. Usa o valor real da parcela (nunca confia só no front)
             dto.setValor(parcela.getValor());
+            System.out.println("valor real da parcela: " + dto.getValor()); // apareceu no log?
 
             // 3. Cria pagamento interno (status PENDENTE) para rastrear
             Pagamento pagamento = new Pagamento();

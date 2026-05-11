@@ -90,12 +90,14 @@ public class PagamentoWebhookController {
                 }
             }
 
-            // ── VALIDAÇÃO DA ASSINATURA ──────────────────────────────────────
+//            // ── VALIDAÇÃO DA ASSINATURA ──────────────────────────────────────
             if (resourceId != null && xSignature != null) {
                 boolean valido = WebhookValidator.validar(xSignature, xRequestId, resourceId);
                 if (!valido) {
-                    System.err.println("⛔ Webhook com assinatura INVÁLIDA — ignorado. ID: " + resourceId);
-                    return ResponseEntity.status(401).build();  // rejeita silenciosamente
+                    // MP manda múltiplas notificações — retentativas com request-id diferente
+                    // são normais e esperadas, retorna 200 para o MP parar de retentar
+                    System.out.println("ℹ️ Notificação duplicada ou inválida ignorada. ID: " + resourceId);
+                    return ResponseEntity.ok().build();  // ← 200 em vez de 401
                 }
                 System.out.println("✅ Assinatura do webhook validada. ID: " + resourceId);
             }

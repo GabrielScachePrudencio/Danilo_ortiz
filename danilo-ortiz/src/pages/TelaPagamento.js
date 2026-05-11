@@ -846,26 +846,43 @@ useEffect(() => {
         )}
 
         {/* RESULTADO PIX */}
-        {resultado && metodo === "pix" && resultado.pixQrCode && (
-          <div style={S.resultBox}>
-            <p style={S.sectionLabel}>Escaneie o QR Code</p>
-            {resultado.pixQrCodeBase64 && (
-              <img
-                src={`data:image/png;base64,${resultado.pixQrCodeBase64}`}
-                alt="QR Code PIX"
-                style={S.qrImg}
-              />
-            )}
-            <p style={{ ...S.label, marginBottom: 8 }}>Ou copie o código:</p>
-            <div style={S.copiaCola}>{resultado.pixQrCode}</div>
-            <button style={S.copyBtn} onClick={copiarPix}>
-              {copiado ? "✓ Copiado!" : "Copiar código PIX"}
-            </button>
-            <p style={{ fontSize: "0.7rem", color: "rgba(240,236,228,0.35)", textAlign: "center" }}>
-              Após o pagamento, seu acesso é liberado automaticamente.
-            </p>
-          </div>
-        )}
+{resultado && metodo === "pix" && resultado.pixQrCode && (
+  <div style={S.resultBox}>
+    <p style={S.sectionLabel}>Escaneie o QR Code</p>
+    {resultado.pixQrCodeBase64 && (
+      <img
+        src={`data:image/png;base64,${resultado.pixQrCodeBase64}`}
+        alt="QR Code PIX"
+        style={S.qrImg}
+      />
+    )}
+    <p style={{ ...S.label, marginBottom: 8 }}>Ou copie o código:</p>
+    <div style={S.copiaCola}>{resultado.pixQrCode}</div>
+    <button style={S.copyBtn} onClick={copiarPix}>
+      {copiado ? "✓ Copiado!" : "Copiar código PIX"}
+    </button>
+
+    {/* ← ADICIONAR ISSO */}
+    <button
+      style={{
+        ...S.btnPrimary(false),
+        marginTop: 24,
+        width: "100%",
+        background: "transparent",
+        border: "1px solid rgba(196,160,100,0.4)",
+        color: "#c4a064",
+      }}
+      onClick={() => navigate(`/home/conta/${idAluno}`)}
+    >
+      Já paguei — ver minha conta →
+    </button>
+    <p style={{ fontSize: "0.7rem", color: "rgba(240,236,228,0.35)", textAlign: "center", marginTop: 8 }}>
+      Seu acesso é liberado automaticamente após o pagamento ser confirmado.
+    </p>
+    {/* ← FIM */}
+
+  </div>
+)}
 
         {/* RESULTADO BOLETO */}
         {resultado && metodo === "boleto" && (
@@ -930,6 +947,8 @@ useEffect(() => {
               : `Pagar com Cartão — ${formatarValor(valorTotal)}`}
           </button>
         )}
+
+
 
         <button
           style={S.btnSecondary}

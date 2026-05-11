@@ -60,9 +60,9 @@ public class ApiMercadoPago {
         PreferenceBackUrlsRequest backUrlsRequest = PreferenceBackUrlsRequest.builder()
                 //rodar ngrok http 3000
                 // colocar o novo caminho
-                .success("https://d193-191-205-234-47.ngrok-free.app/home/telapagamento/correto")
-                .failure("https://d193-191-205-234-47.ngrok-free.app/home/telapagamento/erro")
-                .pending("https://d193-191-205-234-47.ngrok-free.app/home/telapagamento/pendente")
+                .success("https://a597-191-205-231-62.ngrok-free.app/home/telapagamento/correto")
+                .failure("https://a597-191-205-231-62.ngrok-free.app/home/telapagamento/erro")
+                .pending("https://a597-191-205-231-62.ngrok-free.app/home/telapagamento/pendente")
                 .build();
 
         PreferenceRequest request = PreferenceRequest.builder()
@@ -71,7 +71,7 @@ public class ApiMercadoPago {
                 .externalReference(idPagamentoInterno.toString())
 
                 //aqui ver se o ip foi trocado pq ele vai pelo ip
-                .notificationUrl("http://191.205.234.47:3001/v1/pagamentos/notifications")
+                .notificationUrl("https://a1d4-191-205-231-62.ngrok-free.app/v1/pagamentos/notifications")
                 .autoReturn("approved")
                 .build();
 
@@ -196,7 +196,7 @@ public class ApiMercadoPago {
                         // externalReference guarda o ID da parcela interna
                         // para o webhook conseguir confirmar depois
                         .externalReference("parcela:" + dto.getParcelaId())
-                        .notificationUrl("http://200.232.159.68:3001/v1/pagamentos/notifications");
+                        .notificationUrl("https://a1d4-191-205-231-62.ngrok-free.app/v1/pagamentos/notifications");
 
 
         // ── Lógica por método de pagamento ──────────────────────────────
