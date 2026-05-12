@@ -138,7 +138,7 @@ public class AlunoService {
         if (alunoAtualizado.getBairro() != null) aluno.setBairro(alunoAtualizado.getBairro());
         if (alunoAtualizado.getEstado() != null) aluno.setEstado(alunoAtualizado.getEstado());
 
-        
+
         // senha: só atualiza se vier E não for vazia
         if (alunoAtualizado.getSenha() != null && !alunoAtualizado.getSenha().isBlank()) {
             BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();

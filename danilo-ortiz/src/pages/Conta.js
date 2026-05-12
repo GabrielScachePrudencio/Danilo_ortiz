@@ -1029,6 +1029,11 @@ const isRailway = window.location.hostname.includes("railway.app");
   }
 
   function atualizarCampo(key, valor) {
+    if (key === "CEP")    valor = valor.replace(/\D/g, "").slice(0, 8);
+    if (key === "CPF")    valor = valor.replace(/\D/g, "").slice(0, 11);
+    if (key === "CNPJ")   valor = valor.replace(/\D/g, "").slice(0, 14);
+    if (key === "numero") valor = valor.replace(/\D/g, "");
+
     setEditado((prev) => {
       const keys = key.split(".");
       if (keys.length === 1) return { ...prev, [key]: valor };

@@ -318,8 +318,15 @@ export default function Login() {
   }
 
   function handleCadastro(e) {
-    setFormCadastro({ ...formCadastro, [e.target.name]: e.target.value });
-  }
+  let { name, value } = e.target;
+
+      if (name === "cep")    value = value.replace(/\D/g, "").slice(0, 8);
+      if (name === "cpf")    value = value.replace(/\D/g, "").slice(0, 11);
+      if (name === "cnpj")   value = value.replace(/\D/g, "").slice(0, 14);
+      if (name === "numero") value = value.replace(/\D/g, "");
+
+      setFormCadastro({ ...formCadastro, [name]: value });
+    }
 
   function limpar() {
     setErro(null);
