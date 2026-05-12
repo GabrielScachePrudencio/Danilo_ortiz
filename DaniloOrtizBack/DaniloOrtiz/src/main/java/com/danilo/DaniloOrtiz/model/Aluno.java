@@ -55,7 +55,7 @@ public class Aluno {
 
     private Integer CEP;
 
-//    private String bairro;
-//
-//    private String estado;
+    private String bairro;
+
+    private String estado;
 }

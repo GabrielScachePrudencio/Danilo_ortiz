@@ -122,7 +122,7 @@ public class AlunoService {
     public Aluno atualizar(Long id, Aluno alunoAtualizado) {
         Aluno aluno = ar.findById(id);
 
-        
+
         if (aluno == null) return null;
 
         // atualiza só os campos que vieram preenchidos
@@ -135,7 +135,10 @@ public class AlunoService {
         if (alunoAtualizado.getNumero()   != null) aluno.setNumero(alunoAtualizado.getNumero());
         if (alunoAtualizado.getCidade()   != null) aluno.setCidade(alunoAtualizado.getCidade());
         if (alunoAtualizado.getCEP()      != null) aluno.setCEP(alunoAtualizado.getCEP());
+        if (alunoAtualizado.getBairro() != null) aluno.setBairro(alunoAtualizado.getBairro());
+        if (alunoAtualizado.getEstado() != null) aluno.setEstado(alunoAtualizado.getEstado());
 
+        
         // senha: só atualiza se vier E não for vazia
         if (alunoAtualizado.getSenha() != null && !alunoAtualizado.getSenha().isBlank()) {
             BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();

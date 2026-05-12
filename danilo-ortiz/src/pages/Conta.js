@@ -133,12 +133,13 @@ const CAMPOS_PESSOAIS = [
   { key: "nome",     label: "Nome Completo", editable: true },
   { key: "email",    label: "E-mail",        editable: true },
   { key: "whatsapp", label: "WhatsApp",      editable: true },
-  { key: "senha",    label: "Senha",         editable: true, type: "password" },
   { key: "CPF",      label: "CPF",           editable: true },
   { key: "CNPJ",     label: "CNPJ",          editable: true },
   { key: "rua",      label: "Rua",           editable: true },
   { key: "numero",   label: "Número",        editable: true },
+  { key: "bairro",   label: "Bairro",        editable: true }, // ← novo
   { key: "cidade",   label: "Cidade",        editable: true },
+  { key: "estado",   label: "Estado",        editable: true }, // ← novo
   { key: "CEP",      label: "CEP",           editable: true },
 ];
 

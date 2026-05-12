@@ -228,6 +228,48 @@ function Campo({ label, name, type = "text", value, onChange, placeholder }) {
   );
 }
 
+/* ─── campo estilo Conta.js ──────────────────────────────────────────── */
+function CampoForm({ label, name, type = "text", value, onChange, placeholder }) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <div
+      style={{
+        background: focused ? "rgba(196,160,100,0.04)" : "rgba(255,255,255,0.02)",
+        border: `1px solid ${focused ? "rgba(196,160,100,0.35)" : "rgba(196,160,100,0.1)"}`,
+        padding: "20px 24px",
+        transition: "all 0.25s ease",
+      }}
+      onMouseEnter={(e) => { if (!focused) { e.currentTarget.style.borderColor = "rgba(196,160,100,0.35)"; e.currentTarget.style.background = "rgba(196,160,100,0.04)"; } }}
+      onMouseLeave={(e) => { if (!focused) { e.currentTarget.style.borderColor = "rgba(196,160,100,0.1)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; } }}
+    >
+      <label style={{
+        display: "block", fontSize: "0.6rem", fontWeight: 600,
+        letterSpacing: "0.25em", textTransform: "uppercase",
+        color: "rgba(196,160,100,0.5)", marginBottom: 10,
+      }}>
+        {label}
+      </label>
+      <input
+        type={type}
+        name={name}
+        placeholder={placeholder ?? ""}
+        value={value}
+        onChange={onChange}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={{
+          width: "100%", boxSizing: "border-box",
+          background: "transparent", border: "none",
+          borderBottom: `1px solid ${focused ? "#c4a064" : "rgba(196,160,100,0.3)"}`,
+          color: "#f0ece4", fontFamily: "'Barlow', sans-serif",
+          fontSize: "0.95rem", padding: "4px 0", outline: "none",
+          transition: "border-color 0.2s",
+        }}
+      />
+    </div>
+  );
+}
+
 /* ─── página principal ───────────────────────────────────────────────── */
 export default function Login() {
   const navigate = useNavigate();
@@ -265,7 +307,9 @@ export default function Login() {
         cnpj: "",       // Novo
         rua: "",        // Novo
         numero: "",     // Novo
+        bairro: "",
         cidade: "",     // Novo
+        estado: "",
         cep: ""         // Novo
         });
 
@@ -323,69 +367,28 @@ export default function Login() {
       setLoading(false);
     }
   }
-/* ─── campo estilo Conta.js ──────────────────────────────────────────── */
-function CampoForm({ label, name, type = "text", value, onChange, placeholder }) {
-  const [focused, setFocused] = useState(false);
-  return (
-    <div
-      style={{
-        background: focused ? "rgba(196,160,100,0.04)" : "rgba(255,255,255,0.02)",
-        border: `1px solid ${focused ? "rgba(196,160,100,0.35)" : "rgba(196,160,100,0.1)"}`,
-        padding: "20px 24px",
-        transition: "all 0.25s ease",
-      }}
-      onMouseEnter={(e) => { if (!focused) { e.currentTarget.style.borderColor = "rgba(196,160,100,0.35)"; e.currentTarget.style.background = "rgba(196,160,100,0.04)"; } }}
-      onMouseLeave={(e) => { if (!focused) { e.currentTarget.style.borderColor = "rgba(196,160,100,0.1)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; } }}
-    >
-      <label style={{
-        display: "block", fontSize: "0.6rem", fontWeight: 600,
-        letterSpacing: "0.25em", textTransform: "uppercase",
-        color: "rgba(196,160,100,0.5)", marginBottom: 10,
-      }}>
-        {label}
-      </label>
-      <input
-        type={type}
-        name={name}
-        placeholder={placeholder ?? ""}
-        value={value}
-        onChange={onChange}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        style={{
-          width: "100%", boxSizing: "border-box",
-          background: "transparent", border: "none",
-          borderBottom: `1px solid ${focused ? "#c4a064" : "rgba(196,160,100,0.3)"}`,
-          color: "#f0ece4", fontFamily: "'Barlow', sans-serif",
-          fontSize: "0.95rem", padding: "4px 0", outline: "none",
-          transition: "border-color 0.2s",
-        }}
-      />
-    </div>
-  );
-}
+
   async function cadastrar() {
     limpar();
-  
     const obrigatorios = [
-      { campo: "nome",     label: "Nome Completo" },
-      { campo: "email",    label: "E-mail"        },
-      { campo: "senha",    label: "Senha"         },
-      { campo: "whatsapp", label: "WhatsApp"      },
-      { campo: "cpf",      label: "CPF"           },
-    ];
+        { campo: "nome",     label: "Nome Completo" },
+        { campo: "email",    label: "E-mail"        },
+        { campo: "senha",    label: "Senha"         },
+        { campo: "whatsapp", label: "WhatsApp"      },
+        { campo: "cpf",      label: "CPF"           },
+      ];
 
-    for (const { campo, label } of obrigatorios) {
-      if (!formCadastro[campo] || formCadastro[campo].trim() === "") {
-        setErro(`O campo "${label}" é obrigatório.`);
+      for (const { campo, label } of obrigatorios) {
+        if (!formCadastro[campo] || formCadastro[campo].trim() === "") {
+          setErro(`O campo "${label}" é obrigatório.`);
+          return;
+        }
+      }
+
+      if (formCadastro.senha.length < 6) {
+        setErro("A senha deve ter pelo menos 6 caracteres.");
         return;
       }
-    }
-
-    if (formCadastro.senha.length < 6) {
-      setErro("A senha deve ter pelo menos 6 caracteres.");
-      return;
-    }
 
     setLoading(true);
     try {
@@ -621,14 +624,16 @@ function CampoForm({ label, name, type = "text", value, onChange, placeholder })
         gap: 2, marginBottom: 48,
       }}>
         {[
-          { label: "Rua",    name: "rua",    type: "text"   },
-          { label: "Número", name: "numero", type: "number" },
-          { label: "Cidade", name: "cidade", type: "text"   },
-          { label: "CEP",    name: "cep",    type: "text"   },
-        ].map(({ label, name, type }) => (
-          <CampoForm key={name} label={label} name={name} type={type}
-            value={formCadastro[name]} onChange={handleCadastro} />
-        ))}
+        { label: "CEP",    name: "cep",    type: "text"   },
+        { label: "Rua",    name: "rua",    type: "text"   },
+        { label: "Número", name: "numero", type: "number" },
+        { label: "Bairro", name: "bairro", type: "text"   },
+        { label: "Cidade", name: "cidade", type: "text"   },
+        { label: "Estado", name: "estado", type: "text", placeholder: "SP" },
+      ].map(({ label, name, type, placeholder }) => (
+        <CampoForm key={name} label={label} name={name} type={type}
+          placeholder={placeholder} value={formCadastro[name]} onChange={handleCadastro} />
+      ))}
       </div>
 
       {/* ── barra de ação ── */}
