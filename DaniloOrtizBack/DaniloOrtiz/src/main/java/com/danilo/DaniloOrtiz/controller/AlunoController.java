@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/alunos")
@@ -31,6 +32,26 @@ public class AlunoController {
         if(alunoDTOS == null) return ResponseEntity.notFound().build();
 
         return ResponseEntity.ok(alunoDTOS);
+    }
+
+    @PostMapping("/{id}/trocar-senha")
+    public ResponseEntity<?> trocarSenha(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body
+    ) {
+        try {
+            String senhaAtual = body.get("senhaAtual");
+            String senhaNova  = body.get("senhaNova");
+
+            alunoService.trocarSenha(id, senhaAtual, senhaNova);
+
+            return ResponseEntity.ok(Map.of("message", "Senha alterada com sucesso."));
+
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(400)
+                    .body(Map.of("message", e.getMessage()));
+        }
     }
 
     @GetMapping("/me")
@@ -79,6 +100,24 @@ public class AlunoController {
         return ResponseEntity.ok(res);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> atualizarAluno(
+            @PathVariable Long id,
+            @RequestBody Aluno alunoAtualizado
+    ) {
+        try {
+            Aluno aluno = alunoService.atualizar(id, alunoAtualizado);
+
+            if (aluno == null) return ResponseEntity.notFound().build();
+
+            return ResponseEntity.ok(aluno);
+
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(400)
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
 
     @PostMapping
     public ResponseEntity<AlunoDTO> addAluno(@RequestBody Aluno aluno) {

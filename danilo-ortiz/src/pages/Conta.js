@@ -259,6 +259,164 @@ function traduzirMetodo(metodo) {
   return mapa[metodo] ?? metodo ?? "—";
 }
 
+/* ─── modal troca de senha ────────────────────────────────────────────── */
+function ModalTrocarSenha({ onClose, idAluno, token, API, mostrarToast }) {
+  const [senhaAtual, setSenhaAtual]   = useState("");
+  const [senhaNova, setSenhaNova]     = useState("");
+  const [confirmar, setConfirmar]     = useState("");
+  const [salvando, setSalvando]       = useState(false);
+  const [erroLocal, setErroLocal]     = useState("");
+
+  async function handleTrocar() {
+    setErroLocal("");
+    if (!senhaAtual || !senhaNova || !confirmar) {
+      setErroLocal("Preencha todos os campos.");
+      return;
+    }
+    if (senhaNova !== confirmar) {
+      setErroLocal("A nova senha e a confirmação não conferem.");
+      return;
+    }
+    if (senhaNova.length < 6) {
+      setErroLocal("A nova senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+
+    setSalvando(true);
+    try {
+      const res = await fetch(`${API}/alunos/${idAluno}/trocar-senha`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ senhaAtual, senhaNova }),
+      });
+
+      if (res.ok) {
+        mostrarToast("Senha alterada com sucesso!", true);
+        onClose();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setErroLocal(data.message || "Senha atual incorreta ou erro ao salvar.");
+      }
+    } catch {
+      setErroLocal("Erro de conexão.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  return (
+    <div
+      style={{
+        position: "fixed", inset: 0, zIndex: 700,
+        background: "rgba(0,0,0,0.92)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: 20, animation: "fadeIn 0.2s ease",
+      }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div style={{
+        background: "#111", border: "1px solid rgba(196,160,100,0.18)",
+        width: "100%", maxWidth: 420,
+        boxShadow: "0 40px 80px rgba(0,0,0,0.85)",
+        animation: "slideUpCenter 0.22s ease",
+      }}>
+        {/* header */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "15px 20px", borderBottom: "1px solid rgba(196,160,100,0.1)",
+          background: "rgba(196,160,100,0.03)",
+        }}>
+          <div>
+            <p style={{ fontSize: "0.52rem", letterSpacing: "0.35em", color: "rgba(196,160,100,0.45)", textTransform: "uppercase", marginBottom: 3 }}>
+              Segurança
+            </p>
+            <p style={{ fontSize: "0.88rem", color: "#f0ece4", fontWeight: 600 }}>Trocar Senha</p>
+          </div>
+          <button onClick={onClose} style={{
+            background: "transparent", border: "1px solid rgba(240,236,228,0.1)",
+            color: "rgba(240,236,228,0.3)", cursor: "pointer", fontSize: 13,
+            width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center",
+            fontFamily: "inherit",
+          }}>✕</button>
+        </div>
+
+        {/* body */}
+        <div style={{ padding: "24px 24px 8px", display: "flex", flexDirection: "column", gap: 16 }}>
+          {[
+            { label: "Senha Atual",         value: senhaAtual, set: setSenhaAtual },
+            { label: "Nova Senha",           value: senhaNova,  set: setSenhaNova  },
+            { label: "Confirmar Nova Senha", value: confirmar,  set: setConfirmar  },
+          ].map(({ label, value, set }) => (
+            <div key={label}>
+              <label style={{
+                display: "block", fontSize: "0.58rem", fontWeight: 600,
+                letterSpacing: "0.22em", textTransform: "uppercase",
+                color: "rgba(196,160,100,0.55)", marginBottom: 8,
+              }}>
+                {label}
+              </label>
+              <input
+                type="password"
+                value={value}
+                onChange={(e) => set(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleTrocar()}
+                style={{
+                  width: "100%", boxSizing: "border-box",
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(196,160,100,0.2)",
+                  borderBottom: "2px solid rgba(196,160,100,0.5)",
+                  color: "#f0ece4", fontFamily: "'Barlow', sans-serif",
+                  fontSize: "0.9rem", padding: "10px 14px", outline: "none",
+                  transition: "border-color 0.2s",
+                }}
+                onFocus={(e) => (e.target.style.borderColor = "#c4a064")}
+                onBlur={(e)  => (e.target.style.borderBottomColor = "rgba(196,160,100,0.5)")}
+              />
+            </div>
+          ))}
+
+          {erroLocal && (
+            <p style={{
+              fontSize: "0.72rem", color: "#e05555", letterSpacing: "0.04em",
+              background: "rgba(224,85,85,0.07)", border: "1px solid rgba(224,85,85,0.2)",
+              padding: "10px 14px", lineHeight: 1.5,
+            }}>
+              ✕ &nbsp;{erroLocal}
+            </p>
+          )}
+        </div>
+
+        {/* footer */}
+        <div style={{
+          display: "flex", gap: 8, padding: "20px 24px 24px",
+          justifyContent: "flex-end", borderTop: "1px solid rgba(196,160,100,0.07)", marginTop: 16,
+        }}>
+          <button onClick={onClose} style={{ ...S.btnSecondary, padding: "9px 18px", fontSize: "0.7rem" }}>
+            Cancelar
+          </button>
+          <button
+            onClick={handleTrocar}
+            disabled={salvando}
+            style={{ ...S.btnPrimary, padding: "9px 22px", fontSize: "0.7rem", opacity: salvando ? 0.6 : 1 }}
+          >
+            {salvando ? "Salvando..." : "Confirmar Troca →"}
+          </button>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes slideUpCenter {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 /* ─── linha de info dentro do modal ──────────────────────────────────── */
 function InfoRow({ label, valor, cor, mono = false, copiavel = false }) {
   const [copiado, setCopiado] = useState(false);
@@ -744,6 +902,7 @@ const [idAluno, setIdAluno] = useState(null);
   
 const { idAlunoE: idParam } = useParams();
 const isAdminView = searchParams.get("admin") === "true";
+  const [modalSenha, setModalSenha] = useState(false);
 
 
   const [emailLogado, setEmailLogado] = useState(null);
@@ -949,7 +1108,7 @@ const isRailway = window.location.hostname.includes("railway.app");
   const ultimaParcela = MensalidadeParcelasDTOS?.parcelas?.find(
     (p) => p.status === "PENDENTE" || p.status === "AGUARDANDO"
   );
-
+    
   /* ── carregando ── */
   if (!aluno && !erro) {
     return (
@@ -1002,6 +1161,18 @@ const isRailway = window.location.hostname.includes("railway.app");
 
       {/* ── MODAL SISRUN ── */}
       {modalSisrun && <ModalSisrun onClose={() => setModalSisrun(false)} nomeAluno={aluno?.nome} confirmarTrocaStatus={confirmarTrocaStatusSisrun}/>}
+
+      {modalSenha && (
+        <ModalTrocarSenha
+          onClose={() => setModalSenha(false)}
+          idAluno={idAluno}
+          token={token}
+          API={API}
+          mostrarToast={mostrarToast}
+        />
+      )}
+
+
 
       {/* ── BANNER FIXO SISRUN ── */}
       {deveExibirSisrun && (
@@ -1214,7 +1385,19 @@ const isRailway = window.location.hostname.includes("railway.app");
               value={getNestedValue(editado, key)} onChange={(val) => atualizarCampo(key, val)} />
           ))}
         </div>
-
+        <div style={{ marginTop: 8, marginBottom: 32, display: "flex", justifyContent: "flex-end" }}>
+          <button
+            onClick={() => setModalSenha(true)}
+            style={{
+              ...S.btnSecondary,
+              fontSize: "0.7rem", padding: "9px 18px",
+              color: "rgba(196,160,100,0.7)",
+              borderColor: "rgba(196,160,100,0.25)",
+            }}
+          >
+            🔒 Trocar Senha
+          </button>
+        </div>
         {/* salvar */}
         <div style={S.saveBar}>
           <button style={S.btnSecondary} onClick={() => setEditado(aluno)}

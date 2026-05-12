@@ -71,7 +71,7 @@ public class ApiMercadoPago {
                 .externalReference(idPagamentoInterno.toString())
 
                 //aqui ver se o ip foi trocado pq ele vai pelo ip
-                .notificationUrl("https://a1d4-191-205-231-62.ngrok-free.app/v1/pagamentos/notifications")
+                .notificationUrl("https://1343-191-205-231-62.ngrok-free.app/v1/pagamentos/notifications")
                 .autoReturn("approved")
                 .build();
 

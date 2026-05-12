@@ -323,9 +323,70 @@ export default function Login() {
       setLoading(false);
     }
   }
-
+/* ─── campo estilo Conta.js ──────────────────────────────────────────── */
+function CampoForm({ label, name, type = "text", value, onChange, placeholder }) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <div
+      style={{
+        background: focused ? "rgba(196,160,100,0.04)" : "rgba(255,255,255,0.02)",
+        border: `1px solid ${focused ? "rgba(196,160,100,0.35)" : "rgba(196,160,100,0.1)"}`,
+        padding: "20px 24px",
+        transition: "all 0.25s ease",
+      }}
+      onMouseEnter={(e) => { if (!focused) { e.currentTarget.style.borderColor = "rgba(196,160,100,0.35)"; e.currentTarget.style.background = "rgba(196,160,100,0.04)"; } }}
+      onMouseLeave={(e) => { if (!focused) { e.currentTarget.style.borderColor = "rgba(196,160,100,0.1)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; } }}
+    >
+      <label style={{
+        display: "block", fontSize: "0.6rem", fontWeight: 600,
+        letterSpacing: "0.25em", textTransform: "uppercase",
+        color: "rgba(196,160,100,0.5)", marginBottom: 10,
+      }}>
+        {label}
+      </label>
+      <input
+        type={type}
+        name={name}
+        placeholder={placeholder ?? ""}
+        value={value}
+        onChange={onChange}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={{
+          width: "100%", boxSizing: "border-box",
+          background: "transparent", border: "none",
+          borderBottom: `1px solid ${focused ? "#c4a064" : "rgba(196,160,100,0.3)"}`,
+          color: "#f0ece4", fontFamily: "'Barlow', sans-serif",
+          fontSize: "0.95rem", padding: "4px 0", outline: "none",
+          transition: "border-color 0.2s",
+        }}
+      />
+    </div>
+  );
+}
   async function cadastrar() {
     limpar();
+  
+    const obrigatorios = [
+      { campo: "nome",     label: "Nome Completo" },
+      { campo: "email",    label: "E-mail"        },
+      { campo: "senha",    label: "Senha"         },
+      { campo: "whatsapp", label: "WhatsApp"      },
+      { campo: "cpf",      label: "CPF"           },
+    ];
+
+    for (const { campo, label } of obrigatorios) {
+      if (!formCadastro[campo] || formCadastro[campo].trim() === "") {
+        setErro(`O campo "${label}" é obrigatório.`);
+        return;
+      }
+    }
+
+    if (formCadastro.senha.length < 6) {
+      setErro("A senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch(url, {
@@ -436,42 +497,167 @@ export default function Login() {
         )}
 
         {/* ── CADASTRO ── */}
-        {modo === "cadastro" && (
-        <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '8px' }}>
-            <p style={S.formTitle}>Criar Conta</p>
+{modo === "cadastro" && (
+  <div style={{
+    position: "fixed", inset: 0, zIndex: 100,
+    background: "#0a0a0a",
+    overflowY: "auto",
+    fontFamily: "'Barlow', sans-serif",
+  }}>
 
-            <Campo label="Nome completo" name="nome" value={formCadastro.nome} onChange={handleCadastro} />
-            <Campo label="E-mail" name="email" type="email" value={formCadastro.email} onChange={handleCadastro} />
-            <Campo label="Senha" name="senha" type="password" value={formCadastro.senha} onChange={handleCadastro} />
-            <Campo label="WhatsApp" name="whatsapp" value={formCadastro.whatsapp} onChange={handleCadastro} placeholder="(11) 99999-9999" />
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            <Campo label="CPF" name="cpf" value={formCadastro.cpf} onChange={handleCadastro} />
-            <Campo label="CNPJ" name="cnpj" value={formCadastro.cnpj} onChange={handleCadastro} />
-            </div>
+    {/* glow de fundo */}
+    <div style={{
+      position: "fixed", inset: 0, pointerEvents: "none",
+      background: "radial-gradient(ellipse 60% 40% at 50% 0%, rgba(196,160,100,0.08) 0%, transparent 70%)",
+    }} />
 
-            <Campo label="Rua" name="rua" value={formCadastro.rua} onChange={handleCadastro} />
+    {/* header */}
+    <div style={{
+      position: "sticky", top: 0, zIndex: 10,
+      borderBottom: "1px solid rgba(196,160,100,0.1)",
+      background: "rgba(10,10,10,0.95)",
+      backdropFilter: "blur(8px)",
+      padding: "20px 48px",
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+    }}>
+      <div>
+        <p style={{
+          fontSize: "0.55rem", letterSpacing: "0.35em", textTransform: "uppercase",
+          color: "rgba(196,160,100,0.5)", marginBottom: 4,
+        }}>
+          SisRun — Elite Training Platform
+        </p>
+        <h1 style={{
+          fontFamily: "'Bebas Neue', sans-serif", fontSize: "2rem",
+          letterSpacing: "0.06em", color: "#f0ece4", lineHeight: 1,
+        }}>
+          Criar <span style={{ color: "#c4a064" }}>Conta</span>
+        </h1>
+      </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            <Campo label="Número" name="numero" type="number" value={formCadastro.numero} onChange={handleCadastro} />
-            <Campo label="CEP" name="cep" value={formCadastro.cep} onChange={handleCadastro} />
-            </div>
+      <button
+        onClick={voltar}
+        style={{
+          background: "transparent", border: "1px solid rgba(240,236,228,0.12)",
+          color: "rgba(240,236,228,0.4)", cursor: "pointer",
+          fontFamily: "'Barlow', sans-serif", fontSize: "0.65rem",
+          letterSpacing: "0.15em", textTransform: "uppercase",
+          padding: "8px 18px", transition: "all 0.2s",
+        }}
+        onMouseEnter={(e) => { e.target.style.color = "#f0ece4"; e.target.style.borderColor = "rgba(240,236,228,0.4)"; }}
+        onMouseLeave={(e) => { e.target.style.color = "rgba(240,236,228,0.4)"; e.target.style.borderColor = "rgba(240,236,228,0.12)"; }}
+      >
+        ← Voltar
+      </button>
+    </div>
 
-            <Campo label="Cidade" name="cidade" value={formCadastro.cidade} onChange={handleCadastro} />
+    {/* conteúdo */}
+    <div style={{ maxWidth: 860, margin: "0 auto", padding: "48px 48px 100px", position: "relative", zIndex: 1 }}>
 
-            <div style={S.actions}>
-            <button
-                style={{ ...S.btnPrimary, opacity: loading ? 0.6 : 1 }}
-                onClick={cadastrar}
-                disabled={loading}
-            >
-                {loading ? "Cadastrando..." : "Criar Conta"}
-            </button>
+      {/* mensagens */}
+      {erro    && <p style={{ ...S.erroMsg,    marginBottom: 32 }}>{erro}</p>}
+      {sucesso && <p style={{ ...S.successMsg, marginBottom: 32 }}>✓ &nbsp;{sucesso}</p>}
 
-            <button style={S.btnSecondary} onClick={voltar}> ← Voltar </button>
-            </div>
-        </div>
-        )}
+      {/* ── SEÇÃO: Acesso ── */}
+      <p style={{
+        fontSize: "0.6rem", fontWeight: 600, letterSpacing: "0.35em",
+        textTransform: "uppercase", color: "rgba(196,160,100,0.5)",
+        marginBottom: 24, paddingBottom: 12,
+        borderBottom: "1px solid rgba(196,160,100,0.1)",
+      }}>
+        Acesso
+      </p>
+
+      <div style={{
+        display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+        gap: 2, marginBottom: 48,
+      }}>
+        {[
+          { label: "E-mail",  name: "email", type: "email"    },
+          { label: "Senha",   name: "senha", type: "password" },
+        ].map(({ label, name, type }) => (
+          <CampoForm key={name} label={label} name={name} type={type}
+            value={formCadastro[name]} onChange={handleCadastro} />
+        ))}
+      </div>
+
+      {/* ── SEÇÃO: Dados Pessoais ── */}
+      <p style={{
+        fontSize: "0.6rem", fontWeight: 600, letterSpacing: "0.35em",
+        textTransform: "uppercase", color: "rgba(196,160,100,0.5)",
+        marginBottom: 24, paddingBottom: 12,
+        borderBottom: "1px solid rgba(196,160,100,0.1)",
+      }}>
+        Dados Pessoais
+      </p>
+
+      <div style={{
+        display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+        gap: 2, marginBottom: 48,
+      }}>
+        {[
+          { label: "Nome Completo", name: "nome",     type: "text" },
+          { label: "WhatsApp",      name: "whatsapp", type: "text", placeholder: "(11) 99999-9999" },
+          { label: "CPF",           name: "cpf",      type: "text" },
+          { label: "CNPJ",          name: "cnpj",     type: "text" },
+        ].map(({ label, name, type, placeholder }) => (
+          <CampoForm key={name} label={label} name={name} type={type}
+            placeholder={placeholder} value={formCadastro[name]} onChange={handleCadastro} />
+        ))}
+      </div>
+
+      {/* ── SEÇÃO: Endereço ── */}
+      <p style={{
+        fontSize: "0.6rem", fontWeight: 600, letterSpacing: "0.35em",
+        textTransform: "uppercase", color: "rgba(196,160,100,0.5)",
+        marginBottom: 24, paddingBottom: 12,
+        borderBottom: "1px solid rgba(196,160,100,0.1)",
+      }}>
+        Endereço
+      </p>
+
+      <div style={{
+        display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+        gap: 2, marginBottom: 48,
+      }}>
+        {[
+          { label: "Rua",    name: "rua",    type: "text"   },
+          { label: "Número", name: "numero", type: "number" },
+          { label: "Cidade", name: "cidade", type: "text"   },
+          { label: "CEP",    name: "cep",    type: "text"   },
+        ].map(({ label, name, type }) => (
+          <CampoForm key={name} label={label} name={name} type={type}
+            value={formCadastro[name]} onChange={handleCadastro} />
+        ))}
+      </div>
+
+      {/* ── barra de ação ── */}
+      <div style={{
+        display: "flex", justifyContent: "flex-end", gap: 12,
+        paddingTop: 24, borderTop: "1px solid rgba(196,160,100,0.1)",
+      }}>
+        <button
+          style={{ ...S.btnSecondary, width: "auto", padding: "12px 24px" }}
+          onClick={voltar}
+          onMouseEnter={(e) => { e.target.style.color = "#f0ece4"; e.target.style.borderColor = "rgba(240,236,228,0.4)"; }}
+          onMouseLeave={(e) => { e.target.style.color = "rgba(240,236,228,0.35)"; e.target.style.borderColor = "rgba(240,236,228,0.1)"; }}
+        >
+          Cancelar
+        </button>
+        <button
+          style={{ ...S.btnPrimary, width: "auto", padding: "12px 32px", opacity: loading ? 0.6 : 1 }}
+          onClick={cadastrar}
+          disabled={loading}
+          onMouseEnter={(e) => { if (!loading) { e.target.style.background = "transparent"; e.target.style.color = "#c4a064"; } }}
+          onMouseLeave={(e) => { e.target.style.background = "#c4a064"; e.target.style.color = "#0a0a0a"; }}
+        >
+          {loading ? "Cadastrando..." : "Criar Conta →"}
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
       </div>
 
       <style>{`
