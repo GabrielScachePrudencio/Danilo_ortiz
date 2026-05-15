@@ -462,7 +462,38 @@ public class MensalidadeService {
         }
     }
 
+    @Transactional
+    public boolean cancelarSemLog(Long idAluno) {
+        Aluno aluno = alunoService.findById(idAluno);
+        if (aluno == null) return false;
 
+        // Busca mensalidade ativa se existir
+        Mensalidade mensalidade = mensalidadeRepository.findTopByAlunoOrderByDataInicioDesc(aluno);
+
+        if (mensalidade != null) {
+            // Cancela parcelas não finalizadas
+            List<Mensalidades_parcelas> parcelas = mensalidadesParcelasService.findAllByMensalidade(mensalidade);
+            for (Mensalidades_parcelas p : parcelas) {
+                if (!"FINALIZADO".equals(p.getStatus())) {
+                    p.setStatus("CANCELADO");
+                    mensalidadesParcelasService.save(p);
+                }
+            }
+
+            // Cancela a mensalidade
+            mensalidade.setStatusLiberacao("CANCELADO");
+            mensalidade.setPlano(null);
+            save(mensalidade);
+        }
+
+        // Limpa o aluno — isso é o mais importante
+        aluno.setPlanoAtual(null);
+        aluno.setStatusAssinatura("DESATIVADO");
+        alunoService.add(aluno);
+
+        System.out.println("Cancelamento sem log para aluno " + idAluno);
+        return true;
+    }
 
 
 

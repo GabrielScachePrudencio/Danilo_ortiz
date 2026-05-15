@@ -15,4 +15,8 @@ public class ConfiguracaoService {
     public Optional<Configuracao> getConfiguracao(){
         return configuracaoRepository.findById(1);
     }
+
+    public Configuracao salvar(Configuracao configuracao) {
+        return configuracaoRepository.save(configuracao);
+    }
 }

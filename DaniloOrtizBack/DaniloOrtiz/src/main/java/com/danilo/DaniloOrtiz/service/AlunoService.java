@@ -140,11 +140,13 @@ public class AlunoService {
 
 
         // senha: só atualiza se vier E não for vazia
-        if (alunoAtualizado.getSenha() != null && !alunoAtualizado.getSenha().isBlank()) {
+        if (alunoAtualizado.getSenha() != null
+                && !alunoAtualizado.getSenha().isBlank()
+                && !alunoAtualizado.getSenha().startsWith("$2")) {
+            //← não re-encoda hash
             BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
             aluno.setSenha(encoder.encode(alunoAtualizado.getSenha()));
         }
-
         return ar.save(aluno);
     }
 

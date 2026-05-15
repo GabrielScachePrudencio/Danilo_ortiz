@@ -146,29 +146,55 @@ public class MensalidadeController {
                     .build();
 
             // Dados específicos do PIX
-            if ("pix".equalsIgnoreCase(dto.getFormaPagamento())
-                    && mpPayment.getPointOfInteraction() != null
-                    && mpPayment.getPointOfInteraction().getTransactionData() != null) {
+            if ("pix".equalsIgnoreCase(dto.getFormaPagamento())) {
+                System.out.println("=== PIX DEBUG ===");
+                System.out.println("pointOfInteraction: " + mpPayment.getPointOfInteraction());
+                if (mpPayment.getPointOfInteraction() != null) {
+                    System.out.println("transactionData: " + mpPayment.getPointOfInteraction().getTransactionData());
+                    if (mpPayment.getPointOfInteraction().getTransactionData() != null) {
+                        System.out.println("qrCode: " + mpPayment.getPointOfInteraction().getTransactionData().getQrCode());
+                        System.out.println("qrCodeBase64: " + mpPayment.getPointOfInteraction().getTransactionData().getQrCodeBase64());
+                    }
+                }
+                System.out.println("=================");
 
-                response.setPixQrCode(
-                        mpPayment.getPointOfInteraction().getTransactionData().getQrCode()
-                );
-                response.setPixQrCodeBase64(
-                        mpPayment.getPointOfInteraction().getTransactionData().getQrCodeBase64()
-                );
+                if (mpPayment.getPointOfInteraction() != null
+                        && mpPayment.getPointOfInteraction().getTransactionData() != null) {
+                    response.setPixQrCode(
+                            mpPayment.getPointOfInteraction().getTransactionData().getQrCode()
+                    );
+                    response.setPixQrCodeBase64(
+                            mpPayment.getPointOfInteraction().getTransactionData().getQrCodeBase64()
+                    );
+                }
             }
 
             // Dados específicos do Boleto
             if ("boleto".equalsIgnoreCase(dto.getFormaPagamento())) {
-                response.setBoletoUrl(mpPayment.getTransactionDetails() != null
-                        ? mpPayment.getTransactionDetails().getExternalResourceUrl()
-                        : null);
-
-                response.setBoletoBarCode(
-                        mpPayment.getTransactionDetails() != null
-                                ? mpPayment.getTransactionDetails().getExternalResourceUrl()
-                                : null
-                );
+                System.out.println("=== BOLETO DEBUG ===");
+                System.out.println("Status: " + mpPayment.getStatus());
+                System.out.println("StatusDetail: " + mpPayment.getStatusDetail()); // ← motivo real
+                System.out.println("externalResourceUrl: " + mpPayment.getTransactionDetails().getExternalResourceUrl());
+                System.out.println("barcode: " + mpPayment.getTransactionDetails().getBarcode());
+                System.out.println("===================");
+                System.out.println("transactionDetails: " + mpPayment.getTransactionDetails());
+                if (mpPayment.getTransactionDetails() != null) {
+                    System.out.println("externalResourceUrl: " + mpPayment.getTransactionDetails().getExternalResourceUrl());
+                    System.out.println("barcode: " + mpPayment.getTransactionDetails().getBarcode());
+                }
+                System.out.println("===================");
+                if (mpPayment.getTransactionDetails() != null) {
+                    // URL para abrir/imprimir o PDF do boleto
+                    response.setBoletoUrl(
+                            mpPayment.getTransactionDetails().getExternalResourceUrl()
+                    );
+                    // Linha digitável (código de barras) — campo correto
+                    response.setBoletoBarCode(
+                            mpPayment.getTransactionDetails().getBarcode() != null
+                                    ? mpPayment.getTransactionDetails().getBarcode().getContent()
+                                    : mpPayment.getTransactionDetails().getExternalResourceUrl()
+                    );
+                }
             }
 
             // Mensagem por status do cartão
@@ -197,5 +223,12 @@ public class MensalidadeController {
     @GetMapping("/canceladas")
     public ResponseEntity<List<MensalidadeCancelada>> listarCanceladas() {
         return ResponseEntity.ok(mensalidadeCanceladaService.listarTodas());
+    }
+
+    @PostMapping("/cancelar-sem-log/{idAluno}")
+    public ResponseEntity<Boolean> cancelarSemLog(@PathVariable Long idAluno) {
+        boolean resultado = mensalidadeService.cancelarSemLog(idAluno);
+        if (!resultado) return ResponseEntity.badRequest().build();
+        return ResponseEntity.ok(true);
     }
 }

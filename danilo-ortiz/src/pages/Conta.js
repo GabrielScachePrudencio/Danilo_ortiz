@@ -905,6 +905,8 @@ const { idAlunoE: idParam } = useParams();
 const isAdminView = searchParams.get("admin") === "true";
   const [modalSenha, setModalSenha] = useState(false);
 
+const [ehNovaAssinatura, setehNovaAssinatura] = useState(false);
+
 
   const [emailLogado, setEmailLogado] = useState(null);
 
@@ -1027,6 +1029,22 @@ const isRailway = window.location.hostname.includes("railway.app");
       if (res.ok) { const d = await res.json(); setMensalidadeParcelasDTOS(d); }
     } catch { /* silencioso */ }
   }
+
+async function cancelarEVoltar() {
+    try {
+        // só cancela se estava em processo de nova assinatura
+        if (ehNovaAssinatura && idAluno) {
+            await fetch(`${API}/mensalidades/cancelar-sem-log/${idAluno}`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        }
+    } catch {
+        // silencia — o importante é navegar
+    } finally {
+        navigate("/");
+    }
+}
 
   function atualizarCampo(key, valor) {
     if (key === "CEP")    valor = valor.replace(/\D/g, "").slice(0, 8);
@@ -1221,11 +1239,50 @@ const isRailway = window.location.hostname.includes("railway.app");
                 {new Date(MensalidadeParcelasDTOS.dataInicio).toLocaleDateString("pt-BR")} até{" "}
                 {new Date(MensalidadeParcelasDTOS.dataFim).toLocaleDateString("pt-BR")}
               </p>
-              {MensalidadeParcelasDTOS.statusLiberacao === "DESATIVADO" && (
-                <button style={S.btnPagar} onClick={() => navigate(`/home/telapagamento/${MensalidadeParcelasDTOS.planoId}`)}>
-                  Pagar e Ativar Conta
-                </button>
-              )}
+              {MensalidadeParcelasDTOS?.statusLiberacao === "DESATIVADO" && (
+              <>
+                  <button style={S.btnPagar} onClick={() => navigate(`/home/telapagamento/${MensalidadeParcelasDTOS.planoId}`)}>
+                      Pagar e Ativar Conta
+                  </button>
+
+                  {/* ← ADICIONA AQUI — cancelar sem gerar log */}
+                  <button
+                      onClick={async () => {
+                          const confirmou = window.confirm("Deseja cancelar e trocar de plano? Isso vai remover sua associação atual.");
+                          if (!confirmou) return;
+                          try {
+                              await fetch(`${API}/mensalidades/cancelar-sem-log/${idAluno}`, {
+                                  method: "POST",
+                                  headers: { Authorization: `Bearer ${token}` }
+                              });
+                              mostrarToast("Plano removido. Escolha outro plano.", true);
+                              await pegarAlunoPorId();
+                              await pegarDadosMensalidadeAlunoPorId();
+                          } catch {
+                              mostrarToast("Erro ao cancelar.", false);
+                          }
+                      }}
+                      style={{
+                          alignSelf: "flex-start",
+                          marginTop: 6,
+                          fontFamily: "'Barlow', sans-serif",
+                          fontWeight: 500,
+                          fontSize: "0.65rem",
+                          letterSpacing: "0.12em",
+                          textTransform: "uppercase",
+                          padding: "7px 14px",
+                          background: "transparent",
+                          color: "rgba(224,85,85,0.6)",
+                          border: "1px solid rgba(224,85,85,0.2)",
+                          cursor: "pointer",
+                      }}
+                      onMouseEnter={(e) => { e.target.style.color = "#e05555"; e.target.style.borderColor = "rgba(224,85,85,0.5)"; }}
+                      onMouseLeave={(e) => { e.target.style.color = "rgba(224,85,85,0.6)"; e.target.style.borderColor = "rgba(224,85,85,0.2)"; }}
+                  >
+                      Trocar de plano
+                  </button>
+              </>
+          )}
             </div>
           )}
 

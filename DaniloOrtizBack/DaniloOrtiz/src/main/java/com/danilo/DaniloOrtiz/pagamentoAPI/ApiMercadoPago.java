@@ -1,13 +1,16 @@
 package com.danilo.DaniloOrtiz.pagamentoAPI;
 
+import com.danilo.DaniloOrtiz.config.AppConfig;
 import com.danilo.DaniloOrtiz.model.dto.PagamentoCompletoDTO;
 import com.danilo.DaniloOrtiz.model.dto.PagamentoTransparenteDTO;
 import com.danilo.DaniloOrtiz.repository.ConfiguracaoRepository;
 import com.danilo.DaniloOrtiz.service.ConfiguracaoService;
 import com.mercadopago.MercadoPagoConfig;
+import com.mercadopago.client.common.AddressRequest;
 import com.mercadopago.client.common.IdentificationRequest;
 import com.mercadopago.client.payment.PaymentClient;
 import com.mercadopago.client.payment.PaymentCreateRequest;
+import com.mercadopago.client.payment.PaymentPayerAddressRequest;
 import com.mercadopago.client.payment.PaymentPayerRequest;
 import com.mercadopago.client.preference.*;
 import com.mercadopago.exceptions.MPApiException;
@@ -23,8 +26,10 @@ import java.util.List;
 @Service
 public class ApiMercadoPago {
     private static ConfiguracaoService configuracaoServiceStatic;
+    private static String baseUrlStatic;
 
-    public ApiMercadoPago(ConfiguracaoService configuracaoService) {
+    public ApiMercadoPago(ConfiguracaoService configuracaoService, AppConfig appConfig) {
+        ApiMercadoPago.baseUrlStatic = appConfig.getBaseUrl();
         ApiMercadoPago.configuracaoServiceStatic = configuracaoService;
     }
 
@@ -38,16 +43,17 @@ public class ApiMercadoPago {
     }
 
     public static Preference gerarPagamento(PagamentoCompletoDTO pagamentoCompletoDTO, Long idPagamentoInterno) {
+
         if (configuracaoServiceStatic == null) {
             throw new RuntimeException("ConfiguracaoService NÃO foi injetado (static null)");
         }
 
-        MercadoPagoConfig.setAccessToken(
-                configuracaoServiceStatic.getConfiguracao()
-                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
-                        .getMPACCESSTOKEN()
-        );
-
+//        MercadoPagoConfig.setAccessToken(
+//                configuracaoServiceStatic.getConfiguracao()
+//                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
+//                        .getMPACCESSTOKEN()
+//        );
+        configurarMP();
         PreferenceClient cliente = new PreferenceClient();
 
         PreferenceItemRequest item = PreferenceItemRequest.builder()
@@ -58,20 +64,19 @@ public class ApiMercadoPago {
                 .build();
 
         PreferenceBackUrlsRequest backUrlsRequest = PreferenceBackUrlsRequest.builder()
-                //rodar ngrok http 3000
+                //rodar ngrok http 3000 na classe AppConfig
                 // colocar o novo caminho
-                .success("https://a597-191-205-231-62.ngrok-free.app/home/telapagamento/correto")
-                .failure("https://a597-191-205-231-62.ngrok-free.app/home/telapagamento/erro")
-                .pending("https://a597-191-205-231-62.ngrok-free.app/home/telapagamento/pendente")
+                .success(baseUrlStatic + "/home/telapagamento/correto")
+                .failure(baseUrlStatic + "/home/telapagamento/erro")
+                .pending(baseUrlStatic + "/home/telapagamento/pendente")
                 .build();
-
         PreferenceRequest request = PreferenceRequest.builder()
                 .items(List.of(item))
                 .backUrls(backUrlsRequest)
                 .externalReference(idPagamentoInterno.toString())
 
                 //aqui ver se o ip foi trocado pq ele vai pelo ip
-                .notificationUrl("https://1343-191-205-231-62.ngrok-free.app/v1/pagamentos/notifications")
+                .notificationUrl(baseUrlStatic + "/v1/pagamentos/notifications")
                 .autoReturn("approved")
                 .build();
 
@@ -94,11 +99,12 @@ public class ApiMercadoPago {
         }
 
 //        MercadoPagoConfig.setAccessToken(ACCESS_TOKEN);
-        MercadoPagoConfig.setAccessToken(
-                configuracaoServiceStatic.getConfiguracao()
-                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
-                        .getMPACCESSTOKEN()
-        );
+//        MercadoPagoConfig.setAccessToken(
+//                configuracaoServiceStatic.getConfiguracao()
+//                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
+//                        .getMPACCESSTOKEN()
+//        );
+        configurarMP();
 
         PaymentClient client = new PaymentClient();
 
@@ -126,11 +132,13 @@ public class ApiMercadoPago {
         }
 
         //MercadoPagoConfig.setAccessToken(ACCESS_TOKEN);
-        MercadoPagoConfig.setAccessToken(
-                configuracaoServiceStatic.getConfiguracao()
-                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
-                        .getMPACCESSTOKEN()
-        );
+//        MercadoPagoConfig.setAccessToken(
+//                configuracaoServiceStatic.getConfiguracao()
+//                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
+//                        .getMPACCESSTOKEN()
+//        );
+
+        configurarMP();
 
         PaymentClient client = new PaymentClient();
 
@@ -153,36 +161,61 @@ public class ApiMercadoPago {
     }
 
 
+
     //metodo novo
     public static Payment criarPagamentoTransparente(
             PagamentoTransparenteDTO dto,
             com.danilo.DaniloOrtiz.model.Aluno aluno
     ) {
+
+        System.out.println("=== DADOS DO ALUNO PARA BOLETO ===");
+        System.out.println("Nome: " + aluno.getNome());
+        System.out.println("CPF: " + aluno.getCPF());
+        System.out.println("CEP: " + aluno.getCEP());
+        System.out.println("Rua: " + aluno.getRua());
+        System.out.println("Numero: " + aluno.getNumero());
+        System.out.println("Bairro: " + aluno.getBairro());
+        System.out.println("Cidade: " + aluno.getCidade());
+        System.out.println("Estado: " + aluno.getEstado());
+        System.out.println("==================================");
         if (configuracaoServiceStatic == null) {
             throw new RuntimeException("ConfiguracaoService NÃO foi injetado");
         }
 
-        MercadoPagoConfig.setAccessToken(
-                configuracaoServiceStatic.getConfiguracao()
-                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
-                        .getMPACCESSTOKEN()
-        );
+//        MercadoPagoConfig.setAccessToken(
+//                configuracaoServiceStatic.getConfiguracao()
+//                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
+//                        .getMPACCESSTOKEN()
+//        );
+
+        configurarMP();
 
         PaymentClient client = new PaymentClient();
+        String nomeCompleto = aluno.getNome() != null ? aluno.getNome().trim() : "";
+        String[] partes = nomeCompleto.split("\\s+", 2);
+        String firstName = partes[0];
+        String lastName  = partes.length > 1 ? partes[1] : partes[0];
+
+
 
         // ── Monta o pagador ──────────────────────────────────────────────
+//        PaymentPayerRequest.PaymentPayerRequestBuilder payerBuilder =
+//                PaymentPayerRequest.builder()
+//                        .email(aluno.getEmail())
+//                        .firstName(aluno.getNome());
         PaymentPayerRequest.PaymentPayerRequestBuilder payerBuilder =
                 PaymentPayerRequest.builder()
                         .email(aluno.getEmail())
-                        .firstName(aluno.getNome());
+                        .firstName(firstName)
+                        .lastName(lastName);
 
-        // CPF — obrigatório para PIX e Boleto, recomendado para cartão
+// CPF
         String cpf = aluno.getCPF();
         if (cpf != null && !cpf.isBlank()) {
             payerBuilder.identification(
                     IdentificationRequest.builder()
                             .type("CPF")
-                            .number(cpf.replaceAll("[^0-9]", "")) // remove pontos/traços
+                            .number(cpf.replaceAll("[^0-9]", ""))
                             .build()
             );
         }
@@ -192,11 +225,11 @@ public class ApiMercadoPago {
                 PaymentCreateRequest.builder()
                         .transactionAmount(dto.getValor())
                         .description("Plano academia — parcela")
-                        .payer(payerBuilder.build())
+                        //.payer(payerBuilder.build())
                         // externalReference guarda o ID da parcela interna
                         // para o webhook conseguir confirmar depois
                         .externalReference("parcela:" + dto.getParcelaId())
-                        .notificationUrl("https://a1d4-191-205-231-62.ngrok-free.app/v1/pagamentos/notifications");
+                        .notificationUrl(baseUrlStatic + "/v1/pagamentos/notifications");
 
 
         // ── Lógica por método de pagamento ──────────────────────────────
@@ -217,8 +250,37 @@ public class ApiMercadoPago {
                 break;
 
             case "boleto":
-                reqBuilder.paymentMethodId("bolbradesco"); // boleto Bradesco (mais comum)
-                // Você pode trocar por "bolsantander" se preferir
+                reqBuilder
+                        .paymentMethodId("bolbradesco")
+                        .dateOfExpiration(
+                                java.time.OffsetDateTime.now().plusDays(3)  // vence em 3 dias
+                        );
+
+
+                // Endereço completo — obrigatório para boleto registrado
+                String cep = aluno.getCEP() != null
+                        ? aluno.getCEP().toString().replaceAll("[^0-9]", "")
+                        : null;
+
+                if (cep == null || aluno.getRua() == null || aluno.getCidade() == null) {
+                    throw new IllegalArgumentException(
+                            "Endereço incompleto. Boleto exige: CEP, rua, número, bairro, cidade e estado."
+                    );
+                }
+
+                payerBuilder.address(
+                        PaymentPayerAddressRequest.builder()
+                                .zipCode(cep)
+                                .streetName(aluno.getRua())
+                                .streetNumber(aluno.getNumero() != null
+                                        ? aluno.getNumero().toString() : "0")
+                                .neighborhood(aluno.getBairro() != null
+                                        ? aluno.getBairro() : "")
+                                .city(aluno.getCidade())
+                                .federalUnit(aluno.getEstado() != null
+                                        ? aluno.getEstado().toUpperCase() : "SP")
+                                .build()
+                );
                 break;
 
             default:
@@ -228,7 +290,12 @@ public class ApiMercadoPago {
         }
 
         try {
-            Payment payment = client.create(reqBuilder.build());
+            PaymentCreateRequest request = reqBuilder
+                    .payer(payerBuilder.build())   // ← aqui, não antes do switch
+                    .build();
+
+            Payment payment = client.create(request);
+//            Payment payment = client.create(reqBuilder.build());
 
             System.out.println("=== PAGAMENTO TRANSPARENTE CRIADO ===");
             System.out.println("ID MP: " + payment.getId());
@@ -246,5 +313,47 @@ public class ApiMercadoPago {
         }
     }
 
+
+    // ── método central — chame antes de qualquer operação MP ──
+    private static String resolverAccessToken() {
+        var cfg = configuracaoServiceStatic.getConfiguracao()
+                .orElseThrow(() -> new RuntimeException("Configuração não encontrada"));
+
+        boolean isTeste = "TESTE".equalsIgnoreCase(cfg.getMPAMBIENTE());
+
+        String token = isTeste ? cfg.getMPACCESSTOKENTEST() : cfg.getMPACCESSTOKEN();
+
+        if (token == null || token.isBlank()) {
+            throw new RuntimeException("Access Token do MP não configurado para o ambiente: "
+                    + (isTeste ? "TESTE" : "PRODUCAO"));
+        }
+
+        System.out.println("🔑 Ambiente MP: " + (isTeste ? "TESTE" : "PRODUÇÃO"));
+        return token;
+    }
+
+    private static void configurarMP() {
+        if (configuracaoServiceStatic == null) {
+            throw new RuntimeException("ConfiguracaoService NÃO foi injetado (static null)");
+        }
+        MercadoPagoConfig.setAccessToken(resolverAccessToken());
+    }
+
+    public static String resolverPublicKey() {
+        if (configuracaoServiceStatic == null) {
+            throw new RuntimeException("ConfiguracaoService NÃO foi injetado");
+        }
+        var cfg = configuracaoServiceStatic.getConfiguracao()
+                .orElseThrow(() -> new RuntimeException("Configuração não encontrada"));
+
+        boolean isTeste = "TESTE".equalsIgnoreCase(cfg.getMPAMBIENTE());
+        String key = isTeste ? cfg.getMPPUBLICKEYTEST() : cfg.getMPPUBLICKEY();
+
+        if (key == null || key.isBlank()) {
+            throw new RuntimeException("Public Key do MP não configurada para o ambiente: "
+                    + (isTeste ? "TESTE" : "PRODUCAO"));
+        }
+        return key;
+    }
 
 }

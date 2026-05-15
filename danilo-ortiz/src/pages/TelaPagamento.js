@@ -5,7 +5,8 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 // ─── PUBLIC KEY do Mercado Pago ───────────────────────────────────────
 // Troque por sua Public Key de TESTE (começa com TEST-...)
 // Depois de validar, troque pela de produção (APP_USR-...)
-const MP_PUBLIC_KEY = "APP_USR-79991d9f-7628-4759-b8bb-b0fa5259240d";
+//const MP_PUBLIC_KEY = "APP_USR-79991d9f-7628-4759-b8bb-b0fa5259240d";
+//const MP_PUBLIC_KEY = "TEST-53f37eed-9061-4cf2-8484-c88e083f18c8";
 
 
 // ─── Detecção de ambiente ─────────────────────────────────────────────
@@ -341,6 +342,12 @@ export default function TelaPagamento() {
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState(null);
   const [toast, setToast] = useState(null);
+// adiciona junto aos outros estados
+  const [carregandoAuth, setCarregandoAuth] = useState(true);
+  
+  //public key
+  const [mpPublicKey, setMpPublicKey] = useState(null);
+
 
   // ── Método de pagamento
   const [metodo, setMetodo] = useState("pix"); // "pix" | "credit_card" | "boleto"
@@ -406,49 +413,68 @@ export default function TelaPagamento() {
   };
 }, []);
 */
+
+// useEffect 1 — só busca a public key
+useEffect(() => {
+    fetch(`${API}/configuracao/public-key`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+        .then(res => res.json())
+        .then(data => setMpPublicKey(data.publicKey))
+        .catch(() => console.error("Erro ao buscar public key do MP"));
+}, []);
+
+// useEffect 2 — só carrega o SDK quando a key já chegou
+useEffect(() => {
+    if (!mpPublicKey) return; // ← aguarda
+
+    const script = document.createElement("script");
+    script.src = "https://sdk.mercadopago.com/js/v2";
+    script.async = true;
+    script.onload = () => {
+        mpRef.current = new window.MercadoPago(mpPublicKey, { locale: "pt-BR" }); // ✅ usa o estado
+        console.log("MP SDK carregado com key:", mpPublicKey.slice(0, 15) + "...");
+    };
+    document.body.appendChild(script);
+
+    return () => {
+        if (document.body.contains(script)) document.body.removeChild(script);
+    };
+}, [mpPublicKey]); // ← só roda quando a key chegar
+
+// useEffect 3 — autenticação e dados (sem o SDK aqui)
+useEffect(() => {
+    if (!token) {
+        navigate(`/login/${idplano}`);
+        return;
+    }
+
+    fetch(`${API}/alunos/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+    })
+        .then(res => {
+            if (!res.ok) {
+                localStorage.removeItem("token");
+                navigate(`/login/${idplano}`);
+                throw new Error("Não autenticado");
+            }
+            return res.json();
+        })
+        .then(data => {
+            setEmailLogado(data.email);
+            setIdAluno(data.id);
+        })
+        .catch(() => {})
+        .finally(() => setCarregandoAuth(false));
+
+    if (idplano) buscarPlano();
+}, []);
+
 useEffect(() => {
   if (!idAluno) return;
   buscarAluno(idAluno);
   buscarMensalidade(idAluno);
 }, [idAluno]);
-
-useEffect(() => {
-  // Carrega SDK do MP
-  const script = document.createElement("script");
-  script.src = "https://sdk.mercadopago.com/js/v2";
-  script.async = true;
-  script.onload = () => {
-    mpRef.current = new window.MercadoPago(MP_PUBLIC_KEY, { locale: "pt-BR" });
-  };
-  document.body.appendChild(script);
-
-  // Valida token e busca dados do usuário logado
-  if (!token) {
-    navigate(`/login/${idplano}`);
-    return;
-  }
-
-  fetch(`${API}/alunos/me`, {
-    headers: { Authorization: `Bearer ${token}` }
-  })
-    .then(res => {
-      if (!res.ok) {
-        localStorage.removeItem("token");
-        navigate(`/login/${idplano}`);
-        throw new Error("Não autenticado");
-      }
-      return res.json();
-    })
-    .then(data => {
-      setEmailLogado(data.email);
-      setIdAluno(data.id);
-    })
-    .catch(() => {});
-
-  if (idplano) buscarPlano();
-
-  return () => { document.body.removeChild(script); };
-}, []);
 
 
 
@@ -629,6 +655,17 @@ useEffect(() => {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (carregandoAuth) {
+      return (
+          <div style={{ ...S.page, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={S.bgGlow} />
+              <p style={{ color: "rgba(196,160,100,0.5)", letterSpacing: "0.3em", fontSize: "0.7rem" }}>
+                  CARREGANDO...
+              </p>
+          </div>
+      );
   }
 
   // ─── Guards de navegação ─────────────────────────────────────────

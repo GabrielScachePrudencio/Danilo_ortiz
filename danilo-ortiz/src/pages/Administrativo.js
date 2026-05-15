@@ -598,6 +598,15 @@ export default function Conta() {
     const [vendas, setVendas]               = useState([]);
     const [acessoNegado, setAcessoNegado] = useState(false);
 
+const [credentials, setCredentials] = useState({
+    mpaccesstoken: "", mppublickey: "", mpclientsecret: "", mpclientid: "",
+    mpaccesstokentest: "", mppublickeytest: "", mpambiente: "PRODUCAO"
+});
+const [credAtual, setCredAtual] = useState({});
+const [salvando, setSalvando]   = useState(false);
+const [statusSalvo, setStatusSalvo] = useState(null);
+
+
     useEffect(() => {
     if (!token) { navigate("/login"); return; }
 
@@ -644,14 +653,26 @@ export default function Conta() {
         } catch { setErro("Erro ao carregar relatório."); }
     }
 
+    // ✅ correto — carrega tudo no credAtual
     async function pegarTokenAtual() {
         try {
             const res = await fetch(`${BASE_URL}/configuracao`, { headers: { Authorization: `Bearer ${token}` } });
-            if (res.ok) { const d = await res.json(); setTokenAtual(d.mpaccesstoken); }
-            else setErro("Erro ao buscar configurações.");
+            if (res.ok) {
+                const d = await res.json();
+                setTokenAtual(d.mpaccesstoken); // mantém compatibilidade se usar em outro lugar
+                setCredAtual({
+                    mpaccesstoken:     d.mpaccesstoken     || "",
+                    mppublickey:       d.mppublickey       || "",
+                    mpclientid:        d.mpclientid        || "",
+                    mpclientsecret:    d.mpclientsecret    || "",
+                    mpaccesstokentest: d.mpaccesstokentest || "",
+                    mppublickeytest:   d.mppublickeytest   || "",
+                    mpambiente:        d.mpambiente        || "PRODUCAO",
+                });
+            } else setErro("Erro ao buscar configurações.");
         } catch { setErro("Erro ao buscar configurações."); }
     }
-
+    
     async function pegarUltimasVendas() {
         try {
             setCarregando(true);
@@ -695,10 +716,27 @@ export default function Conta() {
         if (!tokenInput.trim()) return;
         setSalvandoToken(true); setTokenStatus(null);
         try {
-            await new Promise(r => setTimeout(r, 600));
-            setTokenAtual(tokenInput); setTokenInput(""); setTokenStatus("ok");
-        } catch { setTokenStatus("erro"); }
-        finally { setSalvandoToken(false); }
+            const payload = { mpaccesstoken: tokenInput };
+            const res = await fetch(`${BASE_URL}/configuracao`, {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                setTokenAtual(tokenInput);
+                setTokenInput("");
+                setTokenStatus("ok");
+            } else {
+                setTokenStatus("erro");
+            }
+        } catch {
+            setTokenStatus("erro");
+        } finally {
+            setSalvandoToken(false);
+        }
     }
 
     const totalAlunos  = relatorio.reduce((s, r) => s + r.quantidade, 0);
@@ -889,33 +927,105 @@ if (!autenticado) return null;
 
                 {/* ══ ABA TOKEN ══ */}
                 {aba === "token" && (
-                    <>
-                        <p style={S.sectionTitle}>Token Mercado Pago</p>
-                        <div style={S.tokenBox}>
-                            <p style={{ fontSize: 13, color: "#888", marginBottom: 22, lineHeight: 1.6 }}>
-                                O token de acesso é usado para processar pagamentos via Mercado Pago.
-                                Troque-o aqui sempre que gerar um novo token no painel do MP.
-                            </p>
-                            <span style={S.tokenLabel}>Token atual</span>
-                            <div style={{ ...S.tokenInput, color: "#555", marginBottom: 24, userSelect: "none", letterSpacing: "0.05em", padding: "10px 14px" }}>
-                                {tokenAtual || "—"}
-                            </div>
-                            <span style={S.tokenLabel}>Novo token</span>
-                            <input style={S.tokenInput} type="password" placeholder="Cole o novo token aqui"
-                                value={tokenInput} onChange={e => setTokenInput(e.target.value)} autoComplete="off"
-                            />
-                            <button style={salvandoToken ? { ...S.btnPrimary, opacity: 0.5 } : S.btnPrimary}
-                                onClick={salvarToken} disabled={salvandoToken}>
-                                {salvandoToken ? "Salvando…" : "Salvar Token"}
-                            </button>
-                            {tokenStatus && (
-                                <div style={S.tokenStatus(tokenStatus === "ok")}>
-                                    {tokenStatus === "ok" ? "✓ Token atualizado com sucesso." : "✗ Erro ao salvar o token. Tente novamente."}
-                                </div>
-                            )}
-                        </div>
-                    </>
+    <>
+        <p style={S.sectionTitle}>Credenciais Mercado Pago</p>
+
+        {/* toggle ambiente */}
+        <div style={{ ...S.tokenBox, marginBottom: 24, display: "flex", alignItems: "center", gap: 20 }}>
+            <span style={{ fontSize: 13, color: "#888" }}>Ambiente ativo:</span>
+            {["PRODUCAO", "TESTE"].map(amb => (
+                <button
+                    key={amb}
+                    style={{
+                        ...S.btnGhost,
+                        ...(credAtual.mpambiente === amb
+                            ? { borderColor: "#e8b44c", color: "#e8b44c", background: "#e8b44c18" }
+                            : {})
+                    }}
+                    onClick={async () => {
+                        await fetch(`${BASE_URL}/configuracao`, {
+                            method: "PUT",
+                            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                            body: JSON.stringify({ ...credAtual, mpambiente: amb })
+                        });
+                        setCredAtual(c => ({ ...c, mpambiente: amb }));
+                    }}
+                >
+                    {amb}
+                </button>
+            ))}
+            <span style={{ fontSize: 11, color: "#555" }}>
+                {credAtual.mpambiente === "TESTE"
+                    ? "⚠ usando credenciais de teste — pagamentos não são reais"
+                    : "✓ usando credenciais de produção"}
+            </span>
+        </div>
+
+        {/* grid de campos */}
+        {[
+            { key: "mpaccesstoken",     label: "Access Token (produção)",  prod: true  },
+            { key: "mppublickey",       label: "Public Key (produção)",    prod: true  },
+            { key: "mpclientid",        label: "Client ID",                prod: true  },
+            { key: "mpclientsecret",    label: "Client Secret",            prod: true  },
+            { key: "mpaccesstokentest", label: "Access Token (teste)",     prod: false },
+            { key: "mppublickeytest",   label: "Public Key (teste)",       prod: false },
+        ].map(({ key, label, prod }) => (
+            <div key={key} style={{ ...S.tokenBox, marginBottom: 16 }}>
+                <span style={S.tokenLabel}>{label}</span>
+                <div style={{ ...S.tokenInput, color: "#555", marginBottom: 12, letterSpacing: "0.03em", padding: "10px 14px", fontSize: 11 }}>
+                    {credAtual[key]
+                        ? credAtual[key].slice(0, 12) + "••••••••••••" + credAtual[key].slice(-4)
+                        : "—"}
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                    <input
+                        style={{ ...S.tokenInput, marginBottom: 0, flex: 1 }}
+                        type="password"
+                        placeholder={`Novo valor para ${label.toLowerCase()}...`}
+                        value={credentials[key]}
+                        onChange={e => setCredentials(c => ({ ...c, [key]: e.target.value }))}
+                        autoComplete="off"
+                    />
+                    <button
+                        style={S.btnPrimary}
+                        onClick={async () => {
+                            if (!credentials[key].trim()) return;
+                            setSalvando(key);
+                            try {
+                                const payload = { ...credAtual, [key]: credentials[key] };
+                                const res = await fetch(`${BASE_URL}/configuracao`, {
+                                    method: "PUT",
+                                    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                                    body: JSON.stringify(payload)
+                                });
+                                if (res.ok) {
+                                    setCredAtual(payload);
+                                    setCredentials(c => ({ ...c, [key]: "" }));
+                                    setStatusSalvo({ key, ok: true });
+                                } else {
+                                    setStatusSalvo({ key, ok: false });
+                                }
+                            } catch {
+                                setStatusSalvo({ key, ok: false });
+                            } finally {
+                                setSalvando(null);
+                                setTimeout(() => setStatusSalvo(null), 3000);
+                            }
+                        }}
+                        disabled={salvando === key}
+                    >
+                        {salvando === key ? "Salvando…" : "Salvar"}
+                    </button>
+                </div>
+                {statusSalvo?.key === key && (
+                    <div style={S.tokenStatus(statusSalvo.ok)}>
+                        {statusSalvo.ok ? "✓ Salvo com sucesso." : "✗ Erro ao salvar."}
+                    </div>
                 )}
+            </div>
+        ))}
+    </>
+)}
 
                 {/* ══ ABA ÚLTIMAS VENDAS ══ */}
                 {aba === "vendas" && (
