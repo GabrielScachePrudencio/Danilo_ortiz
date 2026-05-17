@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class AlunoMapper {
     public AlunoDTO toDTO (Aluno aluno){
-        return new AlunoDTO(aluno.getId(), aluno.getNome(), aluno.getEmail(), aluno.getStatusAssinatura(), aluno.getCriouContaSisrun() ,aluno.getSenha(), aluno.getTipoUsuario()  );
+        return new AlunoDTO(aluno.getId(), aluno.getNome(), aluno.getEmail(), aluno.getStatusAssinatura(), aluno.getCriouContaSisrun() , aluno.getTipoUsuario()  );
     }
     public Aluno toEntity(AlunoDTO dto){
         Aluno aluno = new Aluno();
@@ -16,7 +16,7 @@ public class AlunoMapper {
         aluno.setEmail(dto.getEmail());
         aluno.setStatusAssinatura(dto.getStatusAssinatura());
         aluno.setCriouContaSisrun(dto.getCriouContaSisrun());
-        aluno.setSenha(dto.getSenha());
+
         aluno.setTipoUsuario(dto.getTipoUsuario());
         return aluno;
     }

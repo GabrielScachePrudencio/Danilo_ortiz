@@ -16,8 +16,9 @@ public class MensalidadeComParcelasMapper {
         dto.setAlunoId(mensalidade.getAluno().getId());
         dto.setNomeAluno(mensalidade.getAluno().getNome());
 
-        dto.setPlanoId(mensalidade.getPlano().getId());
-        dto.setNomePlano(mensalidade.getPlano().getNome());
+        dto.setPlanoId(mensalidade.getPlano() != null ? mensalidade.getPlano().getId() : null);
+        dto.setNomePlano(mensalidade.getPlano() != null ? mensalidade.getPlano().getNome() : null);
+// qualquer outro campo que acesse mensalidade.getPlano()
 
         dto.setDataInicio(mensalidade.getDataInicio());
         dto.setDataFim(mensalidade.getDataFim());

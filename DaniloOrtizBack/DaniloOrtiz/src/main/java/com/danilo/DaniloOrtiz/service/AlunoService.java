@@ -84,7 +84,9 @@ public class AlunoService {
 
         return null;
     }
-
+    public void ativarAssinatura(Long idAluno) {
+        ar.atualizarStatusAssinatura(idAluno, "ATIVADO");
+    }
     public Aluno findById(Long id){
         return ar.findById(id);
     }
@@ -148,6 +150,10 @@ public class AlunoService {
             aluno.setSenha(encoder.encode(alunoAtualizado.getSenha()));
         }
         return ar.save(aluno);
+    }
+
+    public void desativarAssinatura(Long id) {
+        ar.desativarAssinatura(id);
     }
 
 }

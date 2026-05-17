@@ -16,10 +16,7 @@ public class WebhookValidator {
      */
     public static boolean validar(String xSignature, String xRequestId, String resourceId) {
 
-        System.out.println("SECRET usada: " + SECRET); // ← adicionar
-        System.out.println("xSignature: " + xSignature);
-        System.out.println("xRequestId: " + xRequestId);
-        System.out.println("resourceId: " + resourceId);
+
 
         if (xSignature == null || xRequestId == null) return false;
 
@@ -46,8 +43,7 @@ public class WebhookValidator {
             return hex.toString().equals(v1);
 
         } catch (Exception e) {
-            System.err.println("Erro ao validar webhook: " + e.getMessage());
-            return false;
+            throw new RuntimeException(e.getMessage());
         }
     }
 }

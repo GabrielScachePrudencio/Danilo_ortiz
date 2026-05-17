@@ -85,12 +85,7 @@ public class MensalidadeController {
     public ResponseEntity<?> abrirPagamentoTransparente(
             @RequestBody PagamentoTransparenteDTO dto
     ) {
-        System.out.println("=== PAYLOAD RECEBIDO ===");
-        System.out.println("alunoId: " + dto.getAlunoId());
-        System.out.println("parcelaId: " + dto.getParcelaId());
-        System.out.println("valor recebido do front: " + dto.getValor());
-        System.out.println("formaPagamento: " + dto.getFormaPagamento());
-        try {
+      try {
             // 1. Busca aluno e parcela no banco
             Aluno aluno = alunoService.findById(dto.getAlunoId());
             if (aluno == null) {
@@ -104,7 +99,6 @@ public class MensalidadeController {
 
             // 2. Usa o valor real da parcela (nunca confia só no front)
             dto.setValor(parcela.getValor());
-            System.out.println("valor real da parcela: " + dto.getValor()); // apareceu no log?
 
             // 3. Cria pagamento interno (status PENDENTE) para rastrear
             Pagamento pagamento = new Pagamento();
@@ -147,16 +141,10 @@ public class MensalidadeController {
 
             // Dados específicos do PIX
             if ("pix".equalsIgnoreCase(dto.getFormaPagamento())) {
-                System.out.println("=== PIX DEBUG ===");
-                System.out.println("pointOfInteraction: " + mpPayment.getPointOfInteraction());
-                if (mpPayment.getPointOfInteraction() != null) {
-                    System.out.println("transactionData: " + mpPayment.getPointOfInteraction().getTransactionData());
+                    if (mpPayment.getPointOfInteraction() != null) {
                     if (mpPayment.getPointOfInteraction().getTransactionData() != null) {
-                        System.out.println("qrCode: " + mpPayment.getPointOfInteraction().getTransactionData().getQrCode());
-                        System.out.println("qrCodeBase64: " + mpPayment.getPointOfInteraction().getTransactionData().getQrCodeBase64());
                     }
                 }
-                System.out.println("=================");
 
                 if (mpPayment.getPointOfInteraction() != null
                         && mpPayment.getPointOfInteraction().getTransactionData() != null) {
@@ -171,18 +159,6 @@ public class MensalidadeController {
 
             // Dados específicos do Boleto
             if ("boleto".equalsIgnoreCase(dto.getFormaPagamento())) {
-                System.out.println("=== BOLETO DEBUG ===");
-                System.out.println("Status: " + mpPayment.getStatus());
-                System.out.println("StatusDetail: " + mpPayment.getStatusDetail()); // ← motivo real
-                System.out.println("externalResourceUrl: " + mpPayment.getTransactionDetails().getExternalResourceUrl());
-                System.out.println("barcode: " + mpPayment.getTransactionDetails().getBarcode());
-                System.out.println("===================");
-                System.out.println("transactionDetails: " + mpPayment.getTransactionDetails());
-                if (mpPayment.getTransactionDetails() != null) {
-                    System.out.println("externalResourceUrl: " + mpPayment.getTransactionDetails().getExternalResourceUrl());
-                    System.out.println("barcode: " + mpPayment.getTransactionDetails().getBarcode());
-                }
-                System.out.println("===================");
                 if (mpPayment.getTransactionDetails() != null) {
                     // URL para abrir/imprimir o PDF do boleto
                     response.setBoletoUrl(
@@ -210,7 +186,6 @@ public class MensalidadeController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("Erro pagamento transparente: " + e.getMessage());
             return ResponseEntity.internalServerError()
                     .body("Erro ao processar pagamento: " + e.getMessage());
         }

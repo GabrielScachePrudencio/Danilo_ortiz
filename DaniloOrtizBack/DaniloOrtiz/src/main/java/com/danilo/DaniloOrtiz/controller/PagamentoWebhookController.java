@@ -96,16 +96,12 @@ public class PagamentoWebhookController {
                 if (!valido) {
                     // MP manda múltiplas notificações — retentativas com request-id diferente
                     // são normais e esperadas, retorna 200 para o MP parar de retentar
-                    System.out.println("ℹ️ Notificação duplicada ou inválida ignorada. ID: " + resourceId);
                     return ResponseEntity.ok().build();  // ← 200 em vez de 401
                 }
-                System.out.println("✅ Assinatura do webhook validada. ID: " + resourceId);
             }
             // ────────────────────────────────────────────────────────────────
 
             if (resourceId != null && ("payment".equals(topic) || (body != null && "payment".equals(body.get("type"))))) {
-                System.out.println("Notificação de pagamento recebida ID: " + resourceId);
-
                 Payment payment = ApiMercadoPago.getPaymentDetails(Long.parseLong(resourceId));
 
                 if ("approved".equals(payment.getStatus())) {

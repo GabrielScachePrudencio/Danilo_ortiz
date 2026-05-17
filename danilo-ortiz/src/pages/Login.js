@@ -282,13 +282,9 @@ export default function Login() {
     ? "http://192.168.15.19:3001/alunos"
     : "http://201.95.94.106:3001/alunos"; */
 
-    const isRailway = window.location.hostname.includes("railway.app");
 
 
-// fallback seguro (NUNCA gera undefined/...)
-//const API = isRailway   ? "https://backend-production-af1ab.up.railway.app"  : (process.env.REACT_APP_API_URL || "http://localhost:3001");
-  const API = isRailway   ? "http://localhost:3001"  : (process.env.REACT_APP_API_URL || "http://localhost:3001");
-
+  const API = process.env.REACT_APP_API_URL || "http://localhost:3001";
   
   const url = API+"/alunos";
 
@@ -360,14 +356,13 @@ export default function Login() {
 
     const token = await res.text();
 
-    console.log("TOKEN:", token);
 
     localStorage.setItem("token", token);
 
 
     setTimeout(() => navigate(idplano ? `/home/telapagamento/${idplano}` : "/"), 800);
     } catch (e) {
-  console.error("ERRO REAL:", e);
+ 
   setErro("Erro de conexão com o servidor.");
 
     } finally {

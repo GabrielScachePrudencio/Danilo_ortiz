@@ -26,11 +26,13 @@ import java.util.List;
 @Service
 public class ApiMercadoPago {
     private static ConfiguracaoService configuracaoServiceStatic;
-    private static String baseUrlStatic;
+    private static AppConfig appConfig;
 
-    public ApiMercadoPago(ConfiguracaoService configuracaoService, AppConfig appConfig) {
-        ApiMercadoPago.baseUrlStatic = appConfig.getBaseUrl();
+    public ApiMercadoPago(ConfiguracaoService configuracaoService,
+                          AppConfig appConfig) {
+
         ApiMercadoPago.configuracaoServiceStatic = configuracaoService;
+        ApiMercadoPago.appConfig = appConfig;
     }
 
     private static final String ACCESS_TOKEN = System.getenv("MP_ACCESS_TOKEN") != null
@@ -43,17 +45,16 @@ public class ApiMercadoPago {
     }
 
     public static Preference gerarPagamento(PagamentoCompletoDTO pagamentoCompletoDTO, Long idPagamentoInterno) {
-
         if (configuracaoServiceStatic == null) {
             throw new RuntimeException("ConfiguracaoService NÃO foi injetado (static null)");
         }
 
-//        MercadoPagoConfig.setAccessToken(
-//                configuracaoServiceStatic.getConfiguracao()
-//                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
-//                        .getMPACCESSTOKEN()
-//        );
-        configurarMP();
+        MercadoPagoConfig.setAccessToken(
+                configuracaoServiceStatic.getConfiguracao()
+                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
+                        .getMPACCESSTOKEN()
+        );
+
         PreferenceClient cliente = new PreferenceClient();
 
         PreferenceItemRequest item = PreferenceItemRequest.builder()
@@ -64,19 +65,24 @@ public class ApiMercadoPago {
                 .build();
 
         PreferenceBackUrlsRequest backUrlsRequest = PreferenceBackUrlsRequest.builder()
-                //rodar ngrok http 3000 na classe AppConfig
+                //rodar ngrok http 3000
                 // colocar o novo caminho
-                .success(baseUrlStatic + "/home/telapagamento/correto")
-                .failure(baseUrlStatic + "/home/telapagamento/erro")
-                .pending(baseUrlStatic + "/home/telapagamento/pendente")
+                .success("https://a597-191-205-231-62.ngrok-free.app/home/telapagamento/correto")
+                .failure("https://a597-191-205-231-62.ngrok-free.app/home/telapagamento/erro")
+                .pending("https://a597-191-205-231-62.ngrok-free.app/home/telapagamento/pendente")
                 .build();
+
+        String url = appConfig.getBaseUrl() + "/v1/pagamentos/notifications";
+
         PreferenceRequest request = PreferenceRequest.builder()
                 .items(List.of(item))
                 .backUrls(backUrlsRequest)
                 .externalReference(idPagamentoInterno.toString())
 
                 //aqui ver se o ip foi trocado pq ele vai pelo ip
-                .notificationUrl(baseUrlStatic + "/v1/pagamentos/notifications")
+                .notificationUrl(
+                        url
+                )
                 .autoReturn("approved")
                 .build();
 
@@ -99,26 +105,18 @@ public class ApiMercadoPago {
         }
 
 //        MercadoPagoConfig.setAccessToken(ACCESS_TOKEN);
-//        MercadoPagoConfig.setAccessToken(
-//                configuracaoServiceStatic.getConfiguracao()
-//                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
-//                        .getMPACCESSTOKEN()
-//        );
-        configurarMP();
+        MercadoPagoConfig.setAccessToken(
+                configuracaoServiceStatic.getConfiguracao()
+                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
+                        .getMPACCESSTOKEN()
+        );
 
         PaymentClient client = new PaymentClient();
 
         try {
             Payment payment = client.get(paymentId);
 
-            System.out.println("--- STATUS DO PAGAMENTO ---");
-            System.out.println("ID: " + payment.getId());
-            System.out.println("Status: " + payment.getStatus());
-            System.out.println("Detalhe: " + payment.getStatusDetail());
-            System.out.println("Valor: " + payment.getTransactionAmount());
-            System.out.println("---------------------------");
-
-            return payment;
+           return payment;
 
         } catch (MPException | MPApiException e) {
             System.err.println("Erro ao consultar pagamento: " + e.getMessage());
@@ -132,25 +130,16 @@ public class ApiMercadoPago {
         }
 
         //MercadoPagoConfig.setAccessToken(ACCESS_TOKEN);
-//        MercadoPagoConfig.setAccessToken(
-//                configuracaoServiceStatic.getConfiguracao()
-//                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
-//                        .getMPACCESSTOKEN()
-//        );
-
-        configurarMP();
+        MercadoPagoConfig.setAccessToken(
+                configuracaoServiceStatic.getConfiguracao()
+                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
+                        .getMPACCESSTOKEN()
+        );
 
         PaymentClient client = new PaymentClient();
 
         try {
             Payment payment = client.get(paymentId);
-
-            System.out.println("--- STATUS DO PAGAMENTO ---");
-            System.out.println("ID: " + payment.getId());
-            System.out.println("Status: " + payment.getStatus());
-            System.out.println("Detalhe: " + payment.getStatusDetail());
-            System.out.println("Valor: " + payment.getTransactionAmount());
-            System.out.println("---------------------------");
 
             return payment;
 
@@ -168,27 +157,16 @@ public class ApiMercadoPago {
             com.danilo.DaniloOrtiz.model.Aluno aluno
     ) {
 
-        System.out.println("=== DADOS DO ALUNO PARA BOLETO ===");
-        System.out.println("Nome: " + aluno.getNome());
-        System.out.println("CPF: " + aluno.getCPF());
-        System.out.println("CEP: " + aluno.getCEP());
-        System.out.println("Rua: " + aluno.getRua());
-        System.out.println("Numero: " + aluno.getNumero());
-        System.out.println("Bairro: " + aluno.getBairro());
-        System.out.println("Cidade: " + aluno.getCidade());
-        System.out.println("Estado: " + aluno.getEstado());
-        System.out.println("==================================");
+
         if (configuracaoServiceStatic == null) {
             throw new RuntimeException("ConfiguracaoService NÃO foi injetado");
         }
 
-//        MercadoPagoConfig.setAccessToken(
-//                configuracaoServiceStatic.getConfiguracao()
-//                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
-//                        .getMPACCESSTOKEN()
-//        );
-
-        configurarMP();
+        MercadoPagoConfig.setAccessToken(
+                configuracaoServiceStatic.getConfiguracao()
+                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
+                        .getMPACCESSTOKEN()
+        );
 
         PaymentClient client = new PaymentClient();
         String nomeCompleto = aluno.getNome() != null ? aluno.getNome().trim() : "";
@@ -219,6 +197,7 @@ public class ApiMercadoPago {
                             .build()
             );
         }
+        String url = appConfig.getBaseUrl() + "/v1/pagamentos/notifications";
 
         // ── Monta a requisição base ──────────────────────────────────────
         PaymentCreateRequest.PaymentCreateRequestBuilder reqBuilder =
@@ -229,8 +208,9 @@ public class ApiMercadoPago {
                         // externalReference guarda o ID da parcela interna
                         // para o webhook conseguir confirmar depois
                         .externalReference("parcela:" + dto.getParcelaId())
-                        .notificationUrl(baseUrlStatic + "/v1/pagamentos/notifications");
-
+                        .notificationUrl(
+                                url
+                        );
 
         // ── Lógica por método de pagamento ──────────────────────────────
         switch (dto.getFormaPagamento().toLowerCase()) {
@@ -297,10 +277,6 @@ public class ApiMercadoPago {
             Payment payment = client.create(request);
 //            Payment payment = client.create(reqBuilder.build());
 
-            System.out.println("=== PAGAMENTO TRANSPARENTE CRIADO ===");
-            System.out.println("ID MP: " + payment.getId());
-            System.out.println("Status: " + payment.getStatus());
-            System.out.println("Método: " + dto.getFormaPagamento());
 
             return payment;
 
@@ -314,46 +290,5 @@ public class ApiMercadoPago {
     }
 
 
-    // ── método central — chame antes de qualquer operação MP ──
-    private static String resolverAccessToken() {
-        var cfg = configuracaoServiceStatic.getConfiguracao()
-                .orElseThrow(() -> new RuntimeException("Configuração não encontrada"));
-
-        boolean isTeste = "TESTE".equalsIgnoreCase(cfg.getMPAMBIENTE());
-
-        String token = isTeste ? cfg.getMPACCESSTOKENTEST() : cfg.getMPACCESSTOKEN();
-
-        if (token == null || token.isBlank()) {
-            throw new RuntimeException("Access Token do MP não configurado para o ambiente: "
-                    + (isTeste ? "TESTE" : "PRODUCAO"));
-        }
-
-        System.out.println("🔑 Ambiente MP: " + (isTeste ? "TESTE" : "PRODUÇÃO"));
-        return token;
-    }
-
-    private static void configurarMP() {
-        if (configuracaoServiceStatic == null) {
-            throw new RuntimeException("ConfiguracaoService NÃO foi injetado (static null)");
-        }
-        MercadoPagoConfig.setAccessToken(resolverAccessToken());
-    }
-
-    public static String resolverPublicKey() {
-        if (configuracaoServiceStatic == null) {
-            throw new RuntimeException("ConfiguracaoService NÃO foi injetado");
-        }
-        var cfg = configuracaoServiceStatic.getConfiguracao()
-                .orElseThrow(() -> new RuntimeException("Configuração não encontrada"));
-
-        boolean isTeste = "TESTE".equalsIgnoreCase(cfg.getMPAMBIENTE());
-        String key = isTeste ? cfg.getMPPUBLICKEYTEST() : cfg.getMPPUBLICKEY();
-
-        if (key == null || key.isBlank()) {
-            throw new RuntimeException("Public Key do MP não configurada para o ambiente: "
-                    + (isTeste ? "TESTE" : "PRODUCAO"));
-        }
-        return key;
-    }
 
 }

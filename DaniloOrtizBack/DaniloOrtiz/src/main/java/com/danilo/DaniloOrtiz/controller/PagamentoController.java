@@ -41,6 +41,16 @@ public class PagamentoController {
             return ResponseEntity.badRequest().build();
         }
 
+        // ── NOVO: verifica se já existe mensalidade DESATIVADO ou CANCELADO para reusa ──
+        Mensalidade existente = mensalidadeService.findTopByAluno(pagamento.getAluno().getId());
+
+        if (existente != null && "DESATIVADO".equals(existente.getStatusLiberacao())) {
+            // Reusa a mensalidade existente, busca a parcela PENDENTE dela
+            // e retorna sem criar nada novo
+            return ResponseEntity.ok(pagamento);
+        }
+
+
         // 🔹 pega parcelas do front
         int totalParcelas = pagamento.getParcelas() != null ? pagamento.getParcelas() : 1;
 

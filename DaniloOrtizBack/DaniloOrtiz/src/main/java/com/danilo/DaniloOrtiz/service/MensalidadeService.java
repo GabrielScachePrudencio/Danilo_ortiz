@@ -62,7 +62,7 @@ public class MensalidadeService {
         if (aluno == null) return false;
 
         Mensalidade mensalidade = mensalidadeRepository
-                .findTopByAlunoOrderByDataInicioDesc(aluno);
+                .findTopByAlunoOrderByIdDesc(aluno);
         if (mensalidade == null) return false;
 
         List<Mensalidades_parcelas> todasParcelas =
@@ -132,27 +132,26 @@ public class MensalidadeService {
         save(mensalidade);
 
         // ── atualiza aluno ───────────────────────────────────────────────────
-        aluno.setStatusAssinatura("DESATIVADO");
-        aluno.setPlanoAtual(null);                // plano null no aluno
-        alunoService.add(aluno);
+        alunoService.desativarAssinatura(aluno.getId());
+
 
         return true;
     }
 
     public MensalidadeComParcelasDTO mensalidadeCompletaPorIdAluno(Long id){
         Aluno aluno = alunoService.findById(id);
-
         if(aluno == null) return null;
 
-        Mensalidade mensalidade = mensalidadeRepository.findTopByAlunoOrderByDataInicioDesc(aluno);
-
+        Mensalidade mensalidade = mensalidadeRepository.findTopByAlunoOrderByIdDesc(aluno);
         if(mensalidade == null) return null;
 
-        List<Mensalidades_parcelas> listaDeParcelas = mensalidadesParcelasService.findAllByMensalidadePendenteFinalizado(mensalidade);
+        // ← ADICIONA ISSO
+        if("CANCELADO".equals(mensalidade.getStatusLiberacao())) return null;
 
-        MensalidadeComParcelasDTO mensalidadeCompletaComParcelas = MensalidadeComParcelasMapper.toDTO(mensalidade, listaDeParcelas);
+        List<Mensalidades_parcelas> listaDeParcelas =
+                mensalidadesParcelasService.findAllByMensalidadePendenteFinalizado(mensalidade);
 
-        return mensalidadeCompletaComParcelas;
+        return MensalidadeComParcelasMapper.toDTO(mensalidade, listaDeParcelas);
     }
 
 
@@ -294,15 +293,15 @@ public class MensalidadeService {
             mensalidade.setStatusLiberacao("ATIVADO");
             save(mensalidade);
 
-
             //ativa o aluno se ja não estiver
-            Aluno aluno = alunoService.findById(pagamento.getAluno().getId());
-            if(aluno.getStatusAssinatura().equalsIgnoreCase("DESATIVADO")){
-                aluno.setStatusAssinatura("ATIVADO");
-            }
-            alunoService.add(aluno);
+            alunoService.ativarAssinatura(pagamento.getAluno().getId());
 
-            System.out.println("Pagamento " + idpagamentoInterno + " confirmado com sucesso!");
+            Aluno aluno = alunoService.findById(pagamento.getAluno().getId());
+//            if(aluno.getStatusAssinatura().equalsIgnoreCase("DESATIVADO")){
+//                aluno.setStatusAssinatura("ATIVADO");
+//            }
+//            alunoService.add(aluno);
+
 
             //envia o email de confirmação
 
@@ -396,7 +395,7 @@ public class MensalidadeService {
         Mensalidades_parcelas parcela = mensalidadesParcelasService.findById(parcelaId);
 
         if (parcela == null) {
-            System.err.println("Parcela não encontrada: " + parcelaId);
+            System.err.println("Parcela não encontrada");
             return;
         }
 
@@ -405,12 +404,11 @@ public class MensalidadeService {
         Pagamento pagamento = parcela.getPagamento();
 
         if (pagamento == null) {
-            System.out.println("Pagamento não vinculado na parcela, buscando por mpPaymentId: " + mpId);
             pagamento = pagamentoService.findByMpPaymentId(mpId);
         }
 
         if (pagamento == null) {
-            System.err.println("Pagamento não encontrado nem por parcela nem por mpPaymentId: " + mpId);
+            System.err.println("Pagamento não encontrado nem por parcela nem");
             return;
         }
 
@@ -439,13 +437,13 @@ public class MensalidadeService {
             mensalidade.setStatusLiberacao("ATIVADO");
             save(mensalidade);
 
-            Aluno aluno = alunoService.findById(pagamento.getAluno().getId());
-            if (aluno.getStatusAssinatura().equalsIgnoreCase("DESATIVADO")) {
-                aluno.setStatusAssinatura("ATIVADO");
-            }
-            alunoService.add(aluno);
+//            if (aluno.getStatusAssinatura().equalsIgnoreCase("DESATIVADO")) {
+//                aluno.setStatusAssinatura("ATIVADO");
+//            }
+//            alunoService.add(aluno);
+             alunoService.ativarAssinatura(pagamento.getAluno().getId());
+             Aluno aluno = alunoService.findById(pagamento.getAluno().getId());
 
-            System.out.println("Parcela " + parcelaId + " confirmada com sucesso!");
 
             byte[] pdf = comprovanteService.gerarComprovante(
                     aluno.getNome(),
@@ -468,7 +466,7 @@ public class MensalidadeService {
         if (aluno == null) return false;
 
         // Busca mensalidade ativa se existir
-        Mensalidade mensalidade = mensalidadeRepository.findTopByAlunoOrderByDataInicioDesc(aluno);
+        Mensalidade mensalidade = mensalidadeRepository.findTopByAlunoOrderByIdDesc(aluno);
 
         if (mensalidade != null) {
             // Cancela parcelas não finalizadas
@@ -487,16 +485,17 @@ public class MensalidadeService {
         }
 
         // Limpa o aluno — isso é o mais importante
-        aluno.setPlanoAtual(null);
-        aluno.setStatusAssinatura("DESATIVADO");
-        alunoService.add(aluno);
+        alunoService.desativarAssinatura(aluno.getId());
 
-        System.out.println("Cancelamento sem log para aluno " + idAluno);
         return true;
     }
 
 
-
+    public Mensalidade findTopByAluno(Long idAluno) {
+        Aluno aluno = alunoService.findById(idAluno);
+        if (aluno == null) return null;
+        return mensalidadeRepository.findTopByAlunoOrderByIdDesc(aluno);
+    }
 
 
 }

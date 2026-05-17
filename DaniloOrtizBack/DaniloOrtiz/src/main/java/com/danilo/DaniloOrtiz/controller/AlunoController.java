@@ -4,6 +4,7 @@ package com.danilo.DaniloOrtiz.controller;
 import com.danilo.DaniloOrtiz.model.Aluno;
 import com.danilo.DaniloOrtiz.model.dto.AlunoDTO;
 import com.danilo.DaniloOrtiz.model.dto.AlunoPorPlanoDTO;
+import com.danilo.DaniloOrtiz.model.dto.LoginDTO;
 import com.danilo.DaniloOrtiz.model.mapper.AlunoMapper;
 import com.danilo.DaniloOrtiz.service.AlunoService;
 import lombok.RequiredArgsConstructor;
@@ -63,7 +64,7 @@ public class AlunoController {
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         AlunoDTO alunoDTO = mapper.toDTO(aluno);
-        alunoDTO.setSenha(null);
+//        alunoDTO.setSenha(null);
 
         return ResponseEntity.ok(alunoDTO);
     }
@@ -135,16 +136,16 @@ public class AlunoController {
 
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AlunoDTO alunoDTO){
+    public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO){
 
-        if(alunoDTO.getEmail() == null || alunoDTO.getSenha() == null){
+        if(loginDTO.getEmail() == null || loginDTO.getSenha() == null){
             return ResponseEntity.badRequest().body("Email e senha são obrigatórios");
         }
 
 
         String tokenCompleto = alunoService.loginComToken(
-                alunoDTO.getEmail(),
-                alunoDTO.getSenha()
+                loginDTO.getEmail(),
+                loginDTO.getSenha()
         );
 
         if(tokenCompleto == null){

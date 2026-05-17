@@ -11,9 +11,8 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 
 // ─── Detecção de ambiente ─────────────────────────────────────────────
 const isRailway = window.location.hostname.includes("railway.app");
-const API = isRailway
-  ? "https://backend-production-af1ab.up.railway.app"
-  : process.env.REACT_APP_API_URL || "http://localhost:3001";
+const API = process.env.REACT_APP_API_URL || "http://localhost:3001";
+
 
 // ─── Bandeiras por BIN (primeiros 6 dígitos) ─────────────────────────
 function detectarBandeira(numero) {
@@ -369,11 +368,12 @@ export default function TelaPagamento() {
 
   // ── Valores calculados
   const agora = new Date();
-  const parcelaPendente = mensalidadeDTO?.parcelas
-    ?.filter((p) => p.status !== "FINALIZADO")
-    ?.sort((a, b) => new Date(a.dataVencimento) - new Date(b.dataVencimento))[0];
+const parcelaPendente = mensalidadeDTO?.parcelas
+  ?.filter((p) => p.status === "PENDENTE")
+  ?.sort((a, b) => new Date(a.dataVencimento) - new Date(b.dataVencimento))[0];
 
-  const ehNovaAssinatura = !mensalidadeDTO?.parcelas || aluno?.planoAtual?.id == null;
+// CORRETO: nova assinatura = não tem parcela pendente
+const ehNovaAssinatura = !parcelaPendente;
 
   const valorTotal = ehNovaAssinatura
     ? parcelasParam === 1
@@ -419,9 +419,9 @@ useEffect(() => {
     fetch(`${API}/configuracao/public-key`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     })
-        .then(res => res.json())
-        .then(data => setMpPublicKey(data.publicKey))
-        .catch(() => console.error("Erro ao buscar public key do MP"));
+    .then(res => res.json())
+    .then(data => setMpPublicKey(data.publicKey))
+        
 }, []);
 
 // useEffect 2 — só carrega o SDK quando a key já chegou
@@ -433,7 +433,7 @@ useEffect(() => {
     script.async = true;
     script.onload = () => {
         mpRef.current = new window.MercadoPago(mpPublicKey, { locale: "pt-BR" }); // ✅ usa o estado
-        console.log("MP SDK carregado com key:", mpPublicKey.slice(0, 15) + "...");
+        
     };
     document.body.appendChild(script);
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const isRailway = window.location.hostname.includes("railway.app");
-const API = isRailway ? "http://localhost:3001" : (process.env.REACT_APP_API_URL || "http://localhost:3001");
+const API = process.env.REACT_APP_API_URL || "http://localhost:3001";
 const BASE_URL = API;
 
 // ─── estilos ─────────────────────────────────────────────────────────────────

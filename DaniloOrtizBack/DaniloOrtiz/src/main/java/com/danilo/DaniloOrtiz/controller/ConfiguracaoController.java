@@ -45,13 +45,23 @@ public class ConfiguracaoController {
         return ResponseEntity.ok(salvo);
     }
 
-    @GetMapping("/configuracao/public-key")
+    @GetMapping("/public-key")
     public ResponseEntity<Map<String, String>> publicKey() {
+        Configuracao config = configuracaoService.getConfiguracao()
+                .orElseThrow(() -> new RuntimeException("Configuração não encontrada"));
+
+        String publicKey;
+
+        if ("TEST".equalsIgnoreCase(config.getMPAMBIENTE())) {
+            publicKey = config.getMPPUBLICKEYTEST();
+        } else {
+            publicKey = config.getMPPUBLICKEY();
+        }
+
         return ResponseEntity.ok(Map.of(
-                "publicKey", ApiMercadoPago.resolverPublicKey(),
-                "ambiente",  configuracaoService.getConfiguracao()
-                        .map(c -> c.getMPAMBIENTE())
-                        .orElse("PRODUCAO")
+                "publicKey", publicKey,
+                "ambiente", config.getMPAMBIENTE()
         ));
+
     }
 }

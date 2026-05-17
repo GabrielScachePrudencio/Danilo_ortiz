@@ -13,10 +13,6 @@ public class EmailTesteRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-//        System.out.println("Enviando email...");
-//
-//        emailService.enviar("bielscache@gmail.com");
-//
-//        System.out.println("Email enviado!");
+
     }
 }

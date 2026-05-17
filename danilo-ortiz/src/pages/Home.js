@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 // ─── IMAGENS via Unsplash ───────────────────────────────────────────────────
@@ -158,7 +158,8 @@ body{background:var(--ink);color:var(--snow)}
 .nbtn-gold:hover{background:var(--gold2)}
 
 /* HERO */
-.hero{position:relative;min-height:100vh;display:grid;grid-template-columns:1fr 640px;align-items:end;overflow:hidden}
+.hero{position:relative;min-height:100vh;display:grid;grid-template-columns:1fr 640px;align-items:stretch;overflow:hidden}
+.hero-right{position:relative;min-height:100vh;overflow:hidden;align-self:stretch}
 .hero-left{position:relative;z-index:2;padding:180px 48px 100px}
 .hero-eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:.68rem;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-bottom:24px}
 .hero-eyebrow::before{content:'';width:28px;height:1px;background:var(--gold)}
@@ -171,7 +172,7 @@ body{background:var(--ink);color:var(--snow)}
 .hero-hint{font-size:.72rem;color:var(--muted);letter-spacing:.06em;display:flex;align-items:center;gap:8px}
 .hero-hint::before{content:'✓';color:var(--gold)}
 .hero-right{position:relative;height:100vh;overflow:hidden}
-.hero-img{width:100%;height:100%;object-fit:cover;object-position:center top;filter:grayscale(0%) contrast(1.05)}
+.hero-img{width:100%;height:100%;object-fit:cover;object-position:top center;position:absolute;top:0;left:0;...}
 .hero-img-overlay{position:absolute;inset:0;background:linear-gradient(90deg,var(--ink) 0%,transparent 40%),linear-gradient(0deg,var(--ink) 0%,transparent 30%)}
 .hero-badge{position:absolute;bottom:80px;left:-28px;background:var(--gold);color:var(--ink);padding:18px 26px;border-radius:3px;font-family:var(--cond);font-weight:800;font-size:.9rem;letter-spacing:.08em;text-transform:uppercase;box-shadow:0 20px 60px rgba(0,0,0,.6);z-index:3}
 .hero-badge span{display:block;font-size:2.2rem;line-height:1}
@@ -256,6 +257,71 @@ body{background:var(--ink);color:var(--snow)}
 .dots span:nth-child(2){animation-delay:.2s}
 .dots span:nth-child(3){animation-delay:.4s}
 
+/* ── CARROSSEL DE PLANOS ── */
+.planos-carousel-wrap{position:relative;overflow:hidden;margin-bottom:48px}
+.planos-carousel{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:8px 4px 16px;cursor:grab}
+.planos-carousel::-webkit-scrollbar{display:none}
+.planos-carousel.grabbing{cursor:grabbing}
+.plan-card{
+  flex:0 0 280px;scroll-snap-align:start;
+  background:var(--ink2);border:1px solid var(--border);
+  position:relative;overflow:hidden;transition:border-color .25s,transform .25s;
+}
+.plan-card:hover{border-color:rgba(212,168,67,.4);transform:translateY(-4px)}
+.plan-card.active-plan{border-color:var(--gold);background:rgba(212,168,67,.06)}
+.plan-card-img{width:100%;height:180px;object-fit:cover;filter:grayscale(20%) brightness(.75);display:block;transition:filter .4s}
+.plan-card:hover .plan-card-img{filter:grayscale(0%) brightness(.65)}
+.plan-card-img-overlay{position:absolute;top:0;left:0;right:0;height:180px;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.85) 100%)}
+.plan-card-tag{position:absolute;top:12px;left:12px;background:var(--gold);color:var(--ink);font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px}
+.plan-card-body{padding:24px 22px 22px}
+.plan-card-num{font-family:var(--cond);font-size:3rem;font-weight:800;color:rgba(212,168,67,.15);line-height:1;position:absolute;top:148px;right:16px}
+.plan-card-nome{font-family:var(--cond);font-size:1.4rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;line-height:1.1;margin-bottom:6px}
+.plan-card-dur{font-size:.68rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:18px}
+.plan-card-price{display:flex;align-items:baseline;gap:4px;margin-bottom:20px}
+.plan-card-cur{font-size:.85rem;color:var(--gold);font-family:var(--cond);font-weight:700}
+.plan-card-val{font-family:var(--cond);font-size:2.6rem;font-weight:800;line-height:1}
+.plan-card-per{font-size:.65rem;color:var(--muted);letter-spacing:.08em;align-self:flex-end;padding-bottom:4px}
+.plan-card-btn{
+  width:100%;padding:12px;background:var(--gold);color:var(--ink);
+  border:none;cursor:pointer;font-family:var(--sans);font-size:.72rem;
+  font-weight:700;letter-spacing:.12em;text-transform:uppercase;transition:background .2s;
+}
+.plan-card-btn:hover{background:var(--gold2)}
+.plan-card-btn.btn-ghost-gold{background:transparent;border:1px solid var(--gold);color:var(--gold)}
+.plan-card-btn.btn-ghost-gold:hover{background:rgba(212,168,67,.1)}
+.carousel-dots{display:flex;justify-content:center;gap:6px;margin-top:4px}
+.carousel-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;transition:all .2s;padding:0}
+.carousel-dot.active{background:var(--gold);width:22px;border-radius:3px}
+
+/* ── TABELA DE PLANOS ── */
+.planos-table{width:100%;border-collapse:collapse;margin-bottom:32px}
+.planos-table thead tr{border-bottom:2px solid var(--gold)}
+.planos-table th{padding:14px 20px;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);text-align:left;font-weight:700}
+.planos-table th:last-child{text-align:center}
+.planos-table tbody tr{border-bottom:1px solid var(--border);transition:background .2s;cursor:pointer}
+.planos-table tbody tr:hover{background:rgba(212,168,67,.04)}
+.planos-table tbody tr.tr-active{background:rgba(212,168,67,.07)}
+.planos-table td{padding:16px 20px;font-size:.85rem;vertical-align:middle}
+.td-num{font-family:var(--cond);font-size:1.4rem;font-weight:800;color:rgba(212,168,67,.25);width:48px}
+.td-nome{font-family:var(--cond);font-size:1.1rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.td-dur{font-size:.7rem;color:var(--muted);letter-spacing:.08em;margin-top:3px}
+.td-price{font-family:var(--cond);font-size:1.5rem;font-weight:800;white-space:nowrap}
+.td-price small{font-size:.75rem;color:var(--gold);margin-right:3px;font-family:var(--sans)}
+.td-action{text-align:center;width:160px}
+.td-btn{
+  padding:9px 20px;background:var(--gold);color:var(--ink);
+  border:none;cursor:pointer;font-family:var(--sans);font-size:.65rem;
+  font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  transition:all .2s;white-space:nowrap;
+}
+.td-btn:hover{background:var(--gold2)}
+.td-btn.ghost{background:transparent;border:1px solid rgba(212,168,67,.4);color:var(--gold)}
+.td-btn.ghost:hover{background:rgba(212,168,67,.1)}
+.td-tag-seu{display:inline-block;background:var(--gold);color:var(--ink);font-size:.55rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;margin-left:8px;vertical-align:middle}
+.td-tag-popular{display:inline-block;background:transparent;border:1px solid rgba(212,168,67,.4);color:var(--gold);font-size:.55rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;margin-left:8px;vertical-align:middle}
+
+
+
 /* FOOTER */
 .footer{border-top:1px solid var(--border);padding:36px 48px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;background:var(--ink)}
 .footer-brand{font-family:var(--cond);font-size:1.1rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
@@ -331,9 +397,18 @@ body{background:var(--ink);color:var(--snow)}
 
 /* RESPONSIVE */
 @media(max-width:900px){
-  .hero{grid-template-columns:1fr}
-  .hero-right{display:none}
-  .hero-left{padding:140px 24px 80px}
+  .hero{grid-template-columns:1fr; min-height:auto}
+  .hero-right{
+    display:block;          /* reativa */
+    height:340px;           /* altura controlada */
+    order:-1;               /* foto ACIMA do texto */
+  }
+  .hero-img{object-position:center 15%}  /* enquadra rosto */
+  .hero-img-overlay{
+    background:linear-gradient(to top,var(--ink) 0%,transparent 40%),
+               linear-gradient(to bottom,var(--ink) 0%,transparent 20%);
+  }
+  .hero-left{padding:40px 24px 80px} 
   .sobre{grid-template-columns:1fr}
   .sobre-img-wrap{height:320px}
   .sobre-content{padding:48px 24px}
@@ -349,7 +424,62 @@ body{background:var(--ink);color:var(--snow)}
   .footer{padding:28px 24px}
   .mp-opts{gap:2px}
 }
+
+
+/* RESPONSIVE */
+@media(max-width:1400px){
+  /* hero continua em 2 colunas, mas proporções ajustadas */
+  .hero{grid-template-columns:1fr 1fr; min-height:100vh; align-items:stretch}
+  .hero-right{
+    display:block;
+    height:100%;
+    min-height:100vh;
+    order:0; /* mantém à direita */
+  }
+  .hero-img{object-position:center top}
+  .hero-img-overlay{
+    background:linear-gradient(90deg,var(--ink) 0%,transparent 40%),
+               linear-gradient(0deg,var(--ink) 0%,transparent 30%);
+  }
+  .hero-left{padding:140px 32px 100px}
+  /* resto igual */
+  .sobre{grid-template-columns:1fr}
+  .sobre-img-wrap{height:320px}
+  .sobre-content{padding:48px 24px}
+  .exercicios,.depoi,.planos-sec{padding:64px 24px}
+  .ex-grid{grid-template-columns:repeat(2,1fr)}
+  .depoi-grid{grid-template-columns:1fr}
+  .nav{padding:14px 20px}
+  .sec-header{flex-direction:column;align-items:flex-start;gap:12px}
+  .sec-note{text-align:left}
+  .plano-row{grid-template-columns:40px 1fr;grid-template-rows:auto auto;gap:12px 10px;padding:18px 20px}
+  .plano-price{grid-column:2;grid-row:2;text-align:left}
+  .plano-btn{display:none}
+  .footer{padding:28px 24px}
+  .mp-opts{gap:2px}
+}
+
+/* só em telas realmente pequenas (celular) aí empilha */
+@media(max-width:700px){
+  .hero{grid-template-columns:1fr; min-height:auto}
+  .hero-right{height:300px; order:-1}
+  .hero-img{object-position:center 20%}
+  .hero-img-overlay{
+    background:linear-gradient(to top,var(--ink) 0%,transparent 45%),
+               linear-gradient(to bottom,var(--ink) 0%,transparent 20%);
+  }
+  .hero-left{padding:32px 24px 80px}
+}
+A lógica é:
+
+1200px–700px: mantém lado a lado com 1fr 1fr — texto à esquerda, foto à direita alinhada
+abaixo de 700px: aí sim empilha, foto em cima com altura fixa de 300px
+
+
+
 `;
+
+
 
 // ─── MODAL DE PARCELAS ──────────────────────────────────────────────────────
 function ModalParcelas({ plano, onConfirmar, onFechar }) {
@@ -493,6 +623,8 @@ function ModalParcelas({ plano, onConfirmar, onFechar }) {
   );
 }
 
+
+
 // ─── COMPONENTE PRINCIPAL ───────────────────────────────────────────────────
 export default function Home() {
   const token = localStorage.getItem("token");
@@ -534,27 +666,15 @@ export default function Home() {
 // 🔥 DEBUG API URL
 const RAW_API = process.env.REACT_APP_API_URL;
 
-console.log("==== DEBUG API CONFIG ====");
-console.log("process.env.REACT_APP_API_URL:", RAW_API);
-console.log("window.location.hostname:", window.location.hostname);
-
 // fallback seguro (NUNCA gera undefined/...)
 //const API = isRailway   ? "https://backend-production-af1ab.up.railway.app"  : (process.env.REACT_APP_API_URL || "http://localhost:3001");
-const API = isRailway   ? "http://localhost:3001"  : (process.env.REACT_APP_API_URL || "http://localhost:3001");
+const API = process.env.REACT_APP_API_URL || "http://localhost:3001";
 
-console.log("API FINAL USADA:", API);
-if (!RAW_API) {
-  console.warn("⚠️ ENV NÃO CARREGADA! usando fallback");
-}
 // monta URLs finais
 const url = `${API}/planos`;
 const urlAlunos = `${API}/alunos`;
 const urlMensalidade = `${API}/mensalidades`;
 
-console.log("URL PLANOS:", url);
-console.log("URL ALUNOS:", urlAlunos);
-console.log("URL MENSALIDADE:", urlMensalidade);
-console.log("==== FIM DEBUG API ====");
 
 const syncLogin = () => {
     setEmailLogado(localStorage.getItem("email"));
@@ -791,6 +911,36 @@ const syncLogin = () => {
 
       <style>{CSS}</style>
       <div className="page">
+        {/* ── BOTÃO FLUTUANTE PLANOS ── */}
+<button
+  onClick={scrollPlanos}
+  style={{
+    position: "fixed",
+    right: 20,
+    bottom: "1%",
+    transform: "translateY(-50%)",
+    zIndex: 300,
+    background: "#d4a843",
+    color: "#0a0a0a",
+    border: "none",
+    cursor: "pointer",
+    textOrientation: "mixed",
+    fontFamily: "'Barlow Condensed', sans-serif",
+    fontWeight: 800,
+    fontSize: ".75rem",
+    letterSpacing: ".2em",
+    textTransform: "uppercase",
+    padding: "18px 10px",
+    borderRadius: "2px",
+    boxShadow: "0 8px 32px rgba(212,168,67,.35)",
+    transition: "all .25s",
+  }}
+  onMouseEnter={e => e.currentTarget.style.background = "#f0c96a"}
+  onMouseLeave={e => e.currentTarget.style.background = "#d4a843"}
+>
+  Ver Planos →
+</button>
+
 
         {/* ── MODAL PARCELAS ── */}
         {modalPlano && (
@@ -814,6 +964,12 @@ const syncLogin = () => {
               }}>
                 Plano: {aluno.planoAtual.nome}
               </span>
+            )}
+            {/* ── ADMIN ── */}
+            {aluno?.tipoUsuario === "ADMIN" && (
+              <button className="nbtn nbtn-ghost" onClick={() => navigate("/home/administrativo")} >
+                Administrativo
+              </button>
             )}
             {emailLogado ? (
               <>
@@ -843,7 +999,7 @@ const syncLogin = () => {
             </div>
           </div>
           <div className="hero-right">
-            <img src="/img/daniloFamilia.jpg" alt="Danilo Ortiz personal trainer" className="hero-img" />
+            <img src="/img/Danilo.jpg" alt="Danilo Ortiz personal trainer" className="hero-img" />
             <div className="hero-img-overlay" />
             <div className="hero-badge"><span>8+</span>Anos de experiência</div>
           </div>
@@ -947,69 +1103,161 @@ const syncLogin = () => {
           {erro && <p className="state-box">{erro}</p>}
 
           {carregando ? (
-            <div className="state-box"><div className="dots"><span /><span /><span /></div></div>
-          ) : (
-            <>
-              <div className="planos-list">
-                {planos.map((plano, i) => {
-                  const ehPlanoDoAluno = aluno?.planoAtual?.id === plano.id;
-                  return (
-                    <button
-                      key={plano.id}
-                      className="plano-row"
-                      onClick={(e) => clicarPlano(e, plano)}
-                      style={{
-                        border: ehPlanoDoAluno ? "2px solid #d4a843" : undefined,
-                        background: ehPlanoDoAluno ? "rgba(212,168,67,.08)" : undefined,
-                      }}
-                    >
-                      <span className="plano-num">{String(i + 1).padStart(2, "0")}</span>
-                      <div>
-                        <div className="plano-nome-txt">
-                          {plano.nome}
-                          {ehPlanoDoAluno && (
-                            <span style={{
-                              marginLeft: 10, fontSize: ".6rem", background: "#d4a843",
-                              color: "#0c0c0c", padding: "4px 8px", letterSpacing: ".1em",
-                              textTransform: "uppercase", fontWeight: "bold",
-                            }}>
-                              Seu plano
-                            </span>
-                          )}
-                          {i === destaqueIdx && !ehPlanoDoAluno && (
-                            <span className="popular-tag">Mais popular</span>
-                          )}
-                        </div>
-                        <div className="plano-dur">
-                          {plano.duracaomeses} {plano.duracaomeses === 1 ? "mês" : "meses"} de assessoria completa
-                        </div>
-                      </div>
-                      <div className="plano-price">
-                        <div className="plano-price-label">por mês</div>
-                        <div className="plano-price-val">
-                          <span className="cur">R$</span>
-                          {Number(plano.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                        </div>
-                      </div>
-                      <div className="plano-btn">
-                        {ehPlanoDoAluno ? "Seu plano atual" : "Contratar"}
-                        <div className="arrow-circle">→</div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+  <div className="state-box"><div className="dots"><span /><span /><span /></div></div>
+) : (
+  <>
 
-              <div className="planos-note">
-                <span className="note-icon">⚡</span>
-                <p>
-                  <strong>Como funciona:</strong> após o pagamento via Pix, você cria sua conta no SisRun
-                  com o mesmo e-mail e entra em contato com o Danilo. O acesso ao grupo é liberado em
-                  até <strong>24 horas</strong>. Sem taxa de adesão, sem contrato de fidelidade.
-                </p>
-              </div>
-            </>
+    <div style={{
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+  gap: 16,
+  marginBottom: 48,
+}}>
+  {planos.map((plano, i) => {
+    const ehPlanoDoAluno = aluno?.planoAtual?.id === plano.id;
+    return (
+      <div
+        key={plano.id}
+        style={{
+          background: ehPlanoDoAluno ? "rgba(212,168,67,.06)" : "var(--ink2)",
+          border: `1px solid ${ehPlanoDoAluno ? "var(--gold)" : "var(--border)"}`,
+          padding: "32px 28px",
+          position: "relative",
+          transition: "border-color .25s, transform .25s",
+          cursor: "pointer",
+        }}
+        onMouseEnter={e => e.currentTarget.style.transform = "translateY(-4px)"}
+        onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+        onClick={(e) => clicarPlano(e, plano)}
+      >
+        {/* número decorativo */}
+        <div style={{
+          position: "absolute", top: 20, right: 20,
+          fontFamily: "var(--cond)", fontSize: "3.5rem", fontWeight: 800,
+          color: "rgba(212,168,67,.1)", lineHeight: 1, userSelect: "none",
+        }}>
+          {String(i + 1).padStart(2, "0")}
+        </div>
+
+        {/* tags */}
+        <div style={{ marginBottom: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {ehPlanoDoAluno && (
+            <span style={{ background: "var(--gold)", color: "var(--ink)", fontSize: ".58rem",
+              fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", padding: "4px 10px" }}>
+              Seu plano
+            </span>
           )}
+          {i === destaqueIdx && !ehPlanoDoAluno && (
+            <span style={{ background: "transparent", border: "1px solid rgba(212,168,67,.4)",
+              color: "var(--gold)", fontSize: ".58rem", fontWeight: 700,
+              letterSpacing: ".12em", textTransform: "uppercase", padding: "4px 10px" }}>
+              Mais popular
+            </span>
+          )}
+        </div>
+
+        {/* nome */}
+        <div style={{ fontFamily: "var(--cond)", fontSize: "1.5rem", fontWeight: 800,
+          textTransform: "uppercase", letterSpacing: ".05em", lineHeight: 1.1, marginBottom: 6 }}>
+          {plano.nome}
+        </div>
+
+        {/* duração */}
+        <div style={{ fontSize: ".68rem", color: "var(--muted)", letterSpacing: ".1em",
+          textTransform: "uppercase", marginBottom: 24 }}>
+          {plano.duracaomeses} {plano.duracaomeses === 1 ? "mês" : "meses"} de assessoria
+        </div>
+
+        {/* preço */}
+        <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 28 }}>
+          <span style={{ fontSize: ".85rem", color: "var(--gold)", fontFamily: "var(--cond)", fontWeight: 700 }}>R$</span>
+          <span style={{ fontFamily: "var(--cond)", fontSize: "2.8rem", fontWeight: 800, lineHeight: 1 }}>
+            {Number(plano.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+          </span>
+          <span style={{ fontSize: ".65rem", color: "var(--muted)", alignSelf: "flex-end", paddingBottom: 4 }}>/mês</span>
+        </div>
+
+        {/* botão */}
+        <button
+          onClick={(e) => { e.stopPropagation(); clicarPlano(e, plano); }}
+          style={{
+            width: "100%", padding: "13px",
+            background: ehPlanoDoAluno ? "transparent" : "var(--gold)",
+            color: ehPlanoDoAluno ? "var(--gold)" : "var(--ink)",
+            border: ehPlanoDoAluno ? "1px solid var(--gold)" : "none",
+            cursor: "pointer", fontFamily: "var(--sans)",
+            fontSize: ".72rem", fontWeight: 700,
+            letterSpacing: ".12em", textTransform: "uppercase",
+            transition: "background .2s",
+          }}
+        >
+          {ehPlanoDoAluno ? "Plano atual" : "Contratar →"}
+        </button>
+      </div>
+    );
+  })}
+</div>
+
+
+    {/* ── TABELA ── */}
+    <table className="planos-table">
+      <thead>
+        <tr>
+          <th style={{width:48}}>#</th>
+          <th>Plano</th>
+          <th>Duração</th>
+          <th>Valor / mês</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {planos.map((plano, i) => {
+          const ehPlanoDoAluno = aluno?.planoAtual?.id === plano.id;
+          return (
+            <tr
+              key={plano.id}
+              className={ehPlanoDoAluno ? "tr-active" : ""}
+              onClick={(e) => clicarPlano(e, plano)}
+            >
+              <td className="td-num">{String(i + 1).padStart(2, "0")}</td>
+              <td>
+                <div className="td-nome">
+                  {plano.nome}
+                  {ehPlanoDoAluno && <span className="td-tag-seu">Seu plano</span>}
+                  {i === destaqueIdx && !ehPlanoDoAluno && <span className="td-tag-popular">Popular</span>}
+                </div>
+              </td>
+              <td className="td-dur" style={{fontSize:".8rem",color:"var(--muted)"}}>
+                {plano.duracaomeses} {plano.duracaomeses === 1 ? "mês" : "meses"}
+              </td>
+              <td className="td-price">
+                <small>R$</small>
+                {Number(plano.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </td>
+              <td className="td-action">
+                <button
+                  className={`td-btn ${ehPlanoDoAluno ? "ghost" : ""}`}
+                  onClick={(e) => clicarPlano(e, plano)}
+                >
+                  {ehPlanoDoAluno ? "Plano atual" : "Contratar →"}
+                </button>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+
+    <div className="planos-note">
+      <span className="note-icon">⚡</span>
+      <p>
+        <strong>Como funciona:</strong> após o pagamento via Pix, você cria sua conta no SisRun
+        com o mesmo e-mail e entra em contato com o Danilo. O acesso ao grupo é liberado em
+        até <strong>24 horas</strong>. Sem taxa de adesão, sem contrato de fidelidade.
+      </p>
+    </div>
+  </>
+)}
         </section>
 
           {toast && (

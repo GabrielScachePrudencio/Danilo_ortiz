@@ -35,6 +35,10 @@ public class SecurityConfig {
 
                         // 🔒 rotas exclusivas de ADMIN
                         .requestMatchers("/alunos").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.GET, "/mensalidades/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/mensalidades/**").authenticated()
+
                         .requestMatchers("/alunos/qtdd-aluno-por-plano").hasRole("ADMIN")
                         .requestMatchers("/alunos/atualizar-status-aluno/**").hasRole("ADMIN")
                         .requestMatchers("/alunos/atualizar-status-contasisrun-aluno/**").hasRole("ADMIN")

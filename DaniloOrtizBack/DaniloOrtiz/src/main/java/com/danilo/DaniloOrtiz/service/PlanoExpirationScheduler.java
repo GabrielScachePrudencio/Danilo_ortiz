@@ -125,13 +125,7 @@ public class PlanoExpirationScheduler {
             aluno.setPlanoAtual(null); // remove vínculo com o plano
             alunoService.add(aluno);
 
-            System.out.println("[Scheduler] Aluno " + aluno.getId()
-                    + " (" + aluno.getNome() + ") desativado por inadimplência. "
-                    + "Parcela vencida: " + parcela.getId()
-                    + " | Vencimento: " + parcela.getDataVencimento());
         }
 
-        System.out.println("[Scheduler] Verificação concluída. "
-                + parcelasVencidas.size() + " parcela(s) vencida(s) processada(s).");
     }
 }
