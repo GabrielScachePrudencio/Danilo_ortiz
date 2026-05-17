@@ -46,6 +46,7 @@ public class SecurityConfig {
                         .requestMatchers("/mensalidades/canceladas").hasRole("ADMIN")
                         .requestMatchers("/configuracao").hasRole("ADMIN")
 
+                        .requestMatchers("/manifest.json").permitAll()
 
                         // 🔒 resto protegido
                         .anyRequest().authenticated()
@@ -58,7 +59,17 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
+        List<String> origins = new java.util.ArrayList<>();
+        origins.add("http://localhost:3000");
+        origins.add("http://192.168.15.19:3000");
+        origins.add("https://*.vercel.app");
+
+        String frontendUrl = System.getenv("FRONTEND_URL");
+        if (frontendUrl != null && !frontendUrl.isBlank()) {
+            origins.add(frontendUrl);
+        }
+
+        config.setAllowedOriginPatterns(origins); // ← mudou aqui
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
