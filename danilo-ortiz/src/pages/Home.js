@@ -688,7 +688,7 @@ const syncLogin = () => {
         return;
       }
 
-      fetch("http://localhost:3001/alunos/me", {
+      fetch(`${API}/alunos/me`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
