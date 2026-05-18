@@ -57,7 +57,7 @@ public class AlunoController {
 
     @GetMapping("/me")
     public ResponseEntity<AlunoDTO> getMe(Authentication authentication) {
-
+        System.out.println("teste ME");
         String email = authentication.getName(); // vem do token
 
         Aluno aluno = alunoService.findByEmail(email)
