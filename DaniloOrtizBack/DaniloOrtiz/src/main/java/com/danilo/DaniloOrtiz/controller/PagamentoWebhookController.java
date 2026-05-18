@@ -80,6 +80,12 @@ public class PagamentoWebhookController {
             @RequestHeader(value = "x-signature",   required = false) String xSignature,   // ← NOVO
             @RequestHeader(value = "x-request-id",  required = false) String xRequestId    // ← NOVO
     ) {
+        System.out.println("=== WEBHOOK RECEBIDO ===");
+        System.out.println("topic: " + topic);
+        System.out.println("id: " + id);
+        System.out.println("body: " + body);
+        System.out.println("x-signature: " + xSignature);
+        System.out.println("x-request-id: " + xRequestId);
         try {
             String resourceId = id;
 
@@ -93,11 +99,14 @@ public class PagamentoWebhookController {
 //            // ── VALIDAÇÃO DA ASSINATURA ──────────────────────────────────────
             if (resourceId != null && xSignature != null) {
                 boolean valido = WebhookValidator.validar(xSignature, xRequestId, resourceId);
+                System.out.println("assinatura válida? " + valido);
+
                 if (!valido) {
                     // MP manda múltiplas notificações — retentativas com request-id diferente
                     // são normais e esperadas, retorna 200 para o MP parar de retentar
                     return ResponseEntity.ok().build();  // ← 200 em vez de 401
                 }
+
             }
             // ────────────────────────────────────────────────────────────────
 
