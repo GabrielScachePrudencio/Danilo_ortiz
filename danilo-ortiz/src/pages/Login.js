@@ -1,11 +1,44 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
+/* ─── paleta de cores centralizada ─────────────────────────────────── */
+const PALETTE = {
+  bgPage: "#0a0a0a",
+  textPrimary: "#f0ece4",
+  accent: "#c4a064", // Dourado principal
+  
+  // Variações do Accent (Dourado) com Opacidade
+  accentGlow: "rgba(196,160,100,0.1)",
+  accentBorder: "rgba(196,160,100,0.2)",
+  accentBorderLight: "rgba(196,160,100,0.15)",
+  accentBorderSoft: "rgba(196,160,100,0.12)",
+  accentBorderUltraLight: "rgba(196,160,100,0.1)",
+  accentBgBadge: "rgba(196,160,100,0.06)",
+  accentTextMuted: "rgba(196,160,100,0.5)",
+  accentTextUltraMuted: "rgba(196,160,100,0.3)",
+  accentBorderOutlined: "rgba(196,160,100,0.4)",
+
+  // Variações do Texto Primário / Brancos com Opacidade
+  whiteCardBg: "rgba(255,255,255,0.02)",
+  whiteInputBg: "rgba(255,255,255,0.03)",
+  textSecondaryBtn: "rgba(240,236,228,0.35)",
+  borderSecondaryBtn: "rgba(240,236,228,0.1)",
+
+  // Estados de Feedback (Erro e Sucesso)
+  error: "#e05555",
+  errorBorder: "rgba(224,85,85,0.3)",
+  errorBg: "rgba(224,85,85,0.05)",
+  
+  success: "#6fcf7a",
+  successBorder: "rgba(111,207,122,0.3)",
+  successBg: "rgba(111,207,122,0.05)",
+};
+
 /* ─── estilos locais ─────────────────────────────────────────────────── */
 const S = {
   page: {
     minHeight: "100vh",
-    background: "#0a0a0a",
+    background: PALETTE.bgPage,
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -17,8 +50,7 @@ const S = {
   bgGlow: {
     position: "fixed",
     inset: 0,
-    background:
-      "radial-gradient(ellipse 70% 50% at 50% 0%, rgba(196,160,100,0.1) 0%, transparent 70%)",
+    background: `radial-gradient(ellipse 70% 50% at 50% 0%, ${PALETTE.accentGlow} 0%, transparent 70%)`,
     pointerEvents: "none",
     zIndex: 0,
   },
@@ -28,8 +60,8 @@ const S = {
     width: "100%",
     maxWidth: 440,
     padding: "56px 48px",
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid rgba(196,160,100,0.2)",
+    background: PALETTE.whiteCardBg,
+    border: `1px solid ${PALETTE.accentBorder}`,
     display: "flex",
     flexDirection: "column",
     gap: 0,
@@ -38,20 +70,20 @@ const S = {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: "3.5rem",
     letterSpacing: "0.06em",
-    color: "#f0ece4",
+    color: PALETTE.textPrimary,
     lineHeight: 1,
     marginBottom: 4,
     textAlign: "center",
   },
   logoAccent: {
-    color: "#c4a064",
+    color: PALETTE.accent,
   },
   eyebrow: {
     fontSize: "0.6rem",
     fontWeight: 600,
     letterSpacing: "0.35em",
     textTransform: "uppercase",
-    color: "rgba(196,160,100,0.5)",
+    color: PALETTE.accentTextMuted,
     textAlign: "center",
     marginBottom: 40,
   },
@@ -60,8 +92,8 @@ const S = {
     alignItems: "center",
     gap: 8,
     padding: "10px 16px",
-    background: "rgba(196,160,100,0.06)",
-    border: "1px solid rgba(196,160,100,0.2)",
+    background: PALETTE.accentBgBadge,
+    border: `1px solid ${PALETTE.accentBorder}`,
     marginBottom: 32,
   },
   planoBadgeLabel: {
@@ -69,26 +101,26 @@ const S = {
     fontWeight: 600,
     letterSpacing: "0.25em",
     textTransform: "uppercase",
-    color: "rgba(196,160,100,0.5)",
+    color: PALETTE.accentTextMuted,
   },
   planoBadgeValue: {
     fontSize: "0.75rem",
     fontWeight: 600,
     letterSpacing: "0.1em",
-    color: "#c4a064",
+    color: PALETTE.accent,
     marginLeft: "auto",
   },
   divider: {
     width: "100%",
     height: 1,
-    background: "rgba(196,160,100,0.12)",
+    background: PALETTE.accentBorderSoft,
     margin: "8px 0 32px",
   },
   formTitle: {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: "1.8rem",
     letterSpacing: "0.05em",
-    color: "#f0ece4",
+    color: PALETTE.textPrimary,
     marginBottom: 28,
   },
   inputGroup: {
@@ -102,13 +134,13 @@ const S = {
     fontWeight: 600,
     letterSpacing: "0.25em",
     textTransform: "uppercase",
-    color: "rgba(196,160,100,0.5)",
+    color: PALETTE.accentTextMuted,
   },
   input: {
-    background: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(196,160,100,0.15)",
+    background: PALETTE.whiteInputBg,
+    border: `1px solid ${PALETTE.accentBorderLight}`,
     borderRadius: 0,
-    color: "#f0ece4",
+    color: PALETTE.textPrimary,
     fontFamily: "'Barlow', sans-serif",
     fontSize: "0.9rem",
     padding: "12px 16px",
@@ -129,9 +161,9 @@ const S = {
     letterSpacing: "0.2em",
     textTransform: "uppercase",
     padding: "14px",
-    background: "#c4a064",
-    color: "#0a0a0a",
-    border: "1px solid #c4a064",
+    background: PALETTE.accent,
+    color: PALETTE.bgPage,
+    border: `1px solid ${PALETTE.accent}`,
     cursor: "pointer",
     transition: "all 0.25s ease",
     width: "100%",
@@ -144,8 +176,8 @@ const S = {
     textTransform: "uppercase",
     padding: "12px",
     background: "transparent",
-    color: "rgba(240,236,228,0.35)",
-    border: "1px solid rgba(240,236,228,0.1)",
+    color: PALETTE.textSecondaryBtn,
+    border: `1px solid ${PALETTE.borderSecondaryBtn}`,
     cursor: "pointer",
     transition: "all 0.25s ease",
     width: "100%",
@@ -158,8 +190,8 @@ const S = {
     textTransform: "uppercase",
     padding: "14px",
     background: "transparent",
-    color: "#c4a064",
-    border: "1px solid rgba(196,160,100,0.4)",
+    color: PALETTE.accent,
+    border: `1px solid ${PALETTE.accentBorderOutlined}`,
     cursor: "pointer",
     transition: "all 0.25s ease",
     width: "100%",
@@ -167,20 +199,20 @@ const S = {
   erroMsg: {
     fontSize: "0.75rem",
     letterSpacing: "0.05em",
-    color: "#e05555",
+    color: PALETTE.error,
     padding: "10px 14px",
-    border: "1px solid rgba(224,85,85,0.3)",
-    background: "rgba(224,85,85,0.05)",
+    border: `1px solid ${PALETTE.errorBorder}`,
+    background: PALETTE.errorBg,
     marginBottom: 20,
     textAlign: "center",
   },
   successMsg: {
     fontSize: "0.75rem",
     letterSpacing: "0.05em",
-    color: "#6fcf7a",
+    color: PALETTE.success,
     padding: "10px 14px",
-    border: "1px solid rgba(111,207,122,0.3)",
-    background: "rgba(111,207,122,0.05)",
+    border: `1px solid ${PALETTE.successBorder}`,
+    background: PALETTE.successBg,
     marginBottom: 20,
     textAlign: "center",
   },
@@ -193,13 +225,13 @@ const S = {
   separadorLine: {
     flex: 1,
     height: 1,
-    background: "rgba(196,160,100,0.1)",
+    background: PALETTE.accentBorderUltraLight,
   },
   separadorText: {
     fontSize: "0.6rem",
     letterSpacing: "0.2em",
     textTransform: "uppercase",
-    color: "rgba(196,160,100,0.3)",
+    color: PALETTE.accentTextUltraMuted,
   },
 };
 

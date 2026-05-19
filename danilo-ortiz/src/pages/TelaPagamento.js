@@ -39,20 +39,63 @@ function formatarValor(v) {
 }
 
 // ─── Estilos ─────────────────────────────────────────────────────────
+// ─── Paleta de Cores Centralizada ───────────────────────────────────
+const PALETTE = {
+  bgPage: "#0a0a0a",
+  bgSelect: "#111010",
+  bgWhite: "#ffffff",
+  textPrimary: "#f0ece4",
+  accent: "#c4a064", // Dourado principal
+
+  // Variações do Accent (Dourado) com Opacidade
+  accentGlow: "rgba(196,160,100,0.1)",
+  accentTextMuted: "rgba(196,160,100,0.5)",
+  accentTextSoft: "rgba(196,160,100,0.45)",
+  accentBorder: "rgba(196,160,100,0.25)",
+  accentBorderDefault: "rgba(196,160,100,0.2)",
+  accentBorderLight: "rgba(196,160,100,0.15)",
+  accentBorderSoft: "rgba(196,160,100,0.12)",
+  accentBorderUltraLight: "rgba(196,160,100,0.1)",
+  accentBgCardSelected: "rgba(196,160,100,0.08)",
+  accentBgTotal: "rgba(196,160,100,0.05)",
+  accentBgResult: "rgba(196,160,100,0.04)",
+  accentDisabled: "rgba(196,160,100,0.3)",
+
+  // Variações do Texto Primário / Brancos com Opacidade
+  whiteBgCard: "rgba(255,255,255,0.02)",
+  whiteBgInput: "rgba(255,255,255,0.03)",
+  whiteBgCopiaCola: "rgba(255,255,255,0.04)",
+  textSecondaryBtn: "rgba(240,236,228,0.35)",
+  textMuted: "rgba(240,236,228,0.4)",
+  textSoft: "rgba(240,236,228,0.7)",
+  borderSecondaryBtn: "rgba(240,236,228,0.1)",
+
+  // Estados de Feedback (Sucesso e Erro)
+  success: "#6fcf7a",
+  successBgBox: "rgba(90,180,100,0.07)",
+  successBgToast: "rgba(90,180,100,0.1)",
+  successBorder: "rgba(90,180,100,0.3)",
+  successBorderToast: "rgba(90,180,100,0.4)",
+
+  error: "#e05555",
+  errorBgToast: "rgba(224,85,85,0.1)",
+  errorBorderToast: "rgba(224,85,85,0.4)",
+};
+
+// ─── Estilos ─────────────────────────────────────────────────────────
 const S = {
   page: {
     minHeight: "100vh",
-    background: "#0a0a0a",
+    background: PALETTE.bgPage,
     fontFamily: "'Barlow', sans-serif",
-    color: "#f0ece4",
+    color: PALETTE.textPrimary,
     position: "relative",
     overflow: "hidden",
   },
   bgGlow: {
     position: "fixed",
     inset: 0,
-    background:
-      "radial-gradient(ellipse 70% 50% at 50% -5%, rgba(196,160,100,0.1) 0%, transparent 65%)",
+    background: `radial-gradient(ellipse 70% 50% at 50% -5%, ${PALETTE.accentGlow} 0%, transparent 65%)`,
     pointerEvents: "none",
     zIndex: 0,
   },
@@ -68,7 +111,7 @@ const S = {
     fontWeight: 600,
     letterSpacing: "0.35em",
     textTransform: "uppercase",
-    color: "rgba(196,160,100,0.5)",
+    color: PALETTE.accentTextMuted,
     marginBottom: 12,
   },
   titulo: {
@@ -76,20 +119,20 @@ const S = {
     fontSize: "clamp(3.5rem, 8vw, 6rem)",
     lineHeight: 0.9,
     letterSpacing: "0.04em",
-    color: "#f0ece4",
+    color: PALETTE.textPrimary,
     marginBottom: 8,
   },
-  tituloAccent: { color: "#c4a064" },
-  divider: { width: 60, height: 2, background: "#c4a064", margin: "32px 0 48px" },
+  tituloAccent: { color: PALETTE.accent },
+  divider: { width: 60, height: 2, background: PALETTE.accent, margin: "32px 0 48px" },
   sectionLabel: {
     fontSize: "0.6rem",
     fontWeight: 600,
     letterSpacing: "0.35em",
     textTransform: "uppercase",
-    color: "rgba(196,160,100,0.5)",
+    color: PALETTE.accentTextMuted,
     marginBottom: 24,
     paddingBottom: 12,
-    borderBottom: "1px solid rgba(196,160,100,0.1)",
+    borderBottom: `1px solid ${PALETTE.accentBorderUltraLight}`,
   },
 
   // Abas de método de pagamento
@@ -101,8 +144,8 @@ const S = {
   },
   metodoCard: (sel) => ({
     padding: "20px 24px",
-    background: sel ? "rgba(196,160,100,0.08)" : "rgba(255,255,255,0.02)",
-    border: `1px solid ${sel ? "#c4a064" : "rgba(196,160,100,0.12)"}`,
+    background: sel ? PALETTE.accentBgCardSelected : PALETTE.whiteBgCard,
+    border: `1px solid ${sel ? PALETTE.accent : PALETTE.accentBorderSoft}`,
     cursor: "pointer",
     transition: "all 0.25s ease",
     display: "flex",
@@ -112,9 +155,9 @@ const S = {
   metodoIcone: { fontSize: "1.6rem", marginBottom: 4 },
   metodoNome: {
     fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.1em",
-    textTransform: "uppercase", color: "#f0ece4",
+    textTransform: "uppercase", color: PALETTE.textPrimary,
   },
-  metodoDesc: { fontSize: "0.63rem", color: "rgba(240,236,228,0.35)", letterSpacing: "0.05em" },
+  metodoDesc: { fontSize: "0.63rem", color: PALETTE.textSecondaryBtn, letterSpacing: "0.05em" },
 
   // Formulário cartão
   formGrid: {
@@ -132,13 +175,13 @@ const S = {
   fieldWrap: { display: "flex", flexDirection: "column", gap: 8 },
   label: {
     fontSize: "0.56rem", fontWeight: 600, letterSpacing: "0.3em",
-    textTransform: "uppercase", color: "rgba(196,160,100,0.5)",
+    textTransform: "uppercase", color: PALETTE.accentTextMuted,
   },
   input: {
-    background: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(196,160,100,0.2)",
+    background: PALETTE.whiteBgInput,
+    border: `1px solid ${PALETTE.accentBorderDefault}`,
     padding: "14px 16px",
-    color: "#f0ece4",
+    color: PALETTE.textPrimary,
     fontFamily: "'Barlow', sans-serif",
     fontSize: "0.9rem",
     letterSpacing: "0.05em",
@@ -148,10 +191,10 @@ const S = {
     boxSizing: "border-box",
   },
   select: {
-    background: "#111",
-    border: "1px solid rgba(196,160,100,0.2)",
+    background: PALETTE.bgSelect,
+    border: `1px solid ${PALETTE.accentBorderDefault}`,
     padding: "14px 16px",
-    color: "#f0ece4",
+    color: PALETTE.textPrimary,
     fontFamily: "'Barlow', sans-serif",
     fontSize: "0.9rem",
     outline: "none",
@@ -162,8 +205,8 @@ const S = {
 
   // Caixa de resumo/valor
   totalBox: {
-    background: "rgba(196,160,100,0.05)",
-    border: "1px solid rgba(196,160,100,0.2)",
+    background: PALETTE.accentBgTotal,
+    border: `1px solid ${PALETTE.accentBorderDefault}`,
     padding: "24px 28px",
     display: "flex",
     justifyContent: "space-between",
@@ -172,11 +215,11 @@ const S = {
   },
   totalLabel: {
     fontSize: "0.65rem", fontWeight: 600, letterSpacing: "0.25em",
-    textTransform: "uppercase", color: "rgba(196,160,100,0.5)",
+    textTransform: "uppercase", color: PALETTE.accentTextMuted,
   },
   totalValor: {
     fontFamily: "'Bebas Neue', sans-serif",
-    fontSize: "2.5rem", color: "#c4a064", letterSpacing: "0.04em", lineHeight: 1,
+    fontSize: "2.5rem", color: PALETTE.accent, letterSpacing: "0.04em", lineHeight: 1,
   },
 
   // Botões
@@ -187,9 +230,9 @@ const S = {
     letterSpacing: "0.2em",
     textTransform: "uppercase",
     padding: "18px 40px",
-    background: disabled ? "rgba(196,160,100,0.3)" : "#c4a064",
-    color: "#0a0a0a",
-    border: "1px solid #c4a064",
+    background: disabled ? PALETTE.accentDisabled : PALETTE.accent,
+    color: PALETTE.bgPage,
+    border: `1px solid ${PALETTE.accent}`,
     cursor: disabled ? "not-allowed" : "pointer",
     transition: "all 0.25s ease",
     width: "100%",
@@ -204,8 +247,8 @@ const S = {
     textTransform: "uppercase",
     padding: "13px",
     background: "transparent",
-    color: "rgba(240,236,228,0.35)",
-    border: "1px solid rgba(240,236,228,0.1)",
+    color: PALETTE.textSecondaryBtn,
+    border: `1px solid ${PALETTE.borderSecondaryBtn}`,
     cursor: "pointer",
     transition: "all 0.25s ease",
     width: "100%",
@@ -213,8 +256,8 @@ const S = {
 
   // Caixa de resultado PIX/Boleto
   resultBox: {
-    background: "rgba(196,160,100,0.04)",
-    border: "1px solid rgba(196,160,100,0.25)",
+    background: PALETTE.accentBgResult,
+    border: `1px solid ${PALETTE.accentBorder}`,
     padding: "32px",
     marginBottom: 24,
     display: "flex",
@@ -222,13 +265,13 @@ const S = {
     alignItems: "center",
     gap: 20,
   },
-  qrImg: { width: 220, height: 220, background: "#fff", padding: 8 },
+  qrImg: { width: 220, height: 220, background: PALETTE.bgWhite, padding: 8 },
   copiaCola: {
     width: "100%",
-    background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(196,160,100,0.15)",
+    background: PALETTE.whiteBgCopiaCola,
+    border: `1px solid ${PALETTE.accentBorderLight}`,
     padding: "14px 16px",
-    color: "rgba(240,236,228,0.7)",
+    color: PALETTE.textSoft,
     fontFamily: "monospace",
     fontSize: "0.75rem",
     wordBreak: "break-all",
@@ -242,13 +285,13 @@ const S = {
     textTransform: "uppercase",
     padding: "12px 28px",
     background: "transparent",
-    color: "#c4a064",
-    border: "1px solid #c4a064",
+    color: PALETTE.accent,
+    border: `1px solid ${PALETTE.accent}`,
     cursor: "pointer",
   },
   approvedBox: {
-    background: "rgba(90,180,100,0.07)",
-    border: "1px solid rgba(90,180,100,0.3)",
+    background: PALETTE.successBgBox,
+    border: `1px solid ${PALETTE.successBorder}`,
     padding: "32px",
     textAlign: "center",
     marginBottom: 24,
@@ -258,38 +301,38 @@ const S = {
   gateCard: {
     maxWidth: 440, margin: "0 auto", textAlign: "center",
     padding: "64px 48px",
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid rgba(196,160,100,0.15)",
+    background: PALETTE.whiteBgCard,
+    border: `1px solid ${PALETTE.accentBorderLight}`,
   },
   gateTitulo: {
     fontFamily: "'Bebas Neue', sans-serif",
-    fontSize: "2.5rem", letterSpacing: "0.04em", color: "#f0ece4", marginBottom: 12,
+    fontSize: "2.5rem", letterSpacing: "0.04em", color: PALETTE.textPrimary, marginBottom: 12,
   },
   gateDesc: {
     fontSize: "0.85rem", fontWeight: 300,
-    color: "rgba(240,236,228,0.4)", letterSpacing: "0.05em", marginBottom: 36,
+    color: PALETTE.textMuted, letterSpacing: "0.05em", marginBottom: 36,
   },
 
   // Bandeira do cartão
   bandeira: {
-    fontSize: "0.65rem", color: "#c4a064", letterSpacing: "0.1em",
+    fontSize: "0.65rem", color: PALETTE.accent, letterSpacing: "0.1em",
     textTransform: "uppercase", marginTop: 4,
   },
 
   // Info box simples
   infoBox: {
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid rgba(196,160,100,0.12)",
+    background: PALETTE.whiteBgCard,
+    border: `1px solid ${PALETTE.accentBorderSoft}`,
     padding: "24px 28px",
   },
   infoLabel: {
     fontSize: "0.58rem", fontWeight: 600, letterSpacing: "0.3em",
-    textTransform: "uppercase", color: "rgba(196,160,100,0.45)", marginBottom: 8, display: "block",
+    textTransform: "uppercase", color: PALETTE.accentTextSoft, marginBottom: 8, display: "block",
   },
-  infoValue: { fontSize: "1.1rem", color: "#f0ece4", fontWeight: 300 },
+  infoValue: { fontSize: "1.1rem", color: PALETTE.textPrimary, fontWeight: 300 },
   infoValueBig: {
     fontFamily: "'Bebas Neue', sans-serif",
-    fontSize: "2.2rem", letterSpacing: "0.04em", color: "#c4a064", lineHeight: 1,
+    fontSize: "2.2rem", letterSpacing: "0.04em", color: PALETTE.accent, lineHeight: 1,
   },
   grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, marginBottom: 40 },
 
@@ -297,9 +340,9 @@ const S = {
   toast: (ok) => ({
     position: "fixed", bottom: 32, right: 32,
     padding: "14px 24px",
-    background: ok ? "rgba(90,180,100,0.1)" : "rgba(224,85,85,0.1)",
-    border: `1px solid ${ok ? "rgba(90,180,100,0.4)" : "rgba(224,85,85,0.4)"}`,
-    color: ok ? "#6fcf7a" : "#e05555",
+    background: ok ? PALETTE.successBgToast : PALETTE.errorBgToast,
+    border: `1px solid ${ok ? PALETTE.successBorderToast : PALETTE.errorBorderToast}`,
+    color: ok ? PALETTE.success : PALETTE.error,
     fontSize: "0.72rem", letterSpacing: "0.1em", textTransform: "uppercase",
     fontFamily: "'Barlow', sans-serif", zIndex: 999,
   }),

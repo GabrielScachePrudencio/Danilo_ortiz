@@ -54,5 +54,5 @@ public class Pagamento {
     private String metodo_pagamento_mercadopago;
 
     @Column(name = "envioEmailConfirmando")
-    private int envioEmailConfirmando;
+    private Integer  envioEmailConfirmando;
 }

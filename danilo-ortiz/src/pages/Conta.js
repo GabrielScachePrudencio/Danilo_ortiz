@@ -1,45 +1,77 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
+
+/* ─── paleta de cores centralizada ─────────────────────────────────── */
+const PALETTE = {
+  bgPage: "#0a0a0a",
+  textPrimary: "#f0ece4",
+  accent: "#c4a064", // Dourado principal
+
+  // Variações do Accent (Dourado) com Opacidade
+  accentBorder: "rgba(196,160,100,0.15)",
+  accentBorderLight: "rgba(196,160,100,0.12)",
+  accentBorderSoft: "rgba(196,160,100,0.1)",
+  accentTextMuted: "rgba(196,160,100,0.6)",
+  accentTextSoft: "rgba(196,160,100,0.5)",
+  accentBgGradient: "rgba(196,160,100,0.08)",
+
+  // Variações do Texto Primário / Brancos com Opacidade
+  whiteCardBg: "rgba(255,255,255,0.02)",
+  textPrimaryMuted: "rgba(240,236,228,0.4)",
+  textPrimarySoft: "rgba(240,236,228,0.5)",
+  borderSecondaryBtn: "rgba(240,236,228,0.15)",
+  borderBadgeDefault: "rgba(240,236,228,0.2)",
+
+  // Estados de Feedback (Sucesso e Erro)
+  success: "#6fcf7a",
+  successBg: "rgba(90,180,100,0.12)",
+  successBorder: "rgba(90,180,100,0.4)",
+
+  error: "#e05555",
+  errorBg: "rgba(224,85,85,0.12)",
+  errorBorder: "rgba(224,85,85,0.4)",
+};
+
 /* ─── estilos ─────────────────────────────────────────────────────────── */
 const S = {
   gateCard: {
     maxWidth: 440, margin: "0 auto", textAlign: "center",
-    padding: "64px 48px", background: "rgba(255,255,255,0.02)",
-    border: "1px solid rgba(196,160,100,0.15)",
+    padding: "64px 48px", background: PALETTE.whiteCardBg,
+    border: `1px solid ${PALETTE.accentBorder}`,
   },
   gateTitulo: {
     fontFamily: "'Bebas Neue', sans-serif", fontSize: "2.5rem",
-    letterSpacing: "0.04em", color: "#f0ece4", marginBottom: 12,
+    letterSpacing: "0.04em", color: PALETTE.textPrimary, marginBottom: 12,
   },
   gateDesc: {
     fontSize: "0.85rem", fontWeight: 300,
-    color: "rgba(240,236,228,0.4)", letterSpacing: "0.05em", marginBottom: 36,
+    color: PALETTE.textPrimaryMuted, letterSpacing: "0.05em", marginBottom: 36,
   },
   page: {
-    minHeight: "100vh", background: "#0a0a0a",
-    color: "#f0ece4", fontFamily: "'Barlow', sans-serif",
+    minHeight: "100vh", background: PALETTE.bgPage,
+    color: PALETTE.textPrimary, fontFamily: "'Barlow', sans-serif",
   },
   hero: {
     position: "relative", zIndex: 1, padding: "72px 48px 40px",
-    borderBottom: "1px solid rgba(196,160,100,0.12)",
+    borderBottom: `1px solid ${PALETTE.accentBorderLight}`,
     display: "flex", justifyContent: "space-between",
   },
   heroEyebrow: {
     fontSize: "0.65rem", fontWeight: 600, letterSpacing: "0.3em",
-    textTransform: "uppercase", color: "rgba(196,160,100,0.6)", marginBottom: 12,
+    textTransform: "uppercase", color: PALETTE.accentTextMuted, marginBottom: 12,
   },
   heroName: {
     fontFamily: "'Bebas Neue', sans-serif",
     fontSize: "clamp(3rem, 8vw, 6rem)", lineHeight: 0.9,
-    letterSpacing: "0.04em", color: "#f0ece4", marginBottom: 8,
+    letterSpacing: "0.04em", color: PALETTE.textPrimary, marginBottom: 8,
   },
   heroBadge: (tipo) => ({
     display: "inline-flex", alignItems: "center", gap: 6, marginTop: 16,
     padding: "4px 14px", fontSize: "0.65rem", fontWeight: 600,
     letterSpacing: "0.2em", textTransform: "uppercase",
-    border: `1px solid ${tipo === "ADMIN" ? "#c4a064" : "rgba(240,236,228,0.2)"}`,
-    color: tipo === "ADMIN" ? "#c4a064" : "rgba(240,236,228,0.4)",
+    border: `1px solid ${tipo === "ADMIN" ? PALETTE.accent : PALETTE.borderBadgeDefault}`,
+    color: tipo === "ADMIN" ? PALETTE.accent : PALETTE.textPrimaryMuted,
     background: "transparent",
   }),
   content: {
@@ -48,86 +80,85 @@ const S = {
   },
   sectionLabel: {
     fontSize: "0.6rem", fontWeight: 600, letterSpacing: "0.35em",
-    textTransform: "uppercase", color: "rgba(196,160,100,0.5)",
+    textTransform: "uppercase", color: PALETTE.accentTextSoft,
     marginBottom: 24, paddingBottom: 12,
-    borderBottom: "1px solid rgba(196,160,100,0.1)",
+    borderBottom: `1px solid ${PALETTE.accentBorderSoft}`,
   },
   grid: {
     display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
     gap: 2, marginBottom: 48,
   },
   field: {
-    background: "rgba(255,255,255,0.02)", border: "1px solid rgba(196,160,100,0.1)",
+    background: PALETTE.whiteCardBg, border: `1px solid ${PALETTE.accentBorderSoft}`,
     padding: "20px 24px", transition: "all 0.25s ease", position: "relative",
   },
   fieldLabel: {
     fontSize: "0.6rem", fontWeight: 600, letterSpacing: "0.25em",
-    textTransform: "uppercase", color: "rgba(196,160,100,0.5)",
+    textTransform: "uppercase", color: PALETTE.accentTextSoft,
     marginBottom: 8, display: "block",
   },
-  fieldValue: { fontSize: "0.95rem", color: "#f0ece4", wordBreak: "break-all" },
+  fieldValue: { fontSize: "0.95rem", color: PALETTE.textPrimary, wordBreak: "break-all" },
   input: {
     width: "100%", background: "transparent", border: "none",
-    borderBottom: "1px solid #c4a064", color: "#f0ece4",
+    borderBottom: `1px solid ${PALETTE.accent}`, color: PALETTE.textPrimary,
     fontFamily: "'Barlow', sans-serif", fontSize: "0.95rem",
     padding: "4px 0", outline: "none",
   },
   editBtn: {
     position: "absolute", top: 16, right: 16, background: "transparent",
-    border: "none", color: "rgba(196,160,100,0.4)", cursor: "pointer",
+    border: "none", color: PALETTE.accentTextMuted, cursor: "pointer",
     fontSize: "0.7rem", letterSpacing: "0.1em", fontFamily: "'Barlow', sans-serif",
     textTransform: "uppercase", transition: "color 0.2s", padding: 0,
   },
   saveBar: {
     display: "flex", justifyContent: "flex-end", gap: 12,
-    marginTop: 32, paddingTop: 24, borderTop: "1px solid rgba(196,160,100,0.1)",
+    marginTop: 32, paddingTop: 24, borderTop: `1px solid ${PALETTE.accentBorderSoft}`,
   },
   btnPrimary: {
     fontFamily: "'Barlow', sans-serif", fontWeight: 600, fontSize: "0.75rem",
     letterSpacing: "0.15em", textTransform: "uppercase", padding: "12px 28px",
-    background: "#c4a064", color: "#0a0a0a", border: "1px solid #c4a064",
+    background: PALETTE.accent, color: PALETTE.bgPage, border: `1px solid ${PALETTE.accent}`,
     cursor: "pointer", transition: "all 0.25s ease",
   },
   btnSecondary: {
     fontFamily: "'Barlow', sans-serif", fontWeight: 400, fontSize: "0.75rem",
     letterSpacing: "0.1em", textTransform: "uppercase", padding: "12px 24px",
-    background: "transparent", color: "rgba(240,236,228,0.4)",
-    border: "1px solid rgba(240,236,228,0.15)", cursor: "pointer",
+    background: "transparent", color: PALETTE.textPrimaryMuted,
+    border: `1px solid ${PALETTE.borderSecondaryBtn}`, cursor: "pointer",
     transition: "all 0.25s ease",
   },
   toast: (ok) => ({
     position: "fixed", bottom: 32, right: 32, padding: "14px 24px",
-    background: ok ? "rgba(90,180,100,0.12)" : "rgba(224,85,85,0.12)",
-    border: `1px solid ${ok ? "rgba(90,180,100,0.4)" : "rgba(224,85,85,0.4)"}`,
-    color: ok ? "#6fcf7a" : "#e05555", fontSize: "0.75rem",
+    background: ok ? PALETTE.successBg : PALETTE.errorBg,
+    border: `1px solid ${ok ? PALETTE.successBorder : PALETTE.errorBorder}`,
+    color: ok ? PALETTE.success : PALETTE.error, fontSize: "0.75rem",
     letterSpacing: "0.1em", textTransform: "uppercase",
     fontFamily: "'Barlow', sans-serif", zIndex: 999, animation: "fadeIn 0.3s ease",
   }),
   planoInfoContainer: { marginTop: 24, display: "flex", flexDirection: "column", gap: 12 },
-  planoTexto: { fontSize: "0.8rem", color: "rgba(240,236,228,0.5)", letterSpacing: "0.05em" },
-  planoDestaque: { color: "#c4a064", fontWeight: 600 },
+  planoTexto: { fontSize: "0.8rem", color: PALETTE.textPrimarySoft, letterSpacing: "0.05em" },
+  planoDestaque: { color: PALETTE.accent, fontWeight: 600 },
   btnPagar: {
     alignSelf: "flex-start", marginTop: 8, fontFamily: "'Barlow', sans-serif",
     fontWeight: 700, fontSize: "0.7rem", letterSpacing: "0.2em",
-    textTransform: "uppercase", padding: "10px 20px", background: "#c4a064",
-    color: "#0a0a0a", border: "none", cursor: "pointer",
+    textTransform: "uppercase", padding: "10px 20px", background: PALETTE.accent,
+    color: PALETTE.bgPage, border: "none", cursor: "pointer",
   },
   parcelaCard: {
     padding: "32px",
-    background: "linear-gradient(145deg, rgba(196,160,100,0.08) 0%, rgba(255,255,255,0.02) 100%)",
-    borderLeft: "4px solid #c4a064", display: "flex", flexDirection: "column",
+    background: `linear-gradient(145deg, ${PALETTE.accentBgGradient} 0%, ${PALETTE.whiteCardBg} 100%)`,
+    borderLeft: `4px solid ${PALETTE.accent}`, display: "flex", flexDirection: "column",
     gap: 12, minWidth: "380px", boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
   },
   parcelaLabel: {
     fontSize: "0.75rem", letterSpacing: "0.25em", textTransform: "uppercase",
-    color: "#c4a064", fontWeight: 700,
+    color: PALETTE.accent, fontWeight: 700,
   },
   parcelaValor: {
     fontSize: "3.5rem", fontFamily: "'Bebas Neue', sans-serif",
-    color: "#f0ece4", lineHeight: 1, margin: "8px 0",
+    color: PALETTE.textPrimary, lineHeight: 1, margin: "8px 0",
   },
 };
-
 /* ─── campos ──────────────────────────────────────────────────────────── */
 const CAMPOS_PESSOAIS = [
   { key: "nome",     label: "Nome Completo", editable: true },

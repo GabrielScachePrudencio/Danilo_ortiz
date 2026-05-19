@@ -9,4 +9,5 @@ import java.util.List;
 
 public interface PlanoRepository extends JpaRepository<Plano, Integer> {
     Plano findById(Long id);
+    List<Plano> findAllByAtivoTrueOrderByDuracaomesesAsc();
 }

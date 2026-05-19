@@ -4,65 +4,102 @@ import { useNavigate } from "react-router-dom";
 const isRailway = window.location.hostname.includes("railway.app");
 const API = process.env.REACT_APP_API_URL || "http://localhost:3001";
 const BASE_URL = API;
+// ─── Paleta de Cores Centralizada ───────────────────────────────────
+const PALETTE = {
+  bgRoot: "#0d0d0f",
+  bgCard: "#111114",
+  bgModal: "#141416",
+  textPrimary: "#e8e6e1",
+  accent: "#e8b44c", // Ouro / Mostarda principal
+
+  // Tons de Cinza / Bordas
+  borderLight: "#1e1e22",
+  borderMedium: "#2a2a2e",
+  borderUltraLight: "#141416",
+  textMuted: "#888888",
+  textDark: "#555555",
+  textUltraDark: "#444444",
+  borderDefault: "#333333",
+
+  // Variações do Accent (Ouro) com Opacidade
+  accentTabAlpha: "#e8b44c18",
+
+  // Estados de Feedback e Badges (Fundo e Texto)
+  success: "#4cde8c",
+  successBg: "#1a3a2a",
+
+  error: "#de4c4c",
+  errorBg: "#2e1a1a",
+  errorBorderAlpha: "#de4c4c44",
+
+  warning: "#e8b44c", // Mesmo tom do accent para o estado pendente
+  warningBg: "#2e2a1a",
+
+  info: "#4ca8de",
+  infoBg: "#1a2a3a",
+
+  neutralMuted: "#666666",
+  whitePure: "#ffffff",
+};
 
 // ─── estilos ─────────────────────────────────────────────────────────────────
 const S = {
     root: {
-        minHeight: "100vh", background: "#0d0d0f", color: "#e8e6e1",
+        minHeight: "100vh", background: PALETTE.bgRoot, color: PALETTE.textPrimary,
         fontFamily: "'DM Mono', 'Fira Mono', monospace", display: "flex", flexDirection: "column",
     },
     topBar: {
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "18px 32px", borderBottom: "1px solid #1e1e22", background: "#0d0d0f",
+        padding: "18px 32px", borderBottom: `1px solid ${PALETTE.borderLight}`, background: PALETTE.bgRoot,
         position: "sticky", top: 0, zIndex: 100,
     },
-    logo: { fontSize: 13, letterSpacing: "0.25em", color: "#e8b44c", textTransform: "uppercase", fontWeight: 700 },
+    logo: { fontSize: 13, letterSpacing: "0.25em", color: PALETTE.accent, textTransform: "uppercase", fontWeight: 700 },
     tabs: { display: "flex", gap: 4, flexWrap: "wrap" },
     tab: (active) => ({
         padding: "7px 18px", borderRadius: 4,
-        border: active ? "1px solid #e8b44c" : "1px solid #2a2a2e",
-        background: active ? "#e8b44c18" : "transparent",
-        color: active ? "#e8b44c" : "#888",
+        border: active ? `1px solid ${PALETTE.accent}` : `1px solid ${PALETTE.borderMedium}`,
+        background: active ? PALETTE.accentTabAlpha : "transparent",
+        color: active ? PALETTE.accent : PALETTE.textMuted,
         fontSize: 12, letterSpacing: "0.12em", cursor: "pointer",
         textTransform: "uppercase", transition: "all .18s",
     }),
     body: { flex: 1, padding: "32px", maxWidth: 1200, margin: "0 auto", width: "100%" },
     sectionTitle: {
-        fontSize: 11, letterSpacing: "0.3em", color: "#555", textTransform: "uppercase",
-        marginBottom: 20, borderBottom: "1px solid #1e1e22", paddingBottom: 10,
+        fontSize: 11, letterSpacing: "0.3em", color: PALETTE.textDark, textTransform: "uppercase",
+        marginBottom: 20, borderBottom: `1px solid ${PALETTE.borderLight}`, paddingBottom: 10,
     },
     searchRow: { display: "flex", gap: 8, marginBottom: 24, alignItems: "center" },
     input: {
-        flex: 1, background: "#111114", border: "1px solid #2a2a2e", borderRadius: 4,
-        color: "#e8e6e1", padding: "9px 14px", fontSize: 13, fontFamily: "inherit", outline: "none",
+        flex: 1, background: PALETTE.bgCard, border: `1px solid ${PALETTE.borderMedium}`, borderRadius: 4,
+        color: PALETTE.textPrimary, padding: "9px 14px", fontSize: 13, fontFamily: "inherit", outline: "none",
     },
     btnPrimary: {
-        padding: "9px 20px", background: "#e8b44c", color: "#0d0d0f", border: "none",
+        padding: "9px 20px", background: PALETTE.accent, color: PALETTE.bgRoot, border: "none",
         borderRadius: 4, fontFamily: "inherit", fontSize: 12, letterSpacing: "0.1em",
         textTransform: "uppercase", cursor: "pointer", fontWeight: 700,
     },
     btnGhost: {
-        padding: "9px 20px", background: "transparent", color: "#888",
-        border: "1px solid #2a2a2e", borderRadius: 4, fontFamily: "inherit",
+        padding: "9px 20px", background: "transparent", color: PALETTE.textMuted,
+        border: `1px solid ${PALETTE.borderMedium}`, borderRadius: 4, fontFamily: "inherit",
         fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer",
     },
     table: { width: "100%", borderCollapse: "collapse", fontSize: 13 },
     th: {
         textAlign: "left", padding: "10px 14px", fontSize: 10, letterSpacing: "0.2em",
-        color: "#555", textTransform: "uppercase", borderBottom: "1px solid #1e1e22",
+        color: PALETTE.textDark, textTransform: "uppercase", borderBottom: `1px solid ${PALETTE.borderLight}`,
     },
-    td: { padding: "12px 14px", borderBottom: "1px solid #141416", verticalAlign: "middle" },
-    rowHover: { background: "#111114", cursor: "pointer", transition: "background .15s" },
+    td: { padding: "12px 14px", borderBottom: `1px solid ${PALETTE.borderUltraLight}`, verticalAlign: "middle" },
+    rowHover: { background: PALETTE.bgCard, cursor: "pointer", transition: "background .15s" },
     badge: (tipo) => {
         const map = {
-            ATIVADO:    { bg: "#1a3a2a", color: "#4cde8c" },
-            DESATIVADO: { bg: "#2e1a1a", color: "#de4c4c" },
-            FINALIZADO: { bg: "#1a3a2a", color: "#4cde8c" },
-            PENDENTE:   { bg: "#2e2a1a", color: "#e8b44c" },
-            AGUARDANDO: { bg: "#1a2a3a", color: "#4ca8de" },
-            CANCELADO:  { bg: "#2e1a1a", color: "#de4c4c" },
-            TRUE:       { bg: "#1a2a3a", color: "#4ca8de" },
-            FALSE:      { bg: "#2a2a2e", color: "#666" },
+            ATIVADO:    { bg: PALETTE.successBg, color: PALETTE.success },
+            DESATIVADO: { bg: PALETTE.errorBg, color: PALETTE.error },
+            FINALIZADO: { bg: PALETTE.successBg, color: PALETTE.success },
+            PENDENTE:   { bg: PALETTE.warningBg, color: PALETTE.warning },
+            AGUARDANDO: { bg: PALETTE.infoBg, color: PALETTE.info },
+            CANCELADO:  { bg: PALETTE.errorBg, color: PALETTE.error },
+            TRUE:       { bg: PALETTE.infoBg, color: PALETTE.info },
+            FALSE:      { bg: PALETTE.borderMedium, color: PALETTE.neutralMuted },
         };
         const s = map[tipo] || map.FALSE;
         return {
@@ -74,71 +111,71 @@ const S = {
         display: "inline-block", padding: "3px 10px", borderRadius: 3,
         fontSize: 11, letterSpacing: "0.12em", fontWeight: 700, cursor: "pointer",
         transition: "opacity .15s",
-        ...(tipo === "ATIVADO"    ? { bg: "#1a3a2a", color: "#4cde8c", background: "#1a3a2a" } :
-            tipo === "DESATIVADO" ? { bg: "#2e1a1a", color: "#de4c4c", background: "#2e1a1a" } :
-            tipo === "TRUE"       ? { bg: "#1a2a3a", color: "#4ca8de", background: "#1a2a3a" } :
-                                    { bg: "#2a2a2e", color: "#666",    background: "#2a2a2e" }),
+        ...(tipo === "ATIVADO"    ? { bg: PALETTE.successBg, color: PALETTE.success, background: PALETTE.successBg } :
+            tipo === "DESATIVADO" ? { bg: PALETTE.errorBg, color: PALETTE.error, background: PALETTE.errorBg } :
+            tipo === "TRUE"       ? { bg: PALETTE.infoBg, color: PALETTE.info, background: PALETTE.infoBg } :
+                                    { bg: PALETTE.borderMedium, color: PALETTE.neutralMuted, background: PALETTE.borderMedium }),
     }),
     btnLink: {
-        background: "transparent", border: "1px solid #2a2a2e", borderRadius: 3,
-        color: "#e8b44c", padding: "4px 12px", fontSize: 11, letterSpacing: "0.1em",
+        background: "transparent", border: `1px solid ${PALETTE.borderMedium}`, borderRadius: 3,
+        color: PALETTE.accent, padding: "4px 12px", fontSize: 11, letterSpacing: "0.1em",
         cursor: "pointer", fontFamily: "inherit", textTransform: "uppercase",
     },
     cardGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 16, marginBottom: 36 },
-    card: { background: "#111114", border: "1px solid #1e1e22", borderRadius: 6, padding: "20px 22px" },
-    cardLabel: { fontSize: 10, letterSpacing: "0.25em", color: "#555", textTransform: "uppercase", marginBottom: 8 },
-    cardValue: { fontSize: 28, fontWeight: 700, color: "#e8b44c", lineHeight: 1 },
-    cardSub: { fontSize: 12, color: "#444", marginTop: 4 },
+    card: { background: PALETTE.bgCard, border: `1px solid ${PALETTE.borderLight}`, borderRadius: 6, padding: "20px 22px" },
+    cardLabel: { fontSize: 10, letterSpacing: "0.25em", color: PALETTE.textDark, textTransform: "uppercase", marginBottom: 8 },
+    cardValue: { fontSize: 28, fontWeight: 700, color: PALETTE.accent, lineHeight: 1 },
+    cardSub: { fontSize: 12, color: PALETTE.textUltraDark, marginTop: 4 },
     barRow: { marginBottom: 12 },
-    barLabel: { display: "flex", justifyContent: "space-between", fontSize: 12, color: "#888", marginBottom: 5 },
-    barTrack: { height: 6, background: "#1e1e22", borderRadius: 3, overflow: "hidden" },
-    barFill: (pct) => ({ height: "100%", width: `${pct}%`, background: "#e8b44c", borderRadius: 3, transition: "width .6s ease" }),
-    tokenBox: { background: "#111114", border: "1px solid #1e1e22", borderRadius: 6, padding: "28px 32px", maxWidth: 560 },
-    tokenLabel: { fontSize: 10, letterSpacing: "0.25em", color: "#555", textTransform: "uppercase", marginBottom: 8, display: "block" },
+    barLabel: { display: "flex", justifyContent: "space-between", fontSize: 12, color: PALETTE.textMuted, marginBottom: 5 },
+    barTrack: { height: 6, background: PALETTE.borderLight, borderRadius: 3, overflow: "hidden" },
+    barFill: (pct) => ({ height: "100%", width: `${pct}%`, background: PALETTE.accent, borderRadius: 3, transition: "width .6s ease" }),
+    tokenBox: { background: PALETTE.bgCard, border: `1px solid ${PALETTE.borderLight}`, borderRadius: 6, padding: "28px 32px", maxWidth: 560 },
+    tokenLabel: { fontSize: 10, letterSpacing: "0.25em", color: PALETTE.textDark, textTransform: "uppercase", marginBottom: 8, display: "block" },
     tokenInput: {
-        width: "100%", background: "#0d0d0f", border: "1px solid #2a2a2e", borderRadius: 4,
-        color: "#e8e6e1", padding: "10px 14px", fontSize: 13,
+        width: "100%", background: PALETTE.bgRoot, border: `1px solid ${PALETTE.borderMedium}`, borderRadius: 4,
+        color: PALETTE.textPrimary, padding: "10px 14px", fontSize: 13,
         fontFamily: "'DM Mono', 'Fira Mono', monospace", outline: "none", boxSizing: "border-box", marginBottom: 16,
     },
-    tokenStatus: (ok) => ({ fontSize: 12, color: ok ? "#4cde8c" : "#de4c4c", marginTop: 10, letterSpacing: "0.05em" }),
+    tokenStatus: (ok) => ({ fontSize: 12, color: ok ? PALETTE.success : PALETTE.error, marginTop: 10, letterSpacing: "0.05em" }),
     overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200 },
-    modal: { background: "#141416", border: "1px solid #2a2a2e", borderRadius: 8, padding: "32px 36px", minWidth: 320, textAlign: "center" },
-    modalTitle: { fontSize: 14, letterSpacing: "0.2em", textTransform: "uppercase", color: "#e8b44c", marginBottom: 10 },
-    modalText: { color: "#888", fontSize: 13, marginBottom: 24 },
+    modal: { background: PALETTE.bgModal, border: `1px solid ${PALETTE.borderMedium}`, borderRadius: 8, padding: "32px 36px", minWidth: 320, textAlign: "center" },
+    modalTitle: { fontSize: 14, letterSpacing: "0.2em", textTransform: "uppercase", color: PALETTE.accent, marginBottom: 10 },
+    modalText: { color: PALETTE.textMuted, fontSize: 13, marginBottom: 24 },
     modalRow: { display: "flex", gap: 10, justifyContent: "center" },
-    erro: { background: "#2e1a1a", border: "1px solid #de4c4c44", color: "#de4c4c", borderRadius: 4, padding: "10px 16px", fontSize: 13, marginBottom: 20 },
+    erro: { background: PALETTE.errorBg, border: `1px solid ${PALETTE.errorBorderAlpha}`, color: PALETTE.error, borderRadius: 4, padding: "10px 16px", fontSize: 13, marginBottom: 20 },
 
     // ── parcelas por aluno ──
     alunoCard: {
-        background: "#111114", border: "1px solid #1e1e22", borderRadius: 6,
+        background: PALETTE.bgCard, border: `1px solid ${PALETTE.borderLight}`, borderRadius: 6,
         marginBottom: 4, overflow: "hidden",
     },
     alunoCardHeader: {
         display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "14px 20px", cursor: "pointer", transition: "background .15s",
     },
-    parcelasContainer: { borderTop: "1px solid #1e1e22" },
+    parcelasContainer: { borderTop: "1px solid ${PALETTE.borderLight}" },
     parcelaRow: (status) => {
         const cores = {
-            FINALIZADO: { border: "#4cde8c" },
-            PENDENTE:   { border: "#e8b44c" },
-            AGUARDANDO: { border: "#4ca8de" },
-            CANCELADO:  { border: "#de4c4c" },
+            FINALIZADO: { border: PALETTE.success },
+            PENDENTE:   { border: PALETTE.warning },
+            AGUARDANDO: { border: PALETTE.info },
+            CANCELADO:  { border: PALETTE.error },
         };
         return {
             display: "grid",
             gridTemplateColumns: "40px 1fr 1fr 140px",
             alignItems: "center",
             padding: "10px 20px 10px 32px",
-            borderLeft: `3px solid ${(cores[status] || { border: "#333" }).border}`,
-            borderBottom: "1px solid #141416",
+            borderLeft: `3px solid ${(cores[status] || { border: PALETTE.borderDefault }).border}`,
+            borderBottom: `1px solid ${PALETTE.borderUltraLight}`,
             fontSize: 12,
         };
     },
 
     // ── canceladas ──
     canceladaCard: {
-        background: "#111114", border: "1px solid #2e1a1a", borderRadius: 6,
+        background: PALETTE.bgCard, border: `1px solid ${PALETTE.errorBg}`, borderRadius: 6,
         marginBottom: 8, padding: "20px 24px",
     },
     canceladaHeader: {
@@ -149,17 +186,17 @@ const S = {
         display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
         gap: 12, marginTop: 12,
     },
-    canceladaField: { background: "#0d0d0f", border: "1px solid #1e1e22", borderRadius: 4, padding: "10px 14px" },
-    canceladaFieldLabel: { fontSize: 9, letterSpacing: "0.25em", color: "#555", textTransform: "uppercase", marginBottom: 4 },
-    canceladaFieldValue: { fontSize: 13, color: "#e8e6e1" },
+    canceladaField: { background: PALETTE.bgRoot, border: `1px solid ${PALETTE.borderLight}`, borderRadius: 4, padding: "10px 14px" },
+    canceladaFieldLabel: { fontSize: 9, letterSpacing: "0.25em", color: PALETTE.textDark, textTransform: "uppercase", marginBottom: 4 },
+    canceladaFieldValue: { fontSize: 13, color: PALETTE.textPrimary },
 
     progressBar: (pct) => ({
-        height: 4, background: "#1e1e22", borderRadius: 2, overflow: "hidden", marginTop: 8,
+        height: 4, background: PALETTE.borderLight, borderRadius: 2, overflow: "hidden", marginTop: 8,
         position: "relative",
     }),
     progressFill: (pct, color) => ({
         height: "100%", width: `${Math.min(pct, 100)}%`,
-        background: color || "#4cde8c", borderRadius: 2, transition: "width .5s ease",
+        background: color || PALETTE.success, borderRadius: 2, transition: "width .5s ease",
     }),
 };
 
@@ -572,6 +609,205 @@ function AbaCanceladas({ token }) {
     );
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ABA: PLANOS
+// ═══════════════════════════════════════════════════════════════════════════════
+function AbaPlanos({ token }) {
+    const [planos, setPlanos]       = useState([]);
+    const [editando, setEditando]   = useState(null); // { id, nome, valor, duracao }
+    const [salvando, setSalvando]   = useState(false);
+    const [status, setStatus]       = useState(null); // { id, ok }
+    const [erro, setErro]           = useState("");
+
+    useEffect(() => { carregarPlanos(); }, []);
+
+    async function carregarPlanos() {
+        const res = await fetch(`${BASE_URL}/planos`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        console.log("plano[0]:", data[0]); // ← veja no console quais chaves chegam
+        setPlanos(data);
+    }
+
+    async function salvarPlano() {
+        if (!editando) return;
+        setSalvando(true); setStatus(null);
+        try {
+            const res = await fetch(`${BASE_URL}/planos/${editando.id}`, {
+                method: "PUT",
+                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    nome:    editando.nome,
+                    valor:   parseFloat(editando.valor),
+                    duracaomeses: parseInt(editando.duracaomeses), 
+                }),
+            });
+            if (res.ok) {
+                const atualizado = await res.json();
+                setPlanos(prev => prev.map(p => p.id === atualizado.id ? atualizado : p));
+                setStatus({ id: editando.id, ok: true });
+                setEditando(null);
+            } else {
+                setStatus({ id: editando.id, ok: false });
+            }
+        } catch { setStatus({ id: editando?.id, ok: false }); }
+        finally {
+            setSalvando(false);
+            setTimeout(() => setStatus(null), 3000);
+        }
+    }
+
+    return (
+        <>
+            <p style={S.sectionTitle}>Gerenciar Planos</p>
+            {erro && <div style={S.erro}>{erro}</div>}
+
+            <div style={{
+                background: "#0d0d0f", border: "1px solid #1e2a1e",
+                borderRadius: 4, padding: "10px 16px", marginBottom: 24,
+                fontSize: 11, color: "#4cde8c", letterSpacing: "0.05em",
+            }}>
+                ⚠ Alterações afetam apenas <strong>novas assinaturas</strong>. Assinaturas existentes mantêm o valor e parcelas originais.
+            </div>
+
+            {planos.map(plano => {
+                const emEdicao = editando?.id === plano.id;
+                const ok = status?.id === plano.id && status?.ok;
+                const err = status?.id === plano.id && !status?.ok;
+
+                return (
+                    <div key={plano.id} style={{
+                        ...S.tokenBox,
+                        marginBottom: 16,
+                        borderColor: emEdicao ? "#4cde8c44" : "#1e1e22",
+                    }}>
+                        {/* cabeçalho */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                <span style={{
+                                    fontSize: 10, letterSpacing: "0.2em", color: "#444",
+                                    textTransform: "uppercase",
+                                }}>
+                                    #{plano.id}
+                                </span>
+                                <span style={{ fontSize: 14, color: "#e8e6e1", fontWeight: 600 }}>
+                                    {plano.nome}
+                                </span>
+                            </div>
+                            {!emEdicao && (
+                                <button
+                                    style={S.btnGhost}
+                                    onClick={() => setEditando({
+                                        id: plano.id,
+                                        nome: plano.nome,
+                                        valor: plano.valor,
+                                        duracaomeses: plano.duracaomeses,
+                                    })}
+                                >
+                                    ✏ Editar
+                                </button>
+                            )}
+                        </div>
+
+                        {/* valores atuais */}
+                        {!emEdicao && (
+                            <div style={{ display: "flex", gap: 32 }}>
+                                <InfoMini label="Valor mensal"   value={fmtMoeda(plano.valor)}             color="#e8b44c" />
+                                <InfoMini label="Duração"        value={`${plano.duracaomeses} mês(es)`} />
+                                <InfoMini label="Nº de parcelas" value={plano.duracaomeses} color="#4cde8c" />
+
+                            </div>
+                        )}
+
+                        {/* formulário de edição */}
+                        {emEdicao && (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                                    {/* nome */}
+                                    <div>
+                                        <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "#555", textTransform: "uppercase", marginBottom: 6 }}>
+                                            Nome do plano
+                                        </div>
+                                        <input
+                                            style={{ ...S.input, margin: 0 }}
+                                            value={editando.nome}
+                                            onChange={e => setEditando(ed => ({ ...ed, nome: e.target.value }))}
+                                        />
+                                    </div>
+
+                                    {/* valor */}
+                                    <div>
+                                        <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "#555", textTransform: "uppercase", marginBottom: 6 }}>
+                                            Valor mensal (R$)
+                                        </div>
+                                        <input
+                                            style={{ ...S.input, margin: 0, color: "#e8b44c" }}
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={editando.valor}
+                                            onChange={e => setEditando(ed => ({ ...ed, valor: e.target.value }))}
+                                        />
+                                    </div>
+
+                                    {/* duração */}
+                                    <div>
+                                        <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "#555", textTransform: "uppercase", marginBottom: 6 }}>
+                                            Duração / parcelas (meses)
+                                        </div>
+                                        <input
+                                            style={{ ...S.input, margin: 0, color: "#4cde8c" }}
+                                            type="number"
+                                            min="1"
+                                            step="1"
+                                            value={editando.duracaomeses}
+                                            onChange={e => setEditando(ed => ({ ...ed, duracaomeses: e.target.value }))}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* preview */}
+                                <div style={{
+                                    background: "#0d0d0f", border: "1px solid #1e1e22",
+                                    borderRadius: 4, padding: "10px 14px",
+                                    fontSize: 11, color: "#666", letterSpacing: "0.05em",
+                                }}>
+                                    Preview → <span style={{ color: "#e8e6e1" }}>{editando.nome}</span>
+                                    {" · "}
+                                    <span style={{ color: "#e8b44c" }}>{fmtMoeda(editando.valor)}/mês</span>
+                                    {" · "}
+                                    <span style={{ color: "#4cde8c" }}>{editando.duracaomeses} parcela(s)</span>
+                                    {" = "}
+                                    <span style={{ color: "#e8e6e1" }}>
+                                        {fmtMoeda(editando.valor * editando.duracaomeses)} total
+                                    </span>
+                                </div>
+
+                                {/* botões */}
+                                <div style={{ display: "flex", gap: 10 }}>
+                                    <button style={S.btnPrimary} onClick={salvarPlano} disabled={salvando}>
+                                        {salvando ? "Salvando…" : "✓ Salvar"}
+                                    </button>
+                                    <button style={S.btnGhost} onClick={() => setEditando(null)}>
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* feedback */}
+                        {ok  && <div style={S.tokenStatus(true)}>✓ Plano atualizado com sucesso.</div>}
+                        {err && <div style={S.tokenStatus(false)}>✗ Erro ao salvar. Tente novamente.</div>}
+                    </div>
+                );
+            })}
+        </>
+    );
+}
+
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -798,6 +1034,7 @@ if (!autenticado) return null;
         { key: "relatorio", label: "Relatório"          },
         { key: "vendas",    label: "Últimas Vendas"     },
         { key: "token",     label: "Token MP"           },
+         { key: "planos", label: "Planos" }
     ];
 
 
@@ -1066,6 +1303,11 @@ if (!autenticado) return null;
                     </>
                 )}
             </div>
+
+            {aba === "planos" && (
+                <AbaPlanos token={token} />
+            )}
+
 
             {/* modal confirmação status */}
             {modal?.tipo === "status" && (

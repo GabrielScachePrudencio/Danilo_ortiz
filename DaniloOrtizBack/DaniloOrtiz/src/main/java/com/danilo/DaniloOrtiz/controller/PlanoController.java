@@ -32,4 +32,16 @@ public class PlanoController {
 
         return ResponseEntity.ok(plano);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Plano> atualizarPlano(@PathVariable Long id, @RequestBody Plano planoAtualizado) {
+        Plano plano = planoservice.buscarPorId(id);
+        if (plano == null) return ResponseEntity.notFound().build();
+
+        plano.setNome(planoAtualizado.getNome());
+        plano.setValor(planoAtualizado.getValor());
+        plano.setDuracaomeses(planoAtualizado.getDuracaomeses()); // ← nome correto
+
+        return ResponseEntity.ok(planoservice.salvar(plano));
+    }
 }

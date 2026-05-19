@@ -7,29 +7,48 @@ const isRailway = window.location.hostname.includes("railway.app");
 const DANILO_WHATSAPP = "5516996339294";
 const EXERCICIOS = [
   {
-    img:  "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=600&q=80&fit=crop",
-    nome: "Caminhada Funcional",
-    desc: "Protocolo de 45 min com variações de ritmo e inclinação para queima máxima de gordura.",
-    tag:  "Cardio",
+    img: "https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=600&q=80&fit=crop",
+    nome: "Grupo de Corrida",
+    desc: "Treinos presenciais em grupo com programação periodizada para todos os níveis, do iniciante ao avançado.",
+    tag: "Corrida",
   },
   {
-    img:  "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80&fit=crop",
-    nome: "Treino de Força",
-    desc: "Movimentos compostos adaptados ao seu nível para construir músculo e acelerar o metabolismo.",
-    tag:  "Força",
+    img: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=600&q=80&fit=crop",
+    nome: "Hipertrofia",
+    desc: "Protocolos de musculação personalizados para ganho de massa muscular com acompanhamento profissional.",
+    tag: "Força",
   },
   {
-    img:  "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&q=80&fit=crop",
-    nome: "Mobilidade & Core",
-    desc: "Rotinas de alongamento ativo e estabilização que eliminam dores posturais do dia a dia.",
-    tag:  "Bem-estar",
+    img: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80&fit=crop",
+    nome: "Emagrecimento",
+    desc: "Planejamento completo combinando treino e orientação para queima de gordura de forma saudável e duradoura.",
+    tag: "Emagrecimento",
   },
+  {
+    img: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&q=80&fit=crop",
+    nome: "Condicionamento Físico",
+    desc: "Melhore sua capacidade cardiorrespiratória e resistência com treinos progressivos e eficientes.",
+    tag: "Condicionamento",
+  },
+  {
+  img: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&q=80&fit=crop",
+  nome: "Caminhada Funcional",
+  desc: "Protocolo de 45 min com variações de ritmo e inclinação para queima máxima de gordura.",
+  tag: "Cardio",
+},
+  {
+  img: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600&q=80&fit=crop",
+  nome: "Treino de Força",
+  desc: "Movimentos compostos adaptados ao seu nível para construir músculo e acelerar o metabolismo.",
+  tag: "Força",
+},
+
   {
     img:  "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=600&q=80&fit=crop",
     nome: "HIIT ao Ar Livre",
     desc: "Intervalos de alta intensidade combinados com corrida leve para resultados expressivos em menos tempo.",
     tag:  "Queima",
-  },
+  }
 ];
 
 
@@ -128,9 +147,14 @@ const CSS = `
   --ink2:#181818;
   --ink3:#1f1f1f;
   --border:#2a2a2a;
+  /*
   --gold:#d4a843;
   --gold2:#f0c96a;
   --gold-dim:rgba(212,168,67,.12);
+  */
+ --gold:#a9ec31;      /* verde 2D */
+  --gold2:#c4ff4d;     /* versão mais clara no hover */
+  --gold-dim:rgba(169,236,49,.12);
   --snow:#f7f4ee;
   --muted:#7a7a7a;
   --sans:'Lato',sans-serif;
@@ -158,22 +182,22 @@ body{background:var(--ink);color:var(--snow)}
 .nbtn-gold:hover{background:var(--gold2)}
 
 /* HERO */
-.hero{position:relative;min-height:100vh;display:grid;grid-template-columns:1fr 640px;align-items:stretch;overflow:hidden}
-.hero-right{position:relative;min-height:100vh;overflow:hidden;align-self:stretch}
-.hero-left{position:relative;z-index:2;padding:180px 48px 100px}
+.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:stretch;overflow:hidden}
+.hero-right{position:relative;height:560px;overflow:hidden;width:100%}
+.hero-left{position:relative;z-index:2;padding:180px 48px 60px;text-align:center;display:flex;flex-direction:column;align-items:center}
 .hero-eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:.68rem;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-bottom:24px}
 .hero-eyebrow::before{content:'';width:28px;height:1px;background:var(--gold)}
 .hero-h1{font-family:var(--cond);font-weight:800;font-style:italic;font-size:clamp(4.5rem,9vw,8.5rem);line-height:.92;text-transform:uppercase;letter-spacing:-.01em}
 .hero-h1 em{color:var(--gold)}
-.hero-p{margin-top:28px;max-width:440px;font-size:.95rem;font-weight:300;line-height:1.8;color:#aaa}
+.hero-p{margin-top:28px;max-width:560px;font-size:.95rem;font-weight:300;line-height:1.8;color:#aaa;text-align:center}
 .hero-cta-row{display:flex;align-items:center;gap:20px;margin-top:44px;flex-wrap:wrap}
 .btn-primary{background:var(--gold);color:var(--ink);border:none;cursor:pointer;font-family:var(--sans);font-size:.8rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:16px 36px;border-radius:2px;transition:all .25s}
 .btn-primary:hover{background:var(--gold2);transform:translateY(-2px)}
 .hero-hint{font-size:.72rem;color:var(--muted);letter-spacing:.06em;display:flex;align-items:center;gap:8px}
 .hero-hint::before{content:'✓';color:var(--gold)}
 .hero-right{position:relative;height:100vh;overflow:hidden}
-.hero-img{width:100%;height:100%;object-fit:cover;object-position:top center;position:absolute;top:0;left:0;...}
-.hero-img-overlay{position:absolute;inset:0;background:linear-gradient(90deg,var(--ink) 0%,transparent 40%),linear-gradient(0deg,var(--ink) 0%,transparent 30%)}
+.hero-img{width:100%;height:100%;object-fit:cover;object-position:center 20%}
+.hero-img-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,var(--ink) 0%,transparent 25%),linear-gradient(to top,var(--ink) 0%,transparent 25%)}
 .hero-badge{position:absolute;bottom:80px;left:-28px;background:var(--gold);color:var(--ink);padding:18px 26px;border-radius:3px;font-family:var(--cond);font-weight:800;font-size:.9rem;letter-spacing:.08em;text-transform:uppercase;box-shadow:0 20px 60px rgba(0,0,0,.6);z-index:3}
 .hero-badge span{display:block;font-size:2.2rem;line-height:1}
 .hero-stats-bar{position:absolute;bottom:0;left:0;right:0;z-index:3;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--border);background:rgba(12,12,12,.88);backdrop-filter:blur(10px)}
@@ -182,6 +206,252 @@ body{background:var(--ink);color:var(--snow)}
 .stat-n{font-family:var(--cond);font-size:2.4rem;font-weight:800;color:var(--snow);line-height:1}
 .stat-n b{color:var(--gold)}
 .stat-l{font-size:.65rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:4px}
+
+
+/* ── PROFESSORES ── */
+.professores-sec{
+  padding:100px 48px;
+  background:var(--ink);
+}
+
+.prof-header{
+  margin-bottom:48px;
+}
+
+.prof-tag{
+  font-size:.68rem;
+  letter-spacing:.25em;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin-bottom:14px;
+}
+
+.prof-header h2{
+  font-family:var(--cond);
+  font-size:clamp(2.8rem,5vw,5rem);
+  font-weight:800;
+  font-style:italic;
+  line-height:.92;
+  text-transform:uppercase;
+}
+
+.prof-header h2 em{
+  color:var(--gold);
+}
+
+.prof-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:28px;
+}
+
+.prof-card{
+  background:var(--ink2);
+  border:1px solid var(--border);
+  overflow:hidden;
+  transition:transform .3s ease, border-color .3s ease;
+}
+
+.prof-card:hover{
+  transform:translateY(-6px);
+  border-color:rgba(169,236,49,.35);
+}
+
+.prof-img-wrap{
+  height:720px;
+  background:#111;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+.prof-img-wrap img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+  background:#111;
+}
+
+.prof-card:hover img{
+  transform:scale(1.03);
+  filter:brightness(.62);
+}
+
+.prof-info{
+  padding:26px 24px 30px;
+  border-top:1px solid var(--border);
+}
+
+.prof-info h3{
+  font-family:var(--cond);
+  font-size:2rem;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  margin-bottom:6px;
+}
+
+.prof-info p{
+  font-size:.78rem;
+  color:var(--muted);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+/* RESPONSIVO */
+@media(max-width:900px){
+
+  .professores-sec{
+    padding:64px 24px;
+  }
+
+  .prof-grid{
+    grid-template-columns:1fr;
+  }
+
+  .prof-img-wrap{
+    height:520px;
+  }
+}
+
+
+/* ── BANNERS TREINO ── */
+.dupla-sec{
+  padding:90px 48px;
+  background:var(--ink2);
+  display:flex;
+  flex-direction:column;
+  gap:28px;
+}
+
+.grupo-card{
+  position:relative;
+  height:420px;
+  overflow:hidden;
+  border:1px solid var(--border);
+}
+
+.grupo-card img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  filter:brightness(.5);
+  transition:transform .6s ease, filter .4s ease;
+}
+
+.grupo-card:hover img{
+  transform:scale(1.04);
+  filter:brightness(.38);
+}
+
+.grupo-overlay{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:60px;
+  max-width:650px;
+  background:linear-gradient(
+    90deg,
+    rgba(0,0,0,.82) 0%,
+    rgba(0,0,0,.45) 45%,
+    transparent 100%
+  );
+}
+
+.grupo-card.invertido .grupo-overlay{
+  margin-left:auto;
+  text-align:right;
+  align-items:flex-end;
+
+  background:linear-gradient(
+    -90deg,
+    rgba(0,0,0,.82) 0%,
+    rgba(0,0,0,.45) 45%,
+    transparent 100%
+  );
+}
+
+.grupo-tag{
+  font-size:.68rem;
+  letter-spacing:.25em;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin-bottom:18px;
+}
+
+.grupo-overlay h3{
+  font-family:var(--cond);
+  font-size:clamp(3rem,6vw,5.5rem);
+  font-style:italic;
+  font-weight:800;
+  line-height:.9;
+  text-transform:uppercase;
+  margin-bottom:22px;
+}
+
+.grupo-overlay h3 em{
+  color:var(--gold);
+}
+
+.grupo-overlay p{
+  font-size:.95rem;
+  line-height:1.9;
+  color:#d0d0d0;
+  max-width:520px;
+}
+
+/* RESPONSIVO */
+@media(max-width:900px){
+
+  .dupla-sec{
+    padding:64px 24px;
+  }
+
+  .grupo-card{
+    height:340px;
+  }
+
+  .grupo-overlay{
+    padding:32px 24px;
+    max-width:100%;
+  }
+
+  .grupo-overlay h3{
+    font-size:clamp(2.5rem,10vw,4rem);
+  }
+
+  .grupo-overlay p{
+    font-size:.85rem;
+    line-height:1.7;
+  }
+}
+
+/* RESPONSIVO */
+@media(max-width:900px){
+
+  .dupla-sec{
+    padding:64px 24px;
+  }
+
+  .dupla-card,
+  .dupla-card.direita{
+    grid-template-columns:1fr;
+    gap:28px;
+  }
+
+  .dupla-img-wrap{
+    min-height:340px;
+  }
+
+  .dupla-card.direita .dupla-img-wrap{
+    order:-1;
+  }
+}
 
 /* SOBRE */
 .sobre{display:grid;grid-template-columns:500px 1fr;min-height:580px}
@@ -953,7 +1223,7 @@ const syncLogin = () => {
 
         {/* NAV */}
         <nav className="nav">
-          <div className="nav-logo">Danilo Ortiz</div>
+          <div className="nav-logo">2D Assessoria</div>
           <div className="nav-links">
             {aluno?.planoAtual && (
               <span style={{
@@ -986,29 +1256,104 @@ const syncLogin = () => {
 
         {/* HERO */}
         <section className="hero">
-          <div className="hero-left">
-            <p className="hero-eyebrow">Personal Trainer Certificado</p>
-            <h1 className="hero-h1">SEU CORPO<br />MERECE<br /><em>MAIS.</em></h1>
-            <p className="hero-p">
-              Assessoria online personalizada focada em emagrecimento real e saúde duradoura.
-              Planos individuais, acompanhamento direto e resultados que você sente na primeira semana.
+        <div className="hero-left">
+          <p className="hero-eyebrow">Assessoria Esportiva & Personal Trainer</p>
+          <h1 className="hero-h1">2D<br />ASSESSORIA<br /><em>ESPORTIVA.</em></h1>
+          <p className="hero-p">
+            A 2D Assessoria é uma plataforma completa de saúde e exercício físico.
+            Combinamos grupos de corrida presenciais com planilhas de treinamento online,
+            100% personalizadas para o seu objetivo.
+          </p>
+          <div className="hero-cta-row">
+            <button className="btn-primary" onClick={scrollPlanos}>Ver planos →</button>
+            <span className="hero-hint">Sem mensalidade de academia</span>
+          </div>
+        </div>
+            {/* PROFESSORES */}
+<section className="professores-sec">
+
+  <div className="prof-header">
+    <p className="prof-tag">Equipe 2D Assessoria</p>
+
+    <h2>
+      OS PRINCIPAIS<br />
+      <em>PROFESSORES.</em>
+    </h2>
+  </div>
+
+  <div className="prof-grid">
+
+    <div className="prof-card">
+      <div className="prof-img-wrap">
+        <img src="/img/igmDanilo2.jpg" alt="Professor 1" />
+      </div>
+
+      <div className="prof-info">
+        <h3>Danilo Ortiz</h3>
+      </div>
+    </div>
+
+    <div className="prof-card">
+      <div className="prof-img-wrap">
+        <img src="/img/ImgOutroDanilo.jpg" alt="Professor 2" />
+      </div>
+
+      <div className="prof-info">
+        <h3>Danilo</h3>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+
+      {/* TREINOS EM GRUPO */}
+      <section className="dupla-sec">
+
+        <div className="grupo-card">
+          <img src="/img/corrida3.jpg" alt="Treino em grupo" />
+
+          <div className="grupo-overlay">
+            <p className="grupo-tag">Corrida & Performance</p>
+
+            <h3>
+              TREINOS EM<br />
+              <em>GRUPO.</em>
+            </h3>
+
+            <p>
+              A energia do grupo transforma o treino. 
+              Mais motivação, constância e evolução em um ambiente leve e competitivo na medida certa.
             </p>
-            <div className="hero-cta-row">
-              <button className="btn-primary" onClick={scrollPlanos}>Ver planos →</button>
-              <span className="hero-hint">Sem mensalidade de academia</span>
-            </div>
           </div>
-          <div className="hero-right">
-            <img src="/img/Danilo.jpg" alt="Danilo Ortiz personal trainer" className="hero-img" />
-            <div className="hero-img-overlay" />
-            <div className="hero-badge"><span>8+</span>Anos de experiência</div>
+        </div>
+
+        <div className="grupo-card invertido">
+          <img src="/img/corrida2.jpg" alt="Assessoria esportiva" />
+
+          <div className="grupo-overlay">
+            <p className="grupo-tag">Assessoria 2D</p>
+
+            <h3>
+              EVOLUÇÃO<br />
+              <em>CONSTANTE.</em>
+            </h3>
+
+            <p>
+              Cada aluno recebe acompanhamento próximo, ajustes frequentes e suporte contínuo
+              para evoluir sem extremos e sem abandonar a rotina.
+            </p>
           </div>
-          <div className="hero-stats-bar">
-            <div className="stat-cell"><div className="stat-n">200<b>+</b></div><div className="stat-l">Alunos ativos</div></div>
-            <div className="stat-cell"><div className="stat-n">94<b>%</b></div><div className="stat-l">Taxa de resultado</div></div>
-            <div className="stat-cell"><div className="stat-n">100<b>%</b></div><div className="stat-l">Online</div></div>
-          </div>
-        </section>
+        </div>
+
+      </section>
+        <div className="hero-stats-bar">
+          <div className="stat-cell"><div className="stat-n">200<b>+</b></div><div className="stat-l">Alunos ativos</div></div>
+          <div className="stat-cell"><div className="stat-n">94<b>%</b></div><div className="stat-l">Taxa de resultado</div></div>
+          <div className="stat-cell"><div className="stat-n">100<b>%</b></div><div className="stat-l">Online</div></div>
+        </div>
+      </section>
 
         {/* SOBRE */}
         <section className="sobre">
@@ -1017,27 +1362,27 @@ const syncLogin = () => {
             <div className="sobre-stripe" />
           </div>
           <div className="sobre-content">
-            <p className="sobre-tag">Quem é o Danilo</p>
+            <p className="sobre-tag">Sobre a 2D Assessoria</p>
             <h2 className="sobre-h2">TREINAMENTO<br /><em>SEM ENROLAÇÃO.</em></h2>
             <p className="sobre-p">
-              Formado em Educação Física com especialização em treinamento funcional e emagrecimento,
-              Danilo acredita que o melhor treino é aquele que cabe na sua vida real — sem precisar
-              de academia cara ou equipamentos especiais.
+              Formado em Educação Física com especialização em Personal Trainer,
+              Danilo acredita que o melhor treino é aquele que cabe na sua vida real.
             </p>
             <p className="sobre-p">
-              Desde caminhadas estruturadas e treinos ao ar livre até protocolos de força e mobilidade,
-              cada aluno recebe um plano pensado do zero. Sem receitas prontas, sem planilhas genéricas.
+              A 2D Assessoria combina grupos de corrida presenciais com planilhas 
+              de treinamento online, tudo 100% personalizado para o seu objetivo 
+              e rotina. Sem receitas prontas, sem planilhas genéricas.
             </p>
             <p className="sobre-p">
-              Acompanhamento por WhatsApp, ajustes semanais e suporte constante fazem parte
-              de todos os planos — do mais básico ao mais completo.
+              Acompanhamento por WhatsApp, ajustes semanais e suporte constante 
+              fazem parte de todos os planos — do mais básico ao mais completo.
             </p>
             <div className="sobre-pills">
-              {["Caminhada funcional","Treino em casa","Emagrecimento","Mobilidade","Saúde geral","HIIT","Sem academia","Ao ar livre"].map((p) => (
+              {["Grupo de corrida","Hipertrofia","Emagrecimento","Condicionamento","Personal Trainer","Planilha online","Mobilidade","Saúde geral"].map((p) => (
                 <span key={p} className="pill">{p}</span>
               ))}
             </div>
-          </div>
+                      </div>
         </section>
 
         {/* EXERCÍCIOS */}
@@ -1267,8 +1612,8 @@ const syncLogin = () => {
           )}
         {/* FOOTER */}
         <footer className="footer">
-          <span className="footer-brand">Danilo Ortiz</span>
-          <span className="footer-txt">Assessoria esportiva online · Emagrecimento & Saúde</span>
+          <span className="footer-brand">2D Assessoria</span>
+          <span className="footer-txt">Assessoria esportiva online · Corrida · Hipertrofia · Emagrecimento</span>
           <span className="footer-txt">© {new Date().getFullYear()}</span>
         </footer>
 

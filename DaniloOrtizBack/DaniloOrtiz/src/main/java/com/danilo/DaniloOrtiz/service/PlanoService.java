@@ -14,7 +14,7 @@ public class PlanoService {
     private final PlanoRepository pr;
 
     public List<Plano> listarTodosPlanos(){
-        List<Plano> planos = pr.findAll();
+        List<Plano> planos = pr.findAllByAtivoTrueOrderByDuracaomesesAsc();
 
         if(planos == null){
             return List.of();
@@ -25,6 +25,10 @@ public class PlanoService {
 
     public Plano buscarPorId(Long id){
         return pr.findById(id);
+    }
+
+    public Plano salvar(Plano plano) {
+        return pr.save(plano);
     }
 
 
