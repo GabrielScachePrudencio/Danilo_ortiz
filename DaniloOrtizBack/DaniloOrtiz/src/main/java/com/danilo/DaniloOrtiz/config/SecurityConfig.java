@@ -41,7 +41,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/alunos/qtdd-aluno-por-plano").hasRole("ADMIN")
                         .requestMatchers("/alunos/atualizar-status-aluno/**").hasRole("ADMIN")
-                        .requestMatchers("/alunos/atualizar-status-contasisrun-aluno/**").hasRole("ADMIN")
+                        .requestMatchers("/alunos/atualizar-status-contasisrun-aluno/**").authenticated()
                         .requestMatchers("/pagamentos/ultimas-vendas").hasRole("ADMIN")
                         .requestMatchers("/mensalidades/canceladas").hasRole("ADMIN")
                         .requestMatchers("/configuracao").hasRole("ADMIN")

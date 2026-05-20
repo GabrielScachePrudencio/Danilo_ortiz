@@ -138,7 +138,7 @@ const S = {
   // Abas de método de pagamento
   metodosGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
+    gridTemplateColumns: "repeat(2, 1fr)",
     gap: 2,
     marginBottom: 40,
   },
@@ -821,8 +821,7 @@ useEffect(() => {
         <div style={S.metodosGrid}>
           {[
             { id: "pix", icone: "⚡", nome: "PIX", desc: "Aprovação instantânea" },
-            { id: "credit_card", icone: "💳", nome: "Cartão", desc: "Crédito em até 12x" },
-            { id: "boleto", icone: "🧾", nome: "Boleto", desc: "Vence em 3 dias úteis" },
+            { id: "credit_card", icone: "💳", nome: "Cartão", desc: "Crédito em até 12x" }
           ].map((m) => (
             <div
               key={m.id}
@@ -912,18 +911,6 @@ useEffect(() => {
           </div>
         )}
 
-        {/* AVISO BOLETO */}
-        {metodo === "boleto" && !resultado && (
-          <div style={{ ...S.infoBox, marginBottom: 32, textAlign: "center" }}>
-            <span style={{ fontSize: "2rem" }}>🧾</span>
-            <p style={{ ...S.infoValue, marginTop: 12 }}>
-              Clique em confirmar para gerar o boleto.<br />
-              <span style={{ color: "rgba(240,236,228,0.4)", fontSize: "0.78rem" }}>
-                Vence em 3 dias úteis. Compensação em até 2 dias após pagamento.
-              </span>
-            </p>
-          </div>
-        )}
 
         {/* RESULTADO PIX */}
 {resultado && metodo === "pix" && resultado.pixQrCode && (
@@ -964,37 +951,7 @@ useEffect(() => {
   </div>
 )}
 
-        {/* RESULTADO BOLETO */}
-        {resultado && metodo === "boleto" && (
-          <div style={S.resultBox}>
-            <p style={S.sectionLabel}>Boleto gerado</p>
-            {resultado.boletoBarCode && (
-              <>
-                <p style={S.label}>Código de barras:</p>
-                <div style={S.copiaCola}>{resultado.boletoBarCode}</div>
-                <button
-                  style={S.copyBtn}
-                  onClick={() => navigator.clipboard.writeText(resultado.boletoBarCode)}
-                >
-                  Copiar código
-                </button>
-              </>
-            )}
-            {resultado.boletoUrl && (
-              <a
-                href={resultado.boletoUrl}
-                target="_blank"
-                rel="noreferrer"
-                style={{ ...S.copyBtn, textDecoration: "none", display: "inline-block" }}
-              >
-                📄 Abrir PDF do Boleto
-              </a>
-            )}
-            <p style={{ fontSize: "0.7rem", color: "rgba(240,236,228,0.35)", textAlign: "center" }}>
-              Vence em 3 dias úteis. Sua conta será ativada após compensação.
-            </p>
-          </div>
-        )}
+     
 
         {/* TOTAL */}
         {!resultado && (

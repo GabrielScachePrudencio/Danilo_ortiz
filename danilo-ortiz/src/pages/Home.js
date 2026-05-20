@@ -52,60 +52,23 @@ const EXERCICIOS = [
 ];
 
 
-const SISRUN_STEPS = [
+const DEPOIMENTOS = [
   {
-    titulo: "Acesse o site ou app do SISRUN",
-    descricao: "Baixe o aplicativo SISRUN na App Store ou Google Play, ou acesse pelo navegador em sisrun.com.br.",
-    img: "https://placehold.co/480x240/0d0d0d/c4a064?text=Passo+1+%E2%80%94+Acessar+o+SISRUN",
+    nome: "jonatan dutra",
+    cidade: "São Paulo — SP",
+    resultado: "-20 kg",
+    tipo: "foto",
+    img: "/img/jonatan2.jpeg",
   },
   {
-    titulo: "Clique em 'Criar Conta'",
-    descricao: "Na tela inicial do app, toque no botão 'Criar Conta' ou 'Cadastrar-se' na parte inferior da tela de login.",
-    img: "https://placehold.co/480x240/0d0d0d/c4a064?text=Passo+2+%E2%80%94+Criar+Conta",
-  },
-  {
-    titulo: "Preencha seus dados pessoais",
-    descricao: "Informe seu nome completo, e-mail e crie uma senha forte. Use o mesmo e-mail cadastrado aqui na plataforma.",
-    img: "https://placehold.co/480x240/0d0d0d/c4a064?text=Passo+3+%E2%80%94+Preencher+Dados",
-  },
-  {
-    titulo: "Confirme seu e-mail",
-    descricao: "Verifique sua caixa de entrada e clique no link de confirmação enviado pelo SISRUN para ativar sua conta.",
-    img: "https://placehold.co/480x240/0d0d0d/c4a064?text=Passo+4+%E2%80%94+Confirmar+E-mail",
-  },
-  {
-    titulo: "Anote seu usuário e avise o Danilo",
-    descricao: "Com a conta criada, copie seu nome de usuário do SISRUN e envie para o Danilo pelo WhatsApp.",
-    img: "https://placehold.co/480x240/0d0d0d/c4a064?text=Passo+5+%E2%80%94+Avisar+o+Danilo",
+    nome: "jonatan dutra",
+    cidade: "São Paulo — SP",
+    resultado: "Media de velocidade 14 kmh",
+    tipo: "stats",
+    img: "/img/jonatan1.jpeg",
   },
 ];
 
-const DEPOIMENTOS = [
-  {
-    nome: "Camila Souza", cidade: "São Paulo — SP",
-    texto: "Perdi 12 kg em 4 meses sem academia. O Danilo montou um plano que cabia na minha rotina de mãe e funcionou de verdade.",
-    resultado: "-12 kg",
-    img: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=200&q=80&fit=crop",
-  },
-  {
-    nome: "Rafael Mendes", cidade: "Curitiba — PR",
-    texto: "Comecei só caminhando. Hoje corro 10 km e me sinto 10 anos mais novo. A assessoria online foi melhor do que qualquer personal presencial que já tive.",
-    resultado: "8 meses",
-    img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80&fit=crop",
-  },
-  {
-    nome: "Fernanda Lima", cidade: "Belo Horizonte — MG",
-    texto: "Tinha pressão alta e sedentarismo total. Em 6 meses normalizei tudo e ainda emagreci 8 kg. Mudança de vida.",
-    resultado: "-8 kg",
-    img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80&fit=crop",
-  },
-  {
-    nome: "Bruno Carvalho", cidade: "Recife — PE",
-    texto: "A planilha é detalhada, o feedback é rápido e o resultado aparece. Simples assim.",
-    resultado: "-15 kg",
-    img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80&fit=crop",
-  },
-];
 const S = {
   btnPrimary: {
     background: "#c4a064",
@@ -182,7 +145,13 @@ body{background:var(--ink);color:var(--snow)}
 .nbtn-gold:hover{background:var(--gold2)}
 
 /* HERO */
-.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:stretch;overflow:hidden}
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr auto;  /* conteúdo + stats-bar */
+  min-height: 100vh;
+  align-items: stretch;
+}
 .hero-right{position:relative;height:560px;overflow:hidden;width:100%}
 .hero-left{position:relative;z-index:2;padding:180px 48px 60px;text-align:center;display:flex;flex-direction:column;align-items:center}
 .hero-eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:.68rem;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-bottom:24px}
@@ -206,6 +175,18 @@ body{background:var(--ink);color:var(--snow)}
 .stat-n{font-family:var(--cond);font-size:2.4rem;font-weight:800;color:var(--snow);line-height:1}
 .stat-n b{color:var(--gold)}
 .stat-l{font-size:.65rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:4px}
+
+/* substitua ou adicione */
+.depoi-grid-real {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3px;
+}
+
+.depoi-grid-real > div {
+  min-height: 600px;
+}
+
 
 
 /* ── PROFESSORES ── */
@@ -245,11 +226,10 @@ body{background:var(--ink);color:var(--snow)}
   gap:28px;
 }
 
-.prof-card{
-  background:var(--ink2);
-  border:1px solid var(--border);
-  overflow:hidden;
-  transition:transform .3s ease, border-color .3s ease;
+.prof-card {
+  border: none; /* tira a borda */
+  overflow: hidden;
+  transition: transform .3s ease;
 }
 
 .prof-card:hover{
@@ -257,21 +237,18 @@ body{background:var(--ink);color:var(--snow)}
   border-color:rgba(169,236,49,.35);
 }
 
-.prof-img-wrap{
-  height:720px;
-  background:#111;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
+.prof-img-wrap {
+  height: 720px;
+  background: transparent; /* sem fundo */
+  overflow: hidden;
 }
 
-.prof-img-wrap img{
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  display:block;
-  background:#111;
+.prof-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;    /* cover em vez de contain — preenche sem sobra */
+  display: block;
+  background: transparent;
 }
 
 .prof-card:hover img{
@@ -316,6 +293,12 @@ body{background:var(--ink);color:var(--snow)}
   }
 }
 
+@media(max-width: 700px) {
+  .depoi + div,
+  .depoi > div:last-child {
+    grid-template-columns: 1fr !important;
+  }
+}
 
 /* ── BANNERS TREINO ── */
 .dupla-sec{
@@ -407,7 +390,9 @@ body{background:var(--ink);color:var(--snow)}
 
 /* RESPONSIVO */
 @media(max-width:900px){
-
+  .depoi-grid-real > div {
+    min-height: 420px;
+  }
   .dupla-sec{
     padding:64px 24px;
   }
@@ -909,7 +894,6 @@ export default function Home() {
   const [erro, setErro]               = useState("");
   const [carregando, setCarregando]   = useState(true);
   const [MensalidadeParcelasDTOS, setMensalidadeParcelasDTOS] = useState({});
-  const [modalSisrun, setModalSisrun] = useState(false);
   const [toast, setToast] = useState(null);
 
   // modal de parcelas
@@ -997,7 +981,27 @@ const syncLogin = () => {
 
 
 
-    async function confirmarTrocaStatusSisrun() {
+    
+
+  function mostrarToast(msg, ok) {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 3000);
+  }
+
+  async function obterAluno(id) {
+    try {
+      const res = await fetch(`${urlAlunos}/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+
+      );
+      if (res.ok) setAluno(await res.json());
+    } catch { /* silencioso */ }
+  }
+
+  async function confirmarTrocaStatusSisrun() {
       const token = localStorage.getItem("token");
 
 
@@ -1023,30 +1027,11 @@ const syncLogin = () => {
         }
       } catch (err) {
         mostrarToast("Erro de conexão.", false);
-      } finally {
-        setModalSisrun(false);
-      }
+      } 
     }
 
 
-  function mostrarToast(msg, ok) {
-    setToast({ msg, ok });
-    setTimeout(() => setToast(null), 3000);
-  }
-
-  async function obterAluno(id) {
-    try {
-      const res = await fetch(`${urlAlunos}/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-
-      );
-      if (res.ok) setAluno(await res.json());
-    } catch { /* silencioso */ }
-  }
-
+  
   async function pegarDadosMensalidadeAlunoPorId(id) {
     try {
       const res = await fetch(`${urlMensalidade}/${id}`, {
@@ -1098,85 +1083,170 @@ const syncLogin = () => {
       </svg>
     );
   }
-  /* ─── modal tutorial sisrun ───────────────────────────────────────────── */
-  function ModalSisrun({ onClose, nomeAluno, confirmarTrocaStatus }) {
-    const [passo, setPasso] = useState(0);
-    const total = SISRUN_STEPS.length;
-    const step = SISRUN_STEPS[passo];
-    const isUltimo = passo === total - 1;
-    const msgWhats = encodeURIComponent(`Olá Danilo! Sou ${nomeAluno || "aluno da plataforma"} e acabei de criar minha conta no SISRUN. Meu usuário é: `);
   
-    return (
-      <div style={{ position: "fixed", inset: 0, zIndex: 500, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, animation: "fadeIn 0.2s ease" }}>
-        <div style={{ background: "#111", border: "1px solid rgba(196,160,100,0.2)", width: "100%", maxWidth: 520, overflow: "hidden", boxShadow: "0 40px 80px rgba(0,0,0,0.7)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 22px", borderBottom: "1px solid rgba(196,160,100,0.1)", background: "rgba(196,160,100,0.03)" }}>
-            <div>
-              <p style={{ fontSize: "0.55rem", letterSpacing: "0.35em", color: "rgba(196,160,100,0.5)", textTransform: "uppercase", marginBottom: 2 }}>Tutorial SISRUN</p>
-              <p style={{ fontSize: "0.88rem", color: "#f0ece4", fontWeight: 600 }}>Como criar sua conta</p>
-            </div>
-            <button onClick={onClose} style={{ background: "transparent", border: "1px solid rgba(240,236,228,0.12)", color: "rgba(240,236,228,0.35)", cursor: "pointer", fontSize: 14, width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}>✕</button>
-          </div>
-          <div style={{ position: "relative", background: "#0a0a0a" }}>
-            <img src={step.img} alt={`Passo ${passo + 1}`} style={{ width: "100%", height: 200, objectFit: "cover", display: "block", opacity: 0.85 }} />
-            <div style={{ position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 6 }}>
-              {SISRUN_STEPS.map((_, i) => (
-                <div key={i} onClick={() => setPasso(i)} style={{ width: i === passo ? 22 : 6, height: 6, borderRadius: 3, background: i === passo ? "#c4a064" : "rgba(196,160,100,0.25)", cursor: "pointer", transition: "all 0.3s ease" }} />
-              ))}
-            </div>
-          </div>
-          <div style={{ padding: "22px 26px 8px" }}>
-            <p style={{ fontSize: "0.58rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(196,160,100,0.45)", marginBottom: 7 }}>Passo {passo + 1} de {total}</p>
-            <h3 style={{ fontSize: "1rem", color: "#f0ece4", marginBottom: 9, fontWeight: 600, lineHeight: 1.3 }}>{step.titulo}</h3>
-            <p style={{ fontSize: "0.83rem", color: "rgba(240,236,228,0.52)", lineHeight: 1.65 }}>{step.descricao}</p>
-          </div>
-          <div style={{ display: "flex", gap: 8, padding: "16px 26px 22px", justifyContent: "space-between", flexWrap: "wrap", alignItems: "center" }}>
-            {isUltimo ? (
-              <a href={`https://wa.me/${DANILO_WHATSAPP}?text=${msgWhats}`} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "10px 16px", background: "#25d366", color: "#fff", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700, fontFamily: "'Barlow', sans-serif", textDecoration: "none" }}>
-                <WaIcon /> Avisar Danilo
-              </a>
-            ) : <div />}
-            <div style={{ display: "flex", gap: 8 }}>
-              {passo > 0 && <button onClick={() => setPasso((p) => p - 1)} style={{ ...S.btnSecondary, padding: "9px 18px", fontSize: "0.7rem" }}>← Voltar</button>}
-              {!isUltimo
-                ? <button onClick={() => setPasso((p) => p + 1)} style={{ ...S.btnPrimary, padding: "9px 18px", fontSize: "0.7rem" }}>Próximo →</button>
-                : <button onClick={confirmarTrocaStatus} style={{ ...S.btnPrimary, padding: "9px 18px", fontSize: "0.7rem" }}>Concluir ✓</button>
-              }
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
+/* ─── banner fixo sisrun ──────────────────────────────────────────────── */
+function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
+  const [visivel, setVisivel] = useState(true);
 
-  function BannerSisrun({ nomeAluno, onAbrirTutorial }) {
-    const [visivel, setVisivel] = useState(true);
-    const msgWhats = encodeURIComponent(`Olá Danilo! Sou ${nomeAluno || "aluno da plataforma"} e quero informar meu usuário do SISRUN. Meu usuário é: `);
-    if (!visivel) return null;
-    return (
-      <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 400, width: "calc(100% - 40px)", maxWidth: 680, background: "linear-gradient(135deg, #150f00 0%, #0f0f0f 70%)", border: "1px solid #c4a064", borderLeft: "5px solid #c4a064", padding: "16px 20px", boxShadow: "0 8px 48px rgba(196,160,100,0.18), 0 2px 12px rgba(0,0,0,0.6)", animation: "slideUp 0.4s ease", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-        <div style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(196,160,100,0.1)", border: "1px solid rgba(196,160,100,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, animation: "pulse 2s infinite", fontSize: 17 }}>⚡</div>
-        <div style={{ flex: 1, minWidth: 180 }}>
-          <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "#c4a064", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Você ainda não criou sua conta no SISRUN!</p>
-          <p style={{ fontSize: "0.76rem", color: "rgba(240,236,228,0.45)", lineHeight: 1.5 }}>Crie agora e avise o Danilo com seu usuário para ele te encontrar no app.</p>
-        </div>
-        <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap", alignItems: "center" }}>
-          <button onClick={onAbrirTutorial} style={{ fontFamily: "'Barlow', sans-serif", fontWeight: 700, fontSize: "0.66rem", letterSpacing: "0.12em", textTransform: "uppercase", padding: "8px 15px", background: "#c4a064", color: "#0a0a0a", border: "none", cursor: "pointer" }}>Como criar →</button>
-          <a href={`https://wa.me/${DANILO_WHATSAPP}?text=${msgWhats}`} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "'Barlow', sans-serif", fontWeight: 600, fontSize: "0.66rem", letterSpacing: "0.1em", textTransform: "uppercase", padding: "8px 13px", background: "transparent", color: "#25d366", border: "1px solid rgba(37,211,102,0.3)", cursor: "pointer", textDecoration: "none" }}><WaIcon /> Falar com Danilo</a>
-          <button onClick={() => setVisivel(false)} style={{ background: "transparent", border: "none", color: "rgba(240,236,228,0.2)", cursor: "pointer", fontSize: 15, padding: "8px 6px", lineHeight: 1 }}>✕</button>
-        </div>
+  const msgWhats = encodeURIComponent(
+    `Olá Danilo! Sou ${
+      nomeAluno || "aluno da plataforma"
+    } e acabei de criar minha conta no SISRUN. Meu usuário é: `
+  );
+
+  if (!visivel) return null;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        bottom: 24,
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 400,
+        width: "calc(100% - 40px)",
+        maxWidth: 680,
+        background: "linear-gradient(135deg, #150f00 0%, #0f0f0f 70%)",
+        border: "1px solid #c4a064",
+        borderLeft: "5px solid #c4a064",
+        padding: "16px 20px",
+        boxShadow:
+          "0 8px 48px rgba(196,160,100,0.18), 0 2px 12px rgba(0,0,0,0.6)",
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        flexWrap: "wrap",
+      }}
+    >
+      <div
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: "50%",
+          background: "rgba(196,160,100,0.1)",
+          border: "1px solid rgba(196,160,100,0.4)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+          fontSize: 17,
+        }}
+      >
+        ⚡
       </div>
-    );
-  }
+
+      <div style={{ flex: 1, minWidth: 180 }}>
+        <p
+          style={{
+            fontSize: "0.72rem",
+            fontWeight: 700,
+            color: "#c4a064",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            marginBottom: 2,
+          }}
+        >
+          Você ainda não criou sua conta no SISRUN!
+        </p>
+
+        <p
+          style={{
+            fontSize: "0.76rem",
+            color: "rgba(240,236,228,0.45)",
+            lineHeight: 1.5,
+          }}
+        >
+          Crie agora e avise o Danilo com seu usuário para ter acesso
+          completo ao app.
+        </p>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          flexShrink: 0,
+          flexWrap: "wrap",
+          alignItems: "center",
+        }}
+      >
+        <button
+          onClick={() =>
+            window.open(
+              "https://appsisrun.com.br/sisrun/forms/cadastro.xhtml?assessoria=2dassessoriaesportiva",
+              "_blank"
+            )
+          }
+          style={{
+            fontFamily: "'Barlow', sans-serif",
+            fontWeight: 700,
+            fontSize: "0.66rem",
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            padding: "8px 15px",
+            background: "#c4a064",
+            color: "#0a0a0a",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          Criar conta →
+        </button>
+
+        <a
+          href={`https://wa.me/${DANILO_WHATSAPP}?text=${msgWhats}`}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            fontFamily: "'Barlow', sans-serif",
+            fontWeight: 600,
+            fontSize: "0.66rem",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            padding: "8px 13px",
+            background: "transparent",
+            color: "#25d366",
+            border: "1px solid rgba(37,211,102,0.3)",
+            textDecoration: "none",
+          }}
+        >
+          <WaIcon /> Falar com Danilo
+        </a>
+
+        {/* 3. ← NOVO: confirma que já criou */}
+        <button
+          onClick={onConfirmarCriou}
+          style={{ fontFamily: "'Barlow', sans-serif", fontWeight: 600, fontSize: "0.66rem", letterSpacing: "0.1em", textTransform: "uppercase", padding: "8px 13px", background: "transparent", color: "rgba(240,236,228,0.5)", border: "1px solid rgba(240,236,228,0.15)", cursor: "pointer" }}
+        >
+          ✓ Já criei minha conta
+        </button>
+
+        <button
+          onClick={() => setVisivel(false)}
+          style={{
+            background: "transparent",
+            border: "none",
+            color: "rgba(240,236,228,0.2)",
+            cursor: "pointer",
+            fontSize: 15,
+            padding: "8px 6px",
+          }}
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  );
+}
 
 
   return (
     <>
-       {/* ── MODAL SISRUN ── */}
-      {modalSisrun && <ModalSisrun onClose={() => setModalSisrun(false)} nomeAluno={aluno?.nome} confirmarTrocaStatus={confirmarTrocaStatusSisrun}/>}
-
       {deveExibirSisrun && (
-        <BannerSisrun nomeAluno={aluno?.nome} onAbrirTutorial={() => setModalSisrun(true)} />
+<BannerSisrun nomeAluno={aluno?.nome} onConfirmarCriou={confirmarTrocaStatusSisrun} />
       )}
 
       <style>{CSS}</style>
@@ -1256,19 +1326,37 @@ const syncLogin = () => {
 
         {/* HERO */}
         <section className="hero">
-        <div className="hero-left">
-          <p className="hero-eyebrow">Assessoria Esportiva & Personal Trainer</p>
-          <h1 className="hero-h1">2D<br />ASSESSORIA<br /><em>ESPORTIVA.</em></h1>
-          <p className="hero-p">
-            A 2D Assessoria é uma plataforma completa de saúde e exercício físico.
-            Combinamos grupos de corrida presenciais com planilhas de treinamento online,
-            100% personalizadas para o seu objetivo.
-          </p>
-          <div className="hero-cta-row">
-            <button className="btn-primary" onClick={scrollPlanos}>Ver planos →</button>
-            <span className="hero-hint">Sem mensalidade de academia</span>
-          </div>
+        
+      {/* COLUNA ESQUERDA — texto */}
+      <div className="hero-left">
+        <p className="hero-eyebrow">Assessoria Esportiva & Personal Trainer</p>
+        <h1 className="hero-h1">2D<br />ASSESSORIA<br /><em>ESPORTIVA.</em></h1>
+        <p className="hero-p">
+          A 2D Assessoria é uma plataforma completa de saúde e exercício físico.
+          Combinamos grupos de corrida presenciais com planilhas de treinamento online,
+          100% personalizadas para o seu objetivo.
+        </p>
+        <div className="hero-cta-row">
+          <button className="btn-primary" onClick={scrollPlanos}>Ver planos →</button>
+          <span className="hero-hint">Sem mensalidade de academia</span>
         </div>
+      </div>
+
+      {/* COLUNA DIREITA — foto ← estava DENTRO do hero-left, esse é o bug */}
+      <div className="hero-right">
+        <img src="/img/img2danilos2.jpeg" alt="Corredores 2D Assessoria" className="hero-img" />
+        <div className="hero-img-overlay" />
+       
+      </div>
+
+      {/* barra de stats fica por último, ocupa as 2 colunas */}
+      <div className="hero-stats-bar">
+        <div className="stat-cell"><div className="stat-n">200<b>+</b></div><div className="stat-l">Alunos ativos</div></div>
+        <div className="stat-cell"><div className="stat-n">94<b>%</b></div><div className="stat-l">Taxa de resultado</div></div>
+        <div className="stat-cell"><div className="stat-n">100<b>%</b></div><div className="stat-l">Online</div></div>
+      </div>
+
+      </section>
             {/* PROFESSORES */}
 <section className="professores-sec">
 
@@ -1276,8 +1364,8 @@ const syncLogin = () => {
     <p className="prof-tag">Equipe 2D Assessoria</p>
 
     <h2>
-      OS PRINCIPAIS<br />
-      <em>PROFESSORES.</em>
+      OS 
+      <em> PROFESSORES</em>
     </h2>
   </div>
 
@@ -1285,7 +1373,7 @@ const syncLogin = () => {
 
     <div className="prof-card">
       <div className="prof-img-wrap">
-        <img src="/img/igmDanilo2.jpg" alt="Professor 1" />
+        <img src="/img/imgDanilo4.png" alt="Professor 1" />
       </div>
 
       <div className="prof-info">
@@ -1295,11 +1383,11 @@ const syncLogin = () => {
 
     <div className="prof-card">
       <div className="prof-img-wrap">
-        <img src="/img/ImgOutroDanilo.jpg" alt="Professor 2" />
+        <img src="/img/imgOutroDanilo2.jpeg" alt="Professor 2" />
       </div>
 
       <div className="prof-info">
-        <h3>Danilo</h3>
+        <h3>Danilo Alves</h3>
       </div>
     </div>
 
@@ -1348,12 +1436,7 @@ const syncLogin = () => {
         </div>
 
       </section>
-        <div className="hero-stats-bar">
-          <div className="stat-cell"><div className="stat-n">200<b>+</b></div><div className="stat-l">Alunos ativos</div></div>
-          <div className="stat-cell"><div className="stat-n">94<b>%</b></div><div className="stat-l">Taxa de resultado</div></div>
-          <div className="stat-cell"><div className="stat-n">100<b>%</b></div><div className="stat-l">Online</div></div>
-        </div>
-      </section>
+        
 
         {/* SOBRE */}
         <section className="sobre">
@@ -1408,32 +1491,123 @@ const syncLogin = () => {
           </div>
         </section>
 
-        {/* DEPOIMENTOS */}
-        <section className="depoi">
-          <div className="sec-header">
-            <div>
-              <p className="sec-tag">Resultados reais</p>
-              <h2 className="sec-h2">QUEM JÁ<br />TRANSFORMOU</h2>
+     {/* DEPOIMENTOS */}
+<section className="depoi">
+  <div className="sec-header">
+    <div>
+      <p className="sec-tag">Resultados reais</p>
+      <h2 className="sec-h2">QUEM JÁ<br />TRANSFORMOU</h2>
+    </div>
+    <p className="sec-note">Prints reais<br />de alunos</p>
+  </div>
+
+  <div style={{
+    display: "grid",
+    gridTemplateColumns: "repeat(2, 1fr)",
+    gap: 3,
+  }}>
+    {DEPOIMENTOS.map((d, i) => (
+      <div key={i} style={{
+        display: "flex",
+        flexDirection: "column",
+        border: "1px solid var(--border)",
+        background: "var(--ink3)",
+        overflow: "hidden",
+        margin: "10px"
+      }}>
+
+        {/* ── TOPO: nome + resultado ── */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "16px 20px",
+          borderBottom: "1px solid var(--border)",
+          background: "var(--ink2)",
+        }}>
+          <div>
+            <div style={{
+              fontFamily: "var(--cond)",
+              fontSize: "1.1rem",
+              fontWeight: 800,
+              textTransform: "uppercase",
+              letterSpacing: ".06em",
+              color: "var(--snow)",
+            }}>
+              {d.nome}
             </div>
-            <p className="sec-note">Depoimentos<br />de alunos reais</p>
+            <div style={{
+              fontSize: ".65rem",
+              color: "var(--muted)",
+              letterSpacing: ".1em",
+              marginTop: 2,
+            }}>
+              {d.cidade}
+            </div>
           </div>
-          <div className="depoi-grid">
-            {DEPOIMENTOS.map((d) => (
-              <div key={d.nome} className="depoi-card">
-                <div className="depoi-quote">"</div>
-                <p className="depoi-text">{d.texto}</p>
-                <div className="depoi-foot">
-                  <img src={d.img} alt={d.nome} className="depoi-foto" loading="lazy" />
-                  <div>
-                    <div className="depoi-nome">{d.nome}</div>
-                    <div className="depoi-cidade">{d.cidade}</div>
-                  </div>
-                  <div className="depoi-result">{d.resultado}</div>
-                </div>
-              </div>
-            ))}
+          <div style={{
+            fontFamily: "var(--cond)",
+            fontSize: "2rem",
+            fontWeight: 800,
+            color: "var(--gold)",
+            letterSpacing: ".04em",
+          }}>
+            {d.resultado}
           </div>
-        </section>
+        </div>
+
+        {/* ── IMAGEM ── */}
+        <div style={{ flex: 1, overflow: "hidden", minHeight: 420 }}>
+          <img
+            src={d.img}
+            alt={d.nome}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "top",
+              display: "block",
+              filter: "brightness(.92)",
+              transition: "transform .5s ease",
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = "scale(1.03)"}
+            onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+          />
+        </div>
+
+        {/* ── BLOCO VERDE EMBAIXO ── */}
+        <div style={{
+          background: "var(--gold)",
+          color: "var(--ink)",
+          padding: "14px 20px",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+        }}>
+          <span style={{
+            fontFamily: "var(--cond)",
+            fontSize: "1.1rem",
+            fontWeight: 800,
+            textTransform: "uppercase",
+            letterSpacing: ".06em",
+            lineHeight: 1.2,
+          }}>
+            {d.enfase}
+          </span>
+          <span style={{
+            marginLeft: "auto",
+            fontSize: "1.4rem",
+            flexShrink: 0,
+          }}>
+            🏃
+          </span>
+        </div>
+
+      </div>
+    ))}
+  </div>
+</section>
+
 
         {/* PLANOS */}
         <section className="planos-sec" id="planos">
