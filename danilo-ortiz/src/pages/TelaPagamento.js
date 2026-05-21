@@ -390,6 +390,7 @@ export default function TelaPagamento() {
   //public key
   const [mpPublicKey, setMpPublicKey] = useState(null);
 
+  const [bloqueado, setBloqueado] = useState(false);
 
   // ── Método de pagamento
   const [metodo, setMetodo] = useState("pix"); // "pix" | "credit_card" | "boleto"
@@ -530,12 +531,21 @@ useEffect(() => {
     } catch { setErro("Erro ao buscar dados do aluno."); }
   }
 
-  async function buscarMensalidade(id) {
+ async function buscarMensalidade(id) {
     try {
-    const res = await fetch(`${API}/mensalidades/${id}`, {
-      headers: { Authorization: `Bearer ${token}` }  // <-- adicionar
-    });
-      if (res.ok) setMensalidadeDTO(await res.json());
+      const res = await fetch(`${API}/mensalidades/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const dados = await res.json();
+        setMensalidadeDTO(dados);
+
+        // ── verifica se tem parcela pendente
+        const temPendente = dados?.parcelas?.some(p => p.status === "PENDENTE");
+        if (!temPendente && dados !== null) {
+          setBloqueado(true);
+        }
+      }
     } catch { /* sem mensalidade = nova assinatura */ }
   }
 
@@ -729,6 +739,25 @@ useEffect(() => {
     );
   }
 
+  // ─── Sem parcelas pendentes (plano em dia) ───────────────────────────
+if (aluno && mensalidadeDTO && !ehNovaAssinatura && !parcelaPendente) {
+  return (
+    <div style={S.page}>
+      <div style={S.bgGlow} />
+      <div style={{ ...S.content, display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", paddingTop: 0 }}>
+        <div style={S.gateCard}>
+          <p style={S.eyebrow}>Tudo em dia</p>
+          <h2 style={S.gateTitulo}>Nenhuma parcela pendente</h2>
+          <p style={S.gateDesc}>Você não possui cobranças abertas no momento.</p>
+          <button style={S.btnPrimary(false)} onClick={() => navigate("/")}>
+            Voltar para início →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
   if (aluno && jaTemPlanoAtivo && aluno?.planoAtual !== null) {
     return (
       <div style={S.page}>
@@ -744,6 +773,35 @@ useEffect(() => {
       </div>
     );
   }
+
+if (bloqueado) {
+  return (
+    <div style={S.page}>
+      <div style={S.bgGlow} />
+      <div style={{
+        ...S.content,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh",
+        paddingTop: 0
+      }}>
+        <div style={S.gateCard}>
+          <p style={S.eyebrow}>Tudo em dia</p>
+          <h2 style={S.gateTitulo}>Nenhuma parcela pendente</h2>
+          <p style={S.gateDesc}>
+            Você não possui cobranças abertas no momento.
+          </p>
+          <button style={S.btnPrimary(false)} onClick={() => navigate("/")}>
+            Voltar para início →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 
   // ─── Resultado aprovado (cartão) ──────────────────────────────────
   if (resultado?.status === "approved") {
@@ -770,6 +828,8 @@ useEffect(() => {
       </div>
     );
   }
+
+  
 
   // ─── Tela principal ───────────────────────────────────────────────
   return (

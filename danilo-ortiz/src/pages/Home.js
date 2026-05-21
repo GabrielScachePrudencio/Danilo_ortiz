@@ -36,12 +36,7 @@ const EXERCICIOS = [
   desc: "Protocolo de 45 min com variações de ritmo e inclinação para queima máxima de gordura.",
   tag: "Cardio",
 },
-  {
-  img: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600&q=80&fit=crop",
-  nome: "Treino de Força",
-  desc: "Movimentos compostos adaptados ao seu nível para construir músculo e acelerar o metabolismo.",
-  tag: "Força",
-},
+
 
   {
     img:  "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=600&q=80&fit=crop",
@@ -55,17 +50,24 @@ const EXERCICIOS = [
 const DEPOIMENTOS = [
   {
     nome: "jonatan dutra",
-    cidade: "São Paulo — SP",
-    resultado: "-20 kg",
+    cidade: "São Paulo — Araraquara",
+    resultado: "Perdi 20 kg",
     tipo: "foto",
     img: "/img/jonatan2.jpeg",
   },
   {
     nome: "jonatan dutra",
-    cidade: "São Paulo — SP",
+    cidade: "São Paulo — Araraquara",
     resultado: "Media de velocidade 14 kmh",
     tipo: "stats",
     img: "/img/jonatan1.jpeg",
+  },
+  {
+    nome: "jonatan dutra",
+    cidade: "São Paulo — Araraquara",
+    resultado: "pace de 4:38 min/km",
+    tipo: "stats",
+    img: "/img/jonatan3.jpeg",
   },
 ];
 
@@ -177,6 +179,7 @@ body{background:var(--ink);color:var(--snow)}
 .stat-l{font-size:.65rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:4px}
 
 /* substitua ou adicione */
+/* DEPOIMENTOS — cards e imagens reduzidos ~35% */
 .depoi-grid-real {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -184,9 +187,48 @@ body{background:var(--ink);color:var(--snow)}
 }
 
 .depoi-grid-real > div {
-  min-height: 600px;
+  min-height: 195px; /* era 300px → 300 × 0.65 ≈ 195 */
 }
 
+.depoi-card {
+  background: var(--ink3);
+  padding: 26px;        /* era 40px → 40 × 0.65 ≈ 26 */
+  border: 1px solid var(--border);
+  position: relative;
+  transition: border-color .25s;
+}
+.depoi-card:hover { border-color: rgba(212,168,67,.3) }
+
+.depoi-quote {
+  font-size: 3.25rem;   /* era 5rem → 5 × 0.65 ≈ 3.25 */
+  margin-bottom: 10px;
+}
+
+.depoi-text {
+  font-size: .78rem;    /* era .9rem */
+  margin-bottom: 18px;  /* era 28px */
+}
+
+.depoi-foto {
+  width: 34px;          /* era 52px */
+  height: 34px;
+}
+
+.depoi-result {
+  font-size: 1.24rem;   /* era 1.9rem */
+}
+
+/* Imagens no grid real (foto-depoimentos) */
+.depoi-grid-real > div {
+  min-height: 195px;
+}
+
+/* Responsivo mobile */
+@media(max-width: 900px) {
+  .depoi-grid-real > div {
+    min-height: 273px; /* era 420px → 420 × 0.65 ≈ 273 */
+  }
+}
 
 
 /* ── PROFESSORES ── */
@@ -226,16 +268,7 @@ body{background:var(--ink);color:var(--snow)}
   gap:28px;
 }
 
-.prof-card {
-  border: none; /* tira a borda */
-  overflow: hidden;
-  transition: transform .3s ease;
-}
 
-.prof-card:hover{
-  transform:translateY(-6px);
-  border-color:rgba(169,236,49,.35);
-}
 
 .prof-img-wrap {
   height: 720px;
@@ -246,13 +279,15 @@ body{background:var(--ink);color:var(--snow)}
 .prof-img-wrap img {
   width: 100%;
   height: 100%;
-  object-fit: cover;    /* cover em vez de contain — preenche sem sobra */
+  object-fit: cover;   
   display: block;
   background: transparent;
+      object-position: center top;  /* puxa para o topo, preserva o rosto */
+
 }
 
 .prof-card:hover img{
-  transform:scale(1.03);
+  transform:scale(1.05);
   filter:brightness(.62);
 }
 
@@ -291,6 +326,7 @@ body{background:var(--ink);color:var(--snow)}
   .prof-img-wrap{
     height:520px;
   }
+    
 }
 
 @media(max-width: 700px) {
@@ -896,6 +932,13 @@ export default function Home() {
   const [MensalidadeParcelasDTOS, setMensalidadeParcelasDTOS] = useState({});
   const [toast, setToast] = useState(null);
 
+
+  const [temParcelaPendente, setTemParcelaPendente] = useState(false);
+  const [bannerPendenteFechado, setBannerPendenteFechado] = useState(false);
+
+  const [planoIdPendente, setPlanoIdPendente] = useState(null); 
+
+
   // modal de parcelas
   const [modalPlano, setModalPlano]   = useState(null); // plano selecionado ou null
 
@@ -1039,7 +1082,15 @@ const syncLogin = () => {
           Authorization: `Bearer ${token}`
         }
       });
-      if (res.ok) { const d = await res.json(); setMensalidadeParcelasDTOS(d); }
+      if (res.ok) {
+        const d = await res.json(); setMensalidadeParcelasDTOS(d); 
+        const pendente = d?.parcelas?.some(p => p.status === "PENDENTE");
+        if (pendente) {
+          setTemParcelaPendente(true);
+          setBannerPendenteFechado(false);
+          setPlanoIdPendente(d.planoId);
+        }
+      }
     } catch { /* silencioso */ }
   }
 
@@ -1296,14 +1347,11 @@ function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
           <div className="nav-logo">2D Assessoria</div>
           <div className="nav-links">
             {aluno?.planoAtual && (
-              <span style={{
-                fontSize: ".7rem", color: "#d4a843",
-                border: "1px solid rgba(212,168,67,.4)",
-                padding: "6px 14px", marginRight: "12px",
-                letterSpacing: ".08em", textTransform: "uppercase",
-              }}>
-                Plano: {aluno.planoAtual.nome}
-              </span>
+              <button className="nbtn nbtn-ghost" onClick={() => navigate("/home/assinatura")}>
+                  Plano: {aluno.planoAtual.nome}
+
+
+              </button>  
             )}
             {/* ── ADMIN ── */}
             {aluno?.tipoUsuario === "ADMIN" && (
@@ -1321,8 +1369,75 @@ function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
             ) : (
               <button className="nbtn nbtn-gold" onClick={() => navigate("/login")}>Entrar</button>
             )}
+
           </div>
         </nav>
+
+
+        {temParcelaPendente && !bannerPendenteFechado && (
+        <div
+          onClick={() => navigate(`/home/telapagamento/${planoIdPendente}`)}
+          style={{
+            position: "fixed",
+            top: 0, left: 0, right: 0,
+            zIndex: 199,
+            background: "linear-gradient(90deg, #e05555 0%, #c13333 100%)",
+            borderBottom: "2px solid rgba(255,100,100,.4)",
+            padding: "13px 48px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            cursor: "pointer",
+            marginTop: 57, /* altura da nav */
+            transition: "opacity .2s",
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = ".88"}
+          onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <span style={{ fontSize: "1.1rem" }}>⚠️</span>
+            <div>
+              <div style={{
+                fontFamily: "var(--cond)",
+                fontSize: "1rem",
+                fontWeight: 800,
+                textTransform: "uppercase",
+                letterSpacing: ".1em",
+                color: "#fff",
+                lineHeight: 1,
+                marginBottom: 3,
+              }}>
+                Parcela pendente
+              </div>
+              <div style={{
+                fontSize: ".68rem",
+                color: "rgba(255,255,255,.75)",
+                letterSpacing: ".06em",
+              }}>
+                Você possui uma cobrança em aberto — clique para pagar
+              </div>
+            </div>
+          </div>
+
+                <button
+        onClick={(e) => { e.stopPropagation(); setBannerPendenteFechado(true); }}
+        style={{
+          background: "transparent",
+          border: "1px solid rgba(255,255,255,.3)",
+          color: "rgba(255,255,255,.7)",
+          cursor: "pointer",
+          width: 28, height: 28,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: ".85rem", borderRadius: "2px", flexShrink: 0,
+        }}
+      >
+        ✕
+      </button>
+
+        
+
+        </div>
+      )}
 
         {/* HERO */}
         <section className="hero">
@@ -1513,7 +1628,8 @@ function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
         border: "1px solid var(--border)",
         background: "var(--ink3)",
         overflow: "hidden",
-        margin: "10px"
+        margin: "6px",         /* era 10px */
+        boxSizing: "border-box",
       }}>
 
         {/* ── TOPO: nome + resultado ── */}
@@ -1521,14 +1637,14 @@ function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "16px 20px",
+          padding: "10px 13px",          /* era 16px 20px */
           borderBottom: "1px solid var(--border)",
           background: "var(--ink2)",
         }}>
           <div>
             <div style={{
               fontFamily: "var(--cond)",
-              fontSize: "1.1rem",
+              fontSize: ".75rem",        /* era 1.1rem */
               fontWeight: 800,
               textTransform: "uppercase",
               letterSpacing: ".06em",
@@ -1537,7 +1653,7 @@ function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
               {d.nome}
             </div>
             <div style={{
-              fontSize: ".65rem",
+              fontSize: ".55rem",        /* era .65rem */
               color: "var(--muted)",
               letterSpacing: ".1em",
               marginTop: 2,
@@ -1547,7 +1663,7 @@ function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
           </div>
           <div style={{
             fontFamily: "var(--cond)",
-            fontSize: "2rem",
+            fontSize: "1.3rem",          /* era 2rem */
             fontWeight: 800,
             color: "var(--gold)",
             letterSpacing: ".04em",
@@ -1557,7 +1673,7 @@ function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
         </div>
 
         {/* ── IMAGEM ── */}
-        <div style={{ flex: 1, overflow: "hidden", minHeight: 420 }}>
+        <div style={{ flex: 1, overflow: "hidden", minHeight: 218 }}> {/* era 336 */}
           <img
             src={d.img}
             alt={d.nome}
@@ -1579,14 +1695,14 @@ function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
         <div style={{
           background: "var(--gold)",
           color: "var(--ink)",
-          padding: "14px 20px",
+          padding: "9px 13px",           /* era 14px 20px */
           display: "flex",
           alignItems: "center",
           gap: 12,
         }}>
           <span style={{
             fontFamily: "var(--cond)",
-            fontSize: "1.1rem",
+            fontSize: ".75rem",          /* era 1.1rem */
             fontWeight: 800,
             textTransform: "uppercase",
             letterSpacing: ".06em",
@@ -1596,7 +1712,7 @@ function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
           </span>
           <span style={{
             marginLeft: "auto",
-            fontSize: "1.4rem",
+            fontSize: ".95rem",          /* era 1.4rem */
             flexShrink: 0,
           }}>
             🏃
@@ -1607,7 +1723,6 @@ function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
     ))}
   </div>
 </section>
-
 
         {/* PLANOS */}
         <section className="planos-sec" id="planos">

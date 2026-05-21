@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import TelaPagamento from "./pages/TelaPagamento";
 import ErroPagamento from "./pages/ErroPagamento";
 import CorretoPagamento from "./pages/CorretoPagamento";
+import Assinatura from "./pages/Assinatura/Assinatura";
 
 
 
@@ -32,6 +33,8 @@ function App() {
         <Route path="/home/telapagamento/" element={<TelaPagamento/>}/>
 
         <Route path="/home/administrativo" element={<Administrativo/>}/>
+
+        <Route path="/home/assinatura" element={<Assinatura />} />
 
 
       </Routes>
