@@ -352,6 +352,22 @@ export default function Login() {
       if (name === "cpf")    value = value.replace(/\D/g, "").slice(0, 11);
       if (name === "cnpj")   value = value.replace(/\D/g, "").slice(0, 14);
       if (name === "numero") value = value.replace(/\D/g, "");
+      if (name === "whatsapp") {
+
+          // remove tudo que não for número
+          value = value.replace(/\D/g, "");
+
+          // remove 55 caso usuário digite
+          if (value.startsWith("55")) {
+            value = value.slice(2);
+          }
+
+          // limita para DDD + número
+          value = value.slice(0, 11);
+
+          // adiciona 55 automaticamente
+          value = "55" + value;
+        }
 
       setFormCadastro({ ...formCadastro, [name]: value });
     }
@@ -418,7 +434,10 @@ export default function Login() {
           return;
         }
       }
-
+      if (formCadastro.whatsapp.length !== 13) {
+        setErro("O WhatsApp deve conter DDD + número.");
+        return;
+      }
       if (formCadastro.senha.length < 6) {
         setErro("A senha deve ter pelo menos 6 caracteres.");
         return;
