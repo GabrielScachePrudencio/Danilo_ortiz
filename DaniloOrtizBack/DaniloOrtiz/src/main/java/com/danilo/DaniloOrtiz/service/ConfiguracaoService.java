@@ -19,4 +19,14 @@ public class ConfiguracaoService {
     public Configuracao salvar(Configuracao configuracao) {
         return configuracaoRepository.save(configuracao);
     }
+
+    public String getAccessTokenAtivo() {
+        Configuracao config = getConfiguracao()
+                .orElseThrow(() -> new RuntimeException("Configuração não encontrada"));
+
+        if ("TESTE".equals(config.getMPAMBIENTE())) {
+            return config.getMPACCESSTOKENTEST();
+        }
+        return config.getMPACCESSTOKEN();
+    }
 }

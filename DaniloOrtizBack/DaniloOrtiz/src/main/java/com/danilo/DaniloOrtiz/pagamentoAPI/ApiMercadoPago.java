@@ -50,9 +50,8 @@ public class ApiMercadoPago {
         }
 
         MercadoPagoConfig.setAccessToken(
-                configuracaoServiceStatic.getConfiguracao()
-                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
-                        .getMPACCESSTOKEN()
+                // DEPOIS
+                configuracaoServiceStatic.getAccessTokenAtivo()
         );
 
         PreferenceClient cliente = new PreferenceClient();
@@ -106,9 +105,8 @@ public class ApiMercadoPago {
 
 //        MercadoPagoConfig.setAccessToken(ACCESS_TOKEN);
         MercadoPagoConfig.setAccessToken(
-                configuracaoServiceStatic.getConfiguracao()
-                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
-                        .getMPACCESSTOKEN()
+                // DEPOIS
+                configuracaoServiceStatic.getAccessTokenAtivo()
         );
 
         PaymentClient client = new PaymentClient();
@@ -131,9 +129,8 @@ public class ApiMercadoPago {
 
         //MercadoPagoConfig.setAccessToken(ACCESS_TOKEN);
         MercadoPagoConfig.setAccessToken(
-                configuracaoServiceStatic.getConfiguracao()
-                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
-                        .getMPACCESSTOKEN()
+                // DEPOIS
+                configuracaoServiceStatic.getAccessTokenAtivo()
         );
 
         PaymentClient client = new PaymentClient();
@@ -163,9 +160,8 @@ public class ApiMercadoPago {
         }
 
         MercadoPagoConfig.setAccessToken(
-                configuracaoServiceStatic.getConfiguracao()
-                        .orElseThrow(() -> new RuntimeException("Configuração não encontrada"))
-                        .getMPACCESSTOKEN()
+                // DEPOIS
+                configuracaoServiceStatic.getAccessTokenAtivo()
         );
 
         PaymentClient client = new PaymentClient();
