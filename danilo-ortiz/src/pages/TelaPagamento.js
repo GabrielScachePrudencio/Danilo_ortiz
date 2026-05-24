@@ -633,7 +633,6 @@ useEffect(() => {
       };
 
       // ── CARTÃO: gera token antes
-      // ── CARTÃO: gera token antes
         if (metodo === "credit_card") {
           if (!mpRef.current) { mostrarToast("SDK do Mercado Pago não carregou.", false); return; }
 

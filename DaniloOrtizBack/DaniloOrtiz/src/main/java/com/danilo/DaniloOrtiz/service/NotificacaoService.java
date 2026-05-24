@@ -46,11 +46,13 @@ public class NotificacaoService {
 
         String texto = String.format(
                 "✅ *Pagamento confirmado!*\n\n" +
-                        "Olá, %s! Recebemos o seu pagamento com sucesso.\n\n" +
+                        "Olá, %s! Somos da *2DASSESSORIA* e recebemos o seu pagamento com sucesso. 🎉\n\n" +
                         "📋 *Plano:* %s\n" +
                         "💰 *Valor pago:* R$ %.2f\n" +
                         "📅 *Válido até:* %s\n\n" +
-                        "Qualquer dúvida é só chamar. Obrigado! 🏋️",
+                        "Agora é só criar sua conta no *SisRun* pelo link abaixo:\n" +
+                        "🔗 https://appsisrun.com.br/sisrun/forms/cadastro.xhtml?assessoria=2dassessoriaesportiva&utm_source=ig&utm_medium=social&utm_content=link_in_bio&fbclid=PAb21jcAR5LyxleHRuA2FlbQIxMQBzcnRjBmFwcF9pZA81NjcwNjczNDMzNTI0MjcAAacTy14m5_s11oO4TzNjZPHbREK-IR_xIrLeDe4qmC1yTdnrue5jtkVPdCjhKQ_aem_p6YqHccJxZ_ls7zK6By4Aw\n\n" +
+                        "Qualquer dúvida estamos à disposição! 🏋️",
                 aluno.getNome(),
                 planoNome,
                 pagamento.getValorPago(),

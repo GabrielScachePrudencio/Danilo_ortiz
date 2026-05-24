@@ -153,7 +153,10 @@ public class ApiMercadoPago {
             PagamentoTransparenteDTO dto,
             com.danilo.DaniloOrtiz.model.Aluno aluno
     ) {
-
+        System.out.println(">>> DTO recebido: valor=" + dto.getValor()
+                + " | parcelaId=" + dto.getParcelaId()
+                + " | forma=" + dto.getFormaPagamento()
+                + " | token=" + dto.getCardToken());
 
         if (configuracaoServiceStatic == null) {
             throw new RuntimeException("ConfiguracaoService NÃO foi injetado");
