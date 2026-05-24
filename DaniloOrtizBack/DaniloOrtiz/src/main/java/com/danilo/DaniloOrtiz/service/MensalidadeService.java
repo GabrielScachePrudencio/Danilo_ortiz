@@ -35,6 +35,7 @@ public class MensalidadeService {
     private final EmailService emailService;
     private final ComprovanteService comprovanteService;
     private final MensalidadeCanceladaService mensalidadeCanceladaService;
+    private final NotificacaoService notificacaoService;
 
     public Mensalidade add(Mensalidade mensalidade){
         Aluno aluno = alunoService.findById(mensalidade.getAluno().getId());
@@ -280,6 +281,9 @@ public class MensalidadeService {
             pagamento.setStatusPagamento("FINALIZADO"); // ou o status que veio do MP
             pagamento.setPago(true);
 
+            //api do zap
+            notificacaoService.agendarConfirmacaoPagamento(pagamento);
+
             pagamento.setEnvioEmailConfirmando(1);
 
             pagamentoService.save(pagamento); // Salva a alteração
@@ -412,7 +416,7 @@ public class MensalidadeService {
             return;
         }
 
-        if (pagamento.getEnvioEmailConfirmando() == 1) {
+        if (Integer.valueOf(1).equals(pagamento.getEnvioEmailConfirmando())) {
             return;
         }
 
@@ -424,6 +428,10 @@ public class MensalidadeService {
             pagamento.setStatusPagamento("FINALIZADO");
             pagamento.setPago(true);
             pagamento.setEnvioEmailConfirmando(1);
+
+            //teste para enviar msgs
+            notificacaoService.agendarConfirmacaoPagamento(pagamento);
+
 
             // Garante o vínculo com a parcela
             pagamento.setMensalidades_parcelas(parcela);
@@ -445,18 +453,21 @@ public class MensalidadeService {
              Aluno aluno = alunoService.findById(pagamento.getAluno().getId());
 
 
-            byte[] pdf = comprovanteService.gerarComprovante(
-                    aluno.getNome(),
-                    pagamento.getPlano().getNome(),
-                    pagamento.getValorPago().toString(),
-                    pagamento.getId().toString()
-            );
-
-            emailService.enviarComAnexo(
-                    aluno.getEmail(),
-                    "<h2>Pagamento confirmado ✔</h2><p>Seu pagamento foi aprovado com sucesso.</p>",
-                    pdf
-            );
+            try {
+                byte[] pdf = comprovanteService.gerarComprovante(
+                        aluno.getNome(),
+                        pagamento.getPlano().getNome(),
+                        pagamento.getValorPago().toString(),
+                        pagamento.getId().toString()
+                );
+                emailService.enviarComAnexo(
+                        aluno.getEmail(),
+                        "<h2>Pagamento confirmado ✔</h2><p>Seu pagamento foi aprovado com sucesso.</p>",
+                        pdf
+                );
+            } catch (Exception e) {
+                System.err.println("Erro ao enviar email (não crítico): " + e.getMessage());
+            }
         }
     }
 

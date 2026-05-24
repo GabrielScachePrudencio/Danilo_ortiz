@@ -2,6 +2,7 @@ package com.danilo.DaniloOrtiz.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -16,14 +17,17 @@ public class Pagamento {
 
     @ManyToOne
     @JoinColumn(name = "aluno_id")
+    @ToString.Exclude
     private Aluno aluno;
 
     @ManyToOne
     @JoinColumn(name = "plano_id")
+    @ToString.Exclude
     private Plano plano;
 
     @ManyToOne
     @JoinColumn(name = "parcela_id")
+    @ToString.Exclude
     private Mensalidades_parcelas mensalidades_parcelas;
 
     @Column(name = "mp_payment_id", unique = true)

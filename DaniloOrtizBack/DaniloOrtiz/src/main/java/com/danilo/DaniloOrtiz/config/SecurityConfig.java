@@ -48,6 +48,9 @@ public class SecurityConfig {
 
                         .requestMatchers("/manifest.json").permitAll()
 
+
+                        .requestMatchers("/dev/*").permitAll()
+
                         // 🔒 resto protegido
                         .anyRequest().authenticated()
                 )
