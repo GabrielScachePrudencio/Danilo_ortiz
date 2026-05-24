@@ -1010,6 +1010,40 @@ if (bloqueado) {
   </div>
 )}
 
+{/* RESULTADO CARTÃO */}
+{resultado && metodo === "credit_card" && resultado.status !== "approved" && (
+  <div style={S.resultBox}>
+    <p style={S.sectionLabel}>Pagamento em análise</p>
+
+    <p
+      style={{
+        fontSize: "0.9rem",
+        color: "rgba(240,236,228,0.75)",
+        textAlign: "center",
+        lineHeight: 1.6,
+      }}
+    >
+      Seu pagamento foi enviado e está sendo processado.
+      <br />
+      Assim que houver confirmação, seu acesso será liberado automaticamente.
+    </p>
+
+    <button
+      style={{
+        ...S.btnPrimary(false),
+        marginTop: 24,
+        width: "100%",
+        background: "transparent",
+        border: "1px solid rgba(196,160,100,0.4)",
+        color: "#c4a064",
+      }}
+      onClick={() => navigate(`/home/conta/${idAluno}`)}
+    >
+      Já paguei — ver minha conta →
+    </button>
+  </div>
+)}
+
      
 
         {/* TOTAL */}
