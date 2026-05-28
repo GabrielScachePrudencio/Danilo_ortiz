@@ -58,6 +58,14 @@ export default function Assinatura() {
       .catch(() => setErro("Erro ao carregar dados da assinatura."));
   }, [aluno]);
 
+async function recarregarMensalidade() {
+  if (!aluno?.id) return;
+  const res = await fetch(`${API}/mensalidades/${aluno.id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.ok) setMensalidade(await res.json());
+}
+
   /* ── loading ── */
   if (carregando) {
     return (
@@ -110,8 +118,11 @@ export default function Assinatura() {
           <>
             <AssinaturaPlano    mensalidade={mensalidade} />
             <AssinaturaStatus  mensalidade={mensalidade} aluno={aluno} />
-            <AssinaturaParcelas parcelas={mensalidade.parcelas} planoId={mensalidade.planoId} />   
-        </>
+<AssinaturaParcelas
+  parcelas={mensalidade.parcelas}
+  planoId={mensalidade.planoId}
+  onAtualizar={recarregarMensalidade}  // ← adiciona
+/>        </>
         )}
 
       </main>

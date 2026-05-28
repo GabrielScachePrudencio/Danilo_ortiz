@@ -407,6 +407,14 @@ export default function TelaPagamento() {
   const [resultado, setResultado] = useState(null); // response do backend
   const [copiado, setCopiado] = useState(false);
 
+  //para verificar se ja foi pago 
+  const [verificandoPagamento, setVerificandoPagamento] = useState(false);
+  const [pagamentoConfirmado, setPagamentoConfirmado] = useState(false);
+
+
+  const [erroCadastro, setErroCadastro] = useState(null);
+
+
   // ── MP SDK
   const mpRef = useRef(null);
 
@@ -571,6 +579,32 @@ useEffect(() => {
     setTimeout(() => setCopiado(false), 2500);
   }
 
+async function verificarPagamentoJaFeito() {
+    if (!parcelaPendente?.id) return;
+    setVerificandoPagamento(true);
+    try {
+        const res = await fetch(`${API}/mensalidades/verificar-pagamento/${parcelaPendente.id}`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+
+        if (data.status === "FINALIZADO") {
+            setPagamentoConfirmado(true);
+            mostrarToast("Pagamento confirmado! Redirecionando...", true);
+            setTimeout(() => navigate(`/home/conta/${idAluno}`), 2000);
+        } else if (data.status === "PENDENTE") {
+            mostrarToast("Pagamento ainda não identificado. Aguarde e tente novamente.", false);
+        } else {
+            mostrarToast(data.mensagem || "Não foi possível confirmar.", false);
+        }
+    } catch {
+        mostrarToast("Erro de conexão. Tente novamente.", false);
+    } finally {
+        setVerificandoPagamento(false);
+    }
+}
+
   // ── Enviar pagamento
   async function confirmar() {
     if (!valorTotal) { mostrarToast("Valor não encontrado.", false); return; }
@@ -686,10 +720,37 @@ useEffect(() => {
       });
 
       if (!res.ok) {
-        const msg = await res.text();
-        mostrarToast(msg || "Erro ao processar pagamento.", false);
-        return;
-      }
+
+          let erro;
+
+          try {
+            erro = await res.json();
+          } catch {
+            const msg = await res.text();
+            mostrarToast(msg || "Erro ao processar pagamento.", false);
+            return;
+          }
+
+          // cadastro incompleto
+          if (erro.status === "CADASTRO_INCOMPLETO") {
+
+            setErroCadastro(erro);
+
+            mostrarToast(
+              "Complete seu cadastro antes de continuar.",
+              false
+            );
+
+            return;
+          }
+
+          mostrarToast(
+            erro.mensagem || "Erro ao processar pagamento.",
+            false
+          );
+
+          return;
+        }
 
       const data = await res.json();
       setResultado(data);
@@ -720,7 +781,7 @@ useEffect(() => {
       );
   }
 
-  // ─── Guards de navegação ─────────────────────────────────────────
+ // ─── Guards de navegação ─────────────────────────────────────────
   if (!emailLogado) {
     return (
       <div style={S.page}>
@@ -738,69 +799,107 @@ useEffect(() => {
     );
   }
 
-  // ─── Sem parcelas pendentes (plano em dia) ───────────────────────────
-if (aluno && mensalidadeDTO && !ehNovaAssinatura && !parcelaPendente) {
-  return (
-    <div style={S.page}>
-      <div style={S.bgGlow} />
-      <div style={{ ...S.content, display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", paddingTop: 0 }}>
-        <div style={S.gateCard}>
-          <p style={S.eyebrow}>Tudo em dia</p>
-          <h2 style={S.gateTitulo}>Nenhuma parcela pendente</h2>
-          <p style={S.gateDesc}>Você não possui cobranças abertas no momento.</p>
-          <button style={S.btnPrimary(false)} onClick={() => navigate("/")}>
-            Voltar para início →
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-  if (aluno && jaTemPlanoAtivo && aluno?.planoAtual !== null) {
+  // 🔒 ADICIONE ESTA LINHA AQUI: SÓ ENTRA NOS BLOQUEIOS SE NÃO HOUVER ERRO DE CADASTRO
+  if (erroCadastro) {
     return (
       <div style={S.page}>
         <div style={S.bgGlow} />
-        <div style={{ ...S.content, display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
-          <div style={S.gateCard}>
-            <p style={S.eyebrow}>Plano ativo</p>
-            <h2 style={S.gateTitulo}>Você já possui um plano</h2>
-            <p style={S.gateDesc}>Seu plano atual ainda está ativo.</p>
-            <button style={S.btnPrimary(false)} onClick={() => navigate("/")}>Ir para minha área</button>
+        <div style={{ ...S.content, display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", paddingTop: 0 }}>
+          <div style={{ ...S.gateCard, border: "1px solid rgba(224,85,85,0.4)" }}>
+            <p style={{ ...S.eyebrow, color: "#e05555" }}>Cadastro Incompleto</p>
+            <h2 style={S.gateTitulo}>Faltam dados</h2>
+            <p style={{ ...S.gateDesc, marginBottom: 20 }}>
+              Precisamos que você complete as seguintes informações no seu perfil para liberar o pagamento:
+            </p>
+            
+            <ul style={{ 
+              textAlign: "left", 
+              color: "rgba(240,236,228,0.8)", 
+              fontSize: "0.85rem", 
+              lineHeight: 1.8,
+              marginBottom: 30,
+              paddingLeft: 20
+            }}>
+              {erroCadastro.campos?.map((campo) => (
+                <li key={campo} style={{ letterSpacing: "0.05em" }}>{campo}</li>
+              ))}
+            </ul>
+
+            <button style={S.btnPrimary(false)} onClick={() => navigate(`/home/conta/${idAluno}`)}>
+              Completar Cadastro →
+            </button>
+            <button style={S.btnSecondary} onClick={() => setErroCadastro(null)}>
+              Voltar e revisar
+            </button>
           </div>
         </div>
       </div>
     );
   }
 
-if (bloqueado) {
-  return (
-    <div style={S.page}>
-      <div style={S.bgGlow} />
-      <div style={{
-        ...S.content,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: "100vh",
-        paddingTop: 0
-      }}>
-        <div style={S.gateCard}>
-          <p style={S.eyebrow}>Tudo em dia</p>
-          <h2 style={S.gateTitulo}>Nenhuma parcela pendente</h2>
-          <p style={S.gateDesc}>
-            Você não possui cobranças abertas no momento.
-          </p>
-          <button style={S.btnPrimary(false)} onClick={() => navigate("/")}>
-            Voltar para início →
-          </button>
+    // ─── Sem parcelas pendentes (plano em dia) ───────────────────────────
+    if (aluno && mensalidadeDTO && !ehNovaAssinatura && !parcelaPendente) {
+      return (
+        <div style={S.page}>
+          <div style={S.bgGlow} />
+          <div style={{ ...S.content, display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", paddingTop: 0 }}>
+            <div style={S.gateCard}>
+              <p style={S.eyebrow}>Tudo em dia</p>
+              <h2 style={S.gateTitulo}>Nenhuma parcela pendente</h2>
+              <p style={S.gateDesc}>Você não possui cobranças abertas no momento.</p>
+              <button style={S.btnPrimary(false)} onClick={() => navigate("/")}>
+                Voltar para início →
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  );
-}
+      );
+    
 
+    if (aluno && jaTemPlanoAtivo && aluno?.planoAtual !== null) {
+      return (
+        <div style={S.page}>
+          <div style={S.bgGlow} />
+          <div style={{ ...S.content, display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+            <div style={S.gateCard}>
+              <p style={S.eyebrow}>Plano ativo</p>
+              <h2 style={S.gateTitulo}>Você já possui um plano</h2>
+              <p style={S.gateDesc}>Seu plano atual ainda está ativo.</p>
+              <button style={S.btnPrimary(false)} onClick={() => navigate("/")}>Ir para minha área</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
+    if (bloqueado) {
+      return (
+        <div style={S.page}>
+          <div style={S.bgGlow} />
+          <div style={{
+            ...S.content,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "100vh",
+            paddingTop: 0
+          }}>
+            <div style={S.gateCard}>
+              <p style={S.eyebrow}>Tudo em dia</p>
+              <h2 style={S.gateTitulo}>Nenhuma parcela pendente</h2>
+              <p style={S.gateDesc}>
+                Você não possui cobranças abertas no momento.
+              </p>
+              <button style={S.btnPrimary(false)} onClick={() => navigate("/")}>
+                Voltar para início →
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+  } // 👈 ADICIONE ESTA CHAVE AQUI PARA FECHAR O BLOCO DO erroCadastro
 
   // ─── Resultado aprovado (cartão) ──────────────────────────────────
   if (resultado?.status === "approved") {
@@ -874,6 +973,9 @@ if (bloqueado) {
             </>
           )}
         </div>
+
+          
+
 
         {/* MÉTODO DE PAGAMENTO */}
         <p style={S.sectionLabel}>Método de pagamento</p>
@@ -972,43 +1074,54 @@ if (bloqueado) {
 
 
         {/* RESULTADO PIX */}
-{resultado && metodo === "pix" && resultado.pixQrCode && (
-  <div style={S.resultBox}>
-    <p style={S.sectionLabel}>Escaneie o QR Code</p>
-    {resultado.pixQrCodeBase64 && (
-      <img
-        src={`data:image/png;base64,${resultado.pixQrCodeBase64}`}
-        alt="QR Code PIX"
-        style={S.qrImg}
-      />
+    {resultado && metodo === "pix" && resultado.pixQrCode && (
+      <div style={S.resultBox}>
+        <p style={S.sectionLabel}>Escaneie o QR Code</p>
+        {resultado.pixQrCodeBase64 && (
+          <img
+            src={`data:image/png;base64,${resultado.pixQrCodeBase64}`}
+            alt="QR Code PIX"
+            style={S.qrImg}
+          />
+        )}
+        <p style={{ ...S.label, marginBottom: 8 }}>Ou copie o código:</p>
+        <div style={S.copiaCola}>{resultado.pixQrCode}</div>
+        <button style={S.copyBtn} onClick={copiarPix}>
+          {copiado ? "✓ Copiado!" : "Copiar código PIX"}
+        </button>
+
+        {/* botão verificar */}
+        {!pagamentoConfirmado ? (
+          <>
+            <button
+              onClick={verificarPagamentoJaFeito}
+              disabled={verificandoPagamento}
+              style={{
+                ...S.btnPrimary(verificandoPagamento),
+                marginTop: 24,
+                background: "transparent",
+                border: `1px solid ${verificandoPagamento ? "rgba(196,160,100,0.2)" : "rgba(196,160,100,0.4)"}`,
+                color: verificandoPagamento ? "rgba(196,160,100,0.4)" : "#c4a064",
+              }}
+            >
+              {verificandoPagamento ? "Verificando pagamento..." : "✓ Já paguei — verificar"}
+            </button>
+            <p style={{ fontSize: "0.68rem", color: "rgba(240,236,228,0.3)", textAlign: "center", marginTop: 8 }}>
+              Clique após realizar o pagamento para confirmar na hora.
+            </p>
+          </>
+        ) : (
+          <div style={{
+            marginTop: 24, padding: "16px 24px", width: "100%", textAlign: "center",
+            background: "rgba(111,207,122,0.08)", border: "1px solid rgba(111,207,122,0.3)",
+          }}>
+            <p style={{ color: "#6fcf7a", fontSize: "0.8rem", letterSpacing: "0.1em" }}>
+              ✓ Pagamento confirmado! Redirecionando...
+            </p>
+          </div>
+        )}
+      </div>
     )}
-    <p style={{ ...S.label, marginBottom: 8 }}>Ou copie o código:</p>
-    <div style={S.copiaCola}>{resultado.pixQrCode}</div>
-    <button style={S.copyBtn} onClick={copiarPix}>
-      {copiado ? "✓ Copiado!" : "Copiar código PIX"}
-    </button>
-
-    {/* ← ADICIONAR ISSO */}
-    <button
-      style={{
-        ...S.btnPrimary(false),
-        marginTop: 24,
-        width: "100%",
-        background: "transparent",
-        border: "1px solid rgba(196,160,100,0.4)",
-        color: "#c4a064",
-      }}
-      onClick={() => navigate(`/home/conta/${idAluno}`)}
-    >
-      Já paguei — ver minha conta →
-    </button>
-    <p style={{ fontSize: "0.7rem", color: "rgba(240,236,228,0.35)", textAlign: "center", marginTop: 8 }}>
-      Seu acesso é liberado automaticamente após o pagamento ser confirmado.
-    </p>
-    {/* ← FIM */}
-
-  </div>
-)}
 
 {/* RESULTADO CARTÃO */}
 {resultado && metodo === "credit_card" && resultado.status !== "approved" && (

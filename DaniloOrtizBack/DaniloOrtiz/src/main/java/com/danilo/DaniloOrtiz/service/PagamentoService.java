@@ -26,6 +26,11 @@ public class PagamentoService {
         Pagamento p = pagamentoRepository.save(pagamento);
         return p;
     }
+
+    public List<Pagamento> findAllByParcelaId(Long parcelaId) {
+        return pagamentoRepository
+                .findByParcelaId(parcelaId);
+    }
     public Pagamento findByMpPaymentId(String mpPaymentId) {
         return pagamentoRepository.findByMpPaymentId(mpPaymentId).orElse(null);
     }
@@ -118,4 +123,10 @@ public class PagamentoService {
 
         return listaDTO;
     }
+    // PagamentoService
+    public Pagamento findByParcelaId(Long parcelaId) {
+        return pagamentoRepository
+                .findTopByParcelaId(parcelaId).orElse(null);
+    }
+
 }

@@ -156,4 +156,35 @@ public class AlunoService {
         ar.desativarAssinatura(id);
     }
 
+
+    public List<String> validarDadosPagamento(Aluno aluno) {
+
+        List<String> pendencias = new ArrayList<>();
+
+        if (aluno.getNome() == null || aluno.getNome().isBlank()) {
+            pendencias.add("Nome completo");
+        }
+
+        if (aluno.getCPF() == null || aluno.getCPF().isBlank()) {
+            pendencias.add("CPF");
+        }
+
+        if (aluno.getEmail() == null || aluno.getEmail().isBlank()) {
+            pendencias.add("E-mail");
+        }
+
+        if (aluno.getWhatsapp() == null || aluno.getWhatsapp().isBlank()) {
+            pendencias.add("Whatsapp");
+        }
+
+        if (aluno.getCEP() == null) {
+            pendencias.add("CEP");
+        }
+
+        if (aluno.getRua() == null || aluno.getRua().isBlank()) {
+            pendencias.add("Rua");
+        }
+
+        return pendencias;
+    }
 }

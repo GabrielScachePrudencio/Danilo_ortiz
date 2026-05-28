@@ -164,8 +164,8 @@ const CAMPOS_PESSOAIS = [
   { key: "nome",     label: "Nome Completo", editable: true },
   { key: "email",    label: "E-mail",        editable: true },
   { key: "whatsapp", label: "WhatsApp",      editable: true },
-  { key: "CPF",      label: "CPF",           editable: true },
-  { key: "CNPJ",     label: "CNPJ",          editable: true },
+  { key: "cpf",      label: "CPF",           editable: true },
+  { key: "cnpj",     label: "CNPJ",          editable: true },
   { key: "rua",      label: "Rua",           editable: true },
   { key: "numero",   label: "Número",        editable: true },
   { key: "bairro",   label: "Bairro",        editable: true }, // ← novo
@@ -475,15 +475,50 @@ function InfoRow({ label, valor, cor, mono = false, copiavel = false }) {
 }
 
 /* ─── modal detalhes da parcela ───────────────────────────────────────── */
-function ModalParcela({ parcela, urlMensalidade, onClose, onPagar, nomePlano }) {
+function ModalParcela({ parcela, urlMensalidade, onClose, onPagar, nomePlano, token, onConfirmado }) {
   const [detalhe, setDetalhe] = useState(null);
   const [carregando, setCarregando] = useState(true);
+  // Adiciona esse estado no ModalParcela
+  const [verificando, setVerificando] = useState(false);
+  const [resultadoVerificacao, setResultadoVerificacao] = useState(null);
+
+  async function verificarPagamento() {
+        setVerificando(true);
+        setResultadoVerificacao(null);
+        try {
+            const res = await fetch(`${urlMensalidade}/verificar-pagamento/${parcela.id}`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            setResultadoVerificacao(data);
+
+            if (data.status === "FINALIZADO") {
+                // Recarrega os detalhes da parcela no modal
+                const res2 = await fetch(`${urlMensalidade}/parcela/${parcela.id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res2.ok) setDetalhe(await res2.json());
+
+                await onConfirmado?.();
+            }
+        } catch {
+            setResultadoVerificacao({
+                status: "ERRO",
+                mensagem: "Erro de conexão. Tente novamente."
+            });
+        } finally {
+            setVerificando(false);
+        }
+    }
 
   useEffect(() => {
     async function buscarDetalhe() {
       setCarregando(true);
       try {
-        const res = await fetch(`${urlMensalidade}/parcela/${parcela.id}`);
+        const res = await fetch(`${urlMensalidade}/parcela/${parcela.id}`, {
+          headers: { Authorization: `Bearer ${token}` }  
+      });
         if (res.ok) setDetalhe(await res.json());
         else setDetalhe(parcela);
       } catch {
@@ -747,7 +782,54 @@ function ModalParcela({ parcela, urlMensalidade, onClose, onPagar, nomePlano }) 
             <button onClick={onClose} style={{ ...S.btnSecondary, padding: "9px 18px", fontSize: "0.68rem" }}>
               Fechar
             </button>
+{/* Botão "Já paguei" — aparece quando tem mpPaymentId e ainda não finalizou */}
+{podePagar && d.mpPaymentId && (
+    <button
+        onClick={verificarPagamento}
+        disabled={verificando}
+        style={{
+            fontFamily: "'Barlow', sans-serif",
+            fontWeight: 600,
+            fontSize: "0.68rem",
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            padding: "9px 18px",
+            background: "transparent",
+            color: verificando ? "rgba(196,160,100,0.4)" : "#c4a064",
+            border: `1px solid ${verificando ? "rgba(196,160,100,0.15)" : "rgba(196,160,100,0.35)"}`,
+            cursor: verificando ? "not-allowed" : "pointer",
+            transition: "all 0.2s",
+        }}
+    >
+        {verificando ? "Verificando..." : "✓ Já paguei"}
+    </button>
+)}
 
+              {/* Resultado da verificação */}
+              {resultadoVerificacao && (
+                  <div style={{
+                      width: "100%",
+                      padding: "10px 14px",
+                      marginTop: 4,
+                      background: resultadoVerificacao.status === "FINALIZADO"
+                          ? "rgba(111,207,122,0.08)"
+                          : resultadoVerificacao.status === "PENDENTE"
+                          ? "rgba(224,160,85,0.08)"
+                          : "rgba(224,85,85,0.08)",
+                      border: `1px solid ${
+                          resultadoVerificacao.status === "FINALIZADO" ? "rgba(111,207,122,0.3)"
+                          : resultadoVerificacao.status === "PENDENTE"  ? "rgba(224,160,85,0.3)"
+                          : "rgba(224,85,85,0.3)"
+                      }`,
+                      fontSize: "0.7rem",
+                      color: resultadoVerificacao.status === "FINALIZADO" ? "#6fcf7a"
+                          : resultadoVerificacao.status === "PENDENTE"   ? "#e0a055"
+                          : "#e05555",
+                      letterSpacing: "0.05em",
+                  }}>
+                      {resultadoVerificacao.mensagem}
+                  </div>
+              )}
             {/* pendente/aguardando → pagar */}
             {podePagar && (
               <button onClick={() => onPagar(d)} style={{ ...S.btnPrimary, padding: "9px 20px", fontSize: "0.68rem" }}>
@@ -1082,7 +1164,11 @@ const API = process.env.REACT_APP_API_URL || "http://localhost:3001";
         headers: { Authorization: `Bearer ${token}` }  // <-- adicionar
       });
 
-      if (res.ok) { const d = await res.json(); setAluno(d); setEditado(d); }
+      if (res.ok) { 
+        const d = await res.json();
+        setAluno(d);
+           setEditado(d);
+         }
       else setErro("Aluno não encontrado no banco.");
     } catch { setErro("Erro de conexão com o servidor."); }
   }
@@ -1272,6 +1358,8 @@ async function confirmarTrocaStatusSisrun() {
           nomePlano={MensalidadeParcelasDTOS?.nomePlano ?? "—"}
           onClose={() => setParcelaSelecionada(null)}
           onPagar={irParaPagamento}
+          token={token}    
+          onConfirmado={pegarDadosMensalidadeAlunoPorId}  
         />
       )}
 
@@ -1439,6 +1527,20 @@ async function confirmarTrocaStatusSisrun() {
                   {ultimaParcela.status}
                 </span>
               </div>
+               {/* ← ADICIONA ISSO */}
+              {ultimaParcela.status === "PENDENTE" && (
+                <p style={{
+                  fontSize: "0.62rem",
+                  color: "rgba(196,160,100,0.5)",
+                  letterSpacing: "0.04em",
+                  lineHeight: 1.5,
+                  marginTop: 8,
+                  paddingTop: 8,
+                  borderTop: "1px solid rgba(196,160,100,0.1)",
+                }}>
+                  Já pagou? Clique aqui para verificar o status do seu pagamento.
+                </p>
+              )}
             </div>
           ) : (
             <div style={{ ...S.parcelaCard, opacity: 0.5, borderLeftColor: "rgba(196,160,100,0.1)" }}>

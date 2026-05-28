@@ -345,7 +345,8 @@ public class MensalidadeService {
                 .dataVencimento(parcela.getDataVencimento().toLocalDate())
                 .status(parcela.getStatus());
 
-        Pagamento pagamento = parcela.getPagamento();
+        // ← MUDA AQUI: busca direto pelo id da parcela em vez de parcela.getPagamento()
+        Pagamento pagamento = pagamentoService.findByParcelaId(idParcela);
 
         if (pagamento != null) {
             builder
@@ -356,7 +357,8 @@ public class MensalidadeService {
                     .valorPago(pagamento.getValorPago())
                     .pago(pagamento.getPago());
 
-            String mpIdStr = pagamento.getId_mercadopago();
+            // ← MUDA AQUI: usa mpPaymentId em vez de id_mercadopago
+            String mpIdStr = pagamento.getMpPaymentId();
 
             if (mpIdStr != null && !mpIdStr.isBlank()) {
                 try {
@@ -385,14 +387,13 @@ public class MensalidadeService {
                     builder.mpErro("Erro ao consultar Mercado Pago: " + e.getMessage());
                 }
             } else {
-                // Pagamento registrado mas webhook ainda não trouxe o id do MP
                 builder.mpErro("Aguardando confirmação do Mercado Pago");
             }
         }
-        // pagamento == null → parcela sem pagamento iniciado; retorna só dados básicos
 
         return builder.build();
     }
+
 
     @Transactional
     public void confirmarPagamentoPorParcelaId(Long parcelaId, String mpId, String statusMp, String pagamentoMp) {
@@ -509,4 +510,68 @@ public class MensalidadeService {
     }
 
 
+    public Pagamento validarOuRetornarPagamento(Long idParcela) {
+
+        List<Pagamento> pagamentos =
+                pagamentoService.findAllByParcelaId(idParcela);
+
+        Pagamento pendente = null;
+
+        for (Pagamento pagamento : pagamentos) {
+
+            // já finalizado
+            if (Boolean.TRUE.equals(pagamento.getPago())
+                    || "FINALIZADO".equalsIgnoreCase(pagamento.getStatusPagamento())) {
+                return pagamento;
+            }
+
+            // pendente sem MP ainda
+            if ("PENDENTE".equalsIgnoreCase(pagamento.getStatusPagamento())) {
+
+                pendente = pagamento;
+
+                if (pagamento.getMpPaymentId() == null
+                        || pagamento.getMpPaymentId().isBlank()) {
+                    return pagamento;
+                }
+
+                try {
+                    Payment mpPayment =
+                            ApiMercadoPago.consultarPagamento(
+                                    Long.parseLong(pagamento.getMpPaymentId())
+                            );
+
+                    if (mpPayment != null) {
+
+                        switch (mpPayment.getStatus()) {
+
+                            case "approved":
+                                confirmarPagamentoDoWebHook(
+                                        pagamento.getId(),
+                                        mpPayment.getId().toString(),
+                                        mpPayment.getStatus(),
+                                        mpPayment.getPaymentMethodId()
+                                );
+                                pagamento = pagamentoService.findById((pagamento.getId()));
+                                return pagamento;
+
+                            case "pending":
+                            case "in_process":
+                                return pagamento;
+
+                            case "rejected":
+                            case "cancelled":
+                                // ❗ IMPORTANTE: esse aqui NÃO pode reutilizar
+                                // PIX expirado entra aqui → deixa criar novo
+                                break;
+                        }
+                    }
+
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // se tiver pendente, retorna ele
+        return pendente;
+    }
 }
