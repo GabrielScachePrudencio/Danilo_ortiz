@@ -309,24 +309,24 @@ public class MensalidadeService {
 
             //envia o email de confirmação
 
-            byte[] pdf = comprovanteService.gerarComprovante(
-                    aluno.getNome(),
-                    pagamento.getPlano().getNome(),
-                    pagamento.getValorPago().toString(),
-                    pagamento.getId().toString()
-            );
-
-            String html = "<h2>Pagamento confirmado ✔</h2>" +
-                    "<p>Seu pagamento foi aprovado com sucesso.</p>";
-
-            emailService.enviarComAnexo(
-                    aluno.getEmail(),
-                    html,
-                    pdf
-            );
-
-            // ✅ SÓ marca depois que enviou
-            pagamento.setEnvioEmailConfirmando(1);
+//            byte[] pdf = comprovanteService.gerarComprovante(
+//                    aluno.getNome(),
+//                    pagamento.getPlano().getNome(),
+//                    pagamento.getValorPago().toString(),
+//                    pagamento.getId().toString()
+//            );
+//
+//            String html = "<h2>Pagamento confirmado ✔</h2>" +
+//                    "<p>Seu pagamento foi aprovado com sucesso.</p>";
+//
+//            emailService.enviarComAnexo(
+//                    aluno.getEmail(),
+//                    html,
+//                    pdf
+//            );
+//
+//            // ✅ SÓ marca depois que enviou
+//            pagamento.setEnvioEmailConfirmando(1);
             pagamentoService.save(pagamento);
 
         }
@@ -453,22 +453,22 @@ public class MensalidadeService {
              alunoService.ativarAssinatura(pagamento.getAluno().getId());
              Aluno aluno = alunoService.findById(pagamento.getAluno().getId());
 
-
-            try {
-                byte[] pdf = comprovanteService.gerarComprovante(
-                        aluno.getNome(),
-                        pagamento.getPlano().getNome(),
-                        pagamento.getValorPago().toString(),
-                        pagamento.getId().toString()
-                );
-                emailService.enviarComAnexo(
-                        aluno.getEmail(),
-                        "<h2>Pagamento confirmado ✔</h2><p>Seu pagamento foi aprovado com sucesso.</p>",
-                        pdf
-                );
-            } catch (Exception e) {
-                System.err.println("Erro ao enviar email (não crítico): " + e.getMessage());
-            }
+//
+//            try {
+//                byte[] pdf = comprovanteService.gerarComprovante(
+//                        aluno.getNome(),
+//                        pagamento.getPlano().getNome(),
+//                        pagamento.getValorPago().toString(),
+//                        pagamento.getId().toString()
+//                );
+//                emailService.enviarComAnexo(
+//                        aluno.getEmail(),
+//                        "<h2>Pagamento confirmado ✔</h2><p>Seu pagamento foi aprovado com sucesso.</p>",
+//                        pdf
+//                );
+//            } catch (Exception e) {
+//                System.err.println("Erro ao enviar email (não crítico): " + e.getMessage());
+//            }
         }
     }
 
