@@ -13,10 +13,6 @@ import com.danilo.DaniloOrtiz.repository.PagamentoRepository;
 import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.CannotAcquireLockException;
-import org.springframework.dao.DeadlockLoserDataAccessException;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -268,11 +264,7 @@ public class MensalidadeService {
 
     }
 
-    @Retryable(
-            retryFor = { CannotAcquireLockException.class, DeadlockLoserDataAccessException.class },
-            maxAttempts = 3,
-            backoff = @Backoff(delay = 500)
-    )
+
     @Transactional
     public void confirmarPagamentoDoWebHook(Long idpagamentoInterno, String mpId, String statusMp, String pagamentoMp){
         Pagamento pagamento = pagamentoService.findById(idpagamentoInterno);
@@ -402,11 +394,7 @@ public class MensalidadeService {
         return builder.build();
     }
 
-    @Retryable(
-            retryFor = { CannotAcquireLockException.class, DeadlockLoserDataAccessException.class },
-            maxAttempts = 3,
-            backoff = @Backoff(delay = 500)
-    )
+
     @Transactional
     public void confirmarPagamentoPorParcelaId(Long parcelaId, String mpId, String statusMp, String pagamentoMp) {
         Mensalidades_parcelas parcela = mensalidadesParcelasService.findById(parcelaId);
