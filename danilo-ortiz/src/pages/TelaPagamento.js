@@ -1042,18 +1042,13 @@ async function verificarPagamentoJaFeito() {
                 />
               </Campo>
               <Campo label="Parcelas">
-                <select
-                  style={S.select}
-                  value={parcelasCartao}
-                  onChange={(e) => setParcelasCartao(Number(e.target.value))}
-                >
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
-                    <option key={n} value={n}>
-                      {n}x de {formatarValor(valorTotal / n)}
-                      {n === 1 ? " (à vista)" : ""}
-                    </option>
-                  ))}
-                </select>
+                <div style={{
+                  ...S.input,
+                  color: "rgba(196,160,100,0.7)",
+                  letterSpacing: "0.08em",
+                }}>
+                  1x de {formatarValor(valorTotal)} (à vista)
+                </div>
               </Campo>
             </div>
           </>
