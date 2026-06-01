@@ -5,9 +5,7 @@ import com.danilo.DaniloOrtiz.model.Mensalidade;
 import com.danilo.DaniloOrtiz.model.MensalidadeCancelada;
 import com.danilo.DaniloOrtiz.model.Mensalidades_parcelas;
 import com.danilo.DaniloOrtiz.repository.Mensalidades_parcelasRepository;
-import com.danilo.DaniloOrtiz.service.AlunoService;
-import com.danilo.DaniloOrtiz.service.MensalidadeCanceladaService;
-import com.danilo.DaniloOrtiz.service.MensalidadeService;
+import com.danilo.DaniloOrtiz.repository.MensalidadeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -26,6 +24,7 @@ public class PlanoExpirationScheduler {
     private final MensalidadeService              mensalidadeService;
     private final AlunoService                    alunoService;
     private final MensalidadeCanceladaService     mensalidadeCanceladaService;
+    private final MensalidadeRepository           mensalidadeRepository; // <-- adiciona isso
 
     /**
      * Roda todo dia à meia-noite.
@@ -38,7 +37,6 @@ public class PlanoExpirationScheduler {
 
         LocalDateTime agora = LocalDateTime.now();
 
-        // 1. Busca todas as parcelas PENDENTES com vencimento no passado
         List<Mensalidades_parcelas> parcelasVencidas =
                 parcelasRepository.findByStatusAndDataVencimentoBefore("PENDENTE", agora);
 
@@ -47,13 +45,11 @@ public class PlanoExpirationScheduler {
             Mensalidade mensalidade = parcela.getMensalidade();
             if (mensalidade == null) continue;
 
-            // Ignora se a mensalidade já foi cancelada anteriormente
             if ("CANCELADO".equals(mensalidade.getStatusLiberacao())) continue;
 
             Aluno aluno = mensalidade.getAluno();
             if (aluno == null) continue;
 
-            // 2. Busca todas as parcelas da mensalidade para o snapshot
             List<Mensalidades_parcelas> todasParcelas =
                     parcelasRepository.findAllByMensalidade(mensalidade);
 
@@ -65,8 +61,6 @@ public class PlanoExpirationScheduler {
                     .filter(p -> !"FINALIZADO".equals(p.getStatus()))
                     .collect(Collectors.toList());
 
-            // 3. Data fim efetiva = último vencimento pago
-            //    Se não pagou nada, usa a data de início da mensalidade
             LocalDate dataFimEfetiva = pagas.stream()
                     .map(p -> p.getDataVencimento().toLocalDate())
                     .max(LocalDate::compareTo)
@@ -80,7 +74,6 @@ public class PlanoExpirationScheduler {
                     .map(p -> String.valueOf(p.getId()))
                     .collect(Collectors.joining(","));
 
-            // 4. Salva o histórico de cancelamento
             MensalidadeCancelada registro = MensalidadeCancelada.builder()
                     .alunoId(aluno.getId())
                     .nomeAluno(aluno.getNome())
@@ -106,26 +99,97 @@ public class PlanoExpirationScheduler {
 
             mensalidadeCanceladaService.salvar(registro);
 
-            // 5. Cancela todas as parcelas não finalizadas
             for (Mensalidades_parcelas p : aCancelar) {
                 p.setStatus("CANCELADO");
                 parcelasRepository.save(p);
             }
 
-            // 6. Atualiza mensalidade
             mensalidade.setStatusLiberacao("CANCELADO");
-            mensalidade.setDataFim(dataFimEfetiva); // ajusta para o último mês pago
-            mensalidade.setPlano(null);             // remove vínculo com o plano
+            mensalidade.setDataFim(dataFimEfetiva);
+            mensalidade.setPlano(null);
             mensalidadeService.save(mensalidade);
 
-            // 7. Atualiza aluno
             if ("ATIVADO".equalsIgnoreCase(aluno.getStatusAssinatura())) {
                 aluno.setStatusAssinatura("DESATIVADO");
             }
-            aluno.setPlanoAtual(null); // remove vínculo com o plano
+            aluno.setPlanoAtual(null);
             alunoService.add(aluno);
-
         }
+    }
 
+    /**
+     * Roda todo dia à meia-noite.
+     * Verifica mensalidades ATIVAS cuja data_fim já passou
+     * e desativa o aluno por expiração do plano.
+     */
+    @Scheduled(cron = "0 0 0 * * *")
+    @Transactional
+    public void verificarPlanosExpirados() {
+
+        LocalDate hoje = LocalDate.now();
+
+        // Busca mensalidades ativas com data_fim no passado
+        List<Mensalidade> expiradas = mensalidadeRepository
+                .findByStatusLiberacaoAndDataFimBefore("ATIVADO", hoje);
+
+        for (Mensalidade mensalidade : expiradas) {
+
+            Aluno aluno = mensalidade.getAluno();
+            if (aluno == null) continue;
+
+            List<Mensalidades_parcelas> todasParcelas =
+                    parcelasRepository.findAllByMensalidade(mensalidade);
+
+            List<Mensalidades_parcelas> pagas = todasParcelas.stream()
+                    .filter(p -> "FINALIZADO".equals(p.getStatus()))
+                    .collect(Collectors.toList());
+
+            LocalDate dataFimEfetiva = pagas.stream()
+                    .map(p -> p.getDataVencimento().toLocalDate())
+                    .max(LocalDate::compareTo)
+                    .orElse(mensalidade.getDataInicio());
+
+            String idsPagas = pagas.stream()
+                    .map(p -> String.valueOf(p.getId()))
+                    .collect(Collectors.joining(","));
+
+            // Salva histórico de expiração
+            MensalidadeCancelada registro = MensalidadeCancelada.builder()
+                    .alunoId(aluno.getId())
+                    .nomeAluno(aluno.getNome())
+                    .emailAluno(aluno.getEmail())
+                    .planoId(mensalidade.getPlano() != null ? mensalidade.getPlano().getId()   : null)
+                    .nomePlano(mensalidade.getPlano() != null ? mensalidade.getPlano().getNome() : "—")
+                    .mensalidadeId(mensalidade.getId())
+                    .dataInicio(mensalidade.getDataInicio())
+                    .dataFim(mensalidade.getDataFim())
+                    .dataFimEfetiva(dataFimEfetiva)
+                    .valorMensalidade(mensalidade.getValorMensalidade())
+                    .valorParcela(mensalidade.getValorParcela())
+                    .totalParcelasContratadas(todasParcelas.size())
+                    .parcelasPagas(pagas.size())
+                    .parcelasRestantesNoCancelamento(0)
+                    .parcelasPagasIds(idsPagas)
+                    .parcelasCanceladasIds("")
+                    .dataCancelamento(LocalDateTime.now())
+                    .canceladoPorAlunoId(0L)
+                    .canceladoPorNome("sistema")
+                    .motivoCancelamento("EXPIRACAO") // <-- diferencia do INADIMPLENCIA
+                    .build();
+
+            mensalidadeCanceladaService.salvar(registro);
+
+            // Atualiza mensalidade
+            mensalidade.setStatusLiberacao("EXPIRADO");
+            mensalidade.setPlano(null);
+            mensalidadeService.save(mensalidade);
+
+            // Desativa aluno
+            if ("ATIVADO".equalsIgnoreCase(aluno.getStatusAssinatura())) {
+                aluno.setStatusAssinatura("DESATIVADO");
+            }
+            aluno.setPlanoAtual(null);
+            alunoService.update(aluno);
+        }
     }
 }

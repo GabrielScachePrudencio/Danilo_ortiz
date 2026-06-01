@@ -7,6 +7,7 @@ import com.danilo.DaniloOrtiz.model.dto.AlunoPorPlanoDTO;
 import com.danilo.DaniloOrtiz.model.dto.LoginDTO;
 import com.danilo.DaniloOrtiz.model.mapper.AlunoMapper;
 import com.danilo.DaniloOrtiz.service.AlunoService;
+import com.danilo.DaniloOrtiz.service.PlanoExpirationScheduler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -22,7 +23,7 @@ import java.util.Map;
 //@CrossOrigin(origins = "http://localhost:3000")
 @CrossOrigin(origins = "*")
 public class AlunoController {
-
+    private final PlanoExpirationScheduler planoExpirationScheduler; // <-- adiciona
     private final AlunoService alunoService;
     private final AlunoMapper mapper;
 
@@ -140,7 +141,6 @@ public class AlunoController {
             return ResponseEntity.badRequest().body("Email e senha são obrigatórios");
         }
 
-
         String tokenCompleto = alunoService.loginComToken(
                 loginDTO.getEmail(),
                 loginDTO.getSenha()
@@ -149,6 +149,9 @@ public class AlunoController {
         if(tokenCompleto == null){
             return ResponseEntity.status(401).body("Credenciais inválidas");
         }
+
+        planoExpirationScheduler.verificarInadimplentes();
+        planoExpirationScheduler.verificarPlanosExpirados();
 
         return ResponseEntity.ok(tokenCompleto);
     }

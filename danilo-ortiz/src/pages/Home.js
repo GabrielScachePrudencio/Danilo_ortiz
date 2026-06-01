@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 const IMG_TRAINER2 = "https://images.unsplash.com/photo-1605296867304-46d5465a13f1?w=700&q=80&fit=crop";
 const isRailway = window.location.hostname.includes("railway.app");
 const DANILO_WHATSAPP = "5516996339294";
+
 const EXERCICIOS = [
   {
     img: "https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=600&q=80&fit=crop",
@@ -1103,9 +1104,12 @@ const syncLogin = () => {
     MensalidadeParcelasDTOS?.statusLiberacao === "ATIVADO" &&
     aluno.criouContaSisrun === false;
 
-  const ultimaParcela = MensalidadeParcelasDTOS?.parcelas?.find(
-    (p) => p.status === "PENDENTE" || p.status === "AGUARDANDO"
-  );
+    
+    const ultimaParcela = MensalidadeParcelasDTOS?.parcelas?.find(
+      (p) => p.status === "PENDENTE" || p.status === "AGUARDANDO"
+    );
+
+    const mensalidadeExpirada = MensalidadeParcelasDTOS?.statusLiberacao === "EXPIRADO"; 
 
   // clique no plano: se já tiver plano, vai direto; senão abre modal
   function clicarPlano(e, plano) {
@@ -1346,13 +1350,11 @@ function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
         <nav className="nav">
           <div className="nav-logo">2D Assessoria</div>
           <div className="nav-links">
-            {aluno?.planoAtual && (
-              <button className="nbtn nbtn-ghost" onClick={() => navigate("/home/assinatura")}>
-                  Plano: {aluno.planoAtual.nome}
-
-
-              </button>  
-            )}
+                {aluno?.planoAtual && (
+                <button className="nbtn nbtn-ghost" onClick={() => navigate("/home/assinatura")}>
+                  Plano: {aluno?.planoAtual?.nome}
+                </button>
+              )}
             {/* ── ADMIN ── */}
             {aluno?.tipoUsuario === "ADMIN" && (
               <button className="nbtn nbtn-ghost" onClick={() => navigate("/home/administrativo")} >
@@ -1438,6 +1440,53 @@ function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
 
         </div>
       )}
+
+
+      {mensalidadeExpirada && (
+  <div
+    onClick={() => navigate("/home/conta")}
+    style={{
+      position: "fixed",
+      top: 0, left: 0, right: 0,
+      zIndex: 199,
+      background: "linear-gradient(90deg, #7a4f00 0%, #3d2800 100%)",
+      borderBottom: "2px solid rgba(196,160,100,0.4)",
+      padding: "13px 48px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      cursor: "pointer",
+      marginTop: 57,
+      transition: "opacity .2s",
+    }}
+    onMouseEnter={e => e.currentTarget.style.opacity = ".88"}
+    onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+  >
+    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <span style={{ fontSize: "1.1rem" }}>⏱</span>
+      <div>
+        <div style={{
+          fontFamily: "var(--cond)", fontSize: "1rem", fontWeight: 800,
+          textTransform: "uppercase", letterSpacing: ".1em",
+          color: "#c4a064", lineHeight: 1, marginBottom: 3,
+        }}>
+          Sua assinatura expirou
+        </div>
+        <div style={{ fontSize: ".68rem", color: "rgba(255,255,255,.6)", letterSpacing: ".06em" }}>
+          Clique aqui para renovar e continuar com acesso completo
+        </div>
+      </div>
+    </div>
+    <span style={{
+      fontFamily: "var(--cond)", fontWeight: 800, fontSize: ".75rem",
+      letterSpacing: ".15em", textTransform: "uppercase",
+      padding: "8px 18px", background: "#c4a064", color: "#0a0a0a",
+      border: "none", flexShrink: 0,
+    }}>
+      Renovar →
+    </span>
+  </div>
+)}
 
         {/* HERO */}
         <section className="hero">

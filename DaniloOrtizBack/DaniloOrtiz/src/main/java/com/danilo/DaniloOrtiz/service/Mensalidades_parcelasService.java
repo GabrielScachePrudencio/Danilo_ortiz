@@ -1,11 +1,14 @@
 package com.danilo.DaniloOrtiz.service;
 
+import com.danilo.DaniloOrtiz.model.Aluno;
 import com.danilo.DaniloOrtiz.model.Mensalidade;
 import com.danilo.DaniloOrtiz.model.Mensalidades_parcelas;
 import com.danilo.DaniloOrtiz.repository.Mensalidades_parcelasRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -33,6 +36,11 @@ public class Mensalidades_parcelasService {
         return mensalidadesParcelasRepository.findByMensalidadeAndNumeroParcela(mensalidade, numeroParcela);
     }
 
+    public LocalDate findUltimaDataVencimentoPorAluno(Aluno aluno) {
+        LocalDateTime dt = mensalidadesParcelasRepository.findUltimaDataVencimentoPorAluno(aluno);
+        return dt != null ? dt.toLocalDate() : null;
+    }
+
     public List<Mensalidades_parcelas> findAllByMensalidadePendenteFinalizado(Mensalidade mensalidade){
         List<String> statusPermitidos = List.of("PENDENTE", "FINALIZADO");
 
@@ -44,4 +52,6 @@ public class Mensalidades_parcelasService {
                         );
         return listaDeParcelas;
     }
+
+
 }

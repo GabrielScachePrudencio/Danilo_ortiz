@@ -29,6 +29,12 @@ public class AlunoService {
     public Optional<Aluno> findByEmail(String email){
         return ar.findByEmail(email);
     }
+    public AlunoDTO update(Aluno aluno){
+        if(aluno == null) return null;
+
+        Aluno salvo = ar.save(aluno);
+        return mapper.toDTO(salvo);
+    }
 
     public AlunoDTO add(Aluno aluno){
         if(aluno == null) return null;

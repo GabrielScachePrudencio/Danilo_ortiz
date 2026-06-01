@@ -10,9 +10,11 @@ import com.danilo.DaniloOrtiz.pdfs.ComprovanteService;
 import com.danilo.DaniloOrtiz.repository.MensalidadeRepository;
 import com.danilo.DaniloOrtiz.repository.Mensalidades_parcelasRepository;
 import com.danilo.DaniloOrtiz.repository.PagamentoRepository;
+import com.danilo.DaniloOrtiz.repository.PlanoRepository;
 import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,14 +31,17 @@ import java.util.stream.Collectors;
 public class MensalidadeService {
     private final MensalidadeRepository mensalidadeRepository;
     private final Mensalidades_parcelasService mensalidadesParcelasService;
+        private final Mensalidades_parcelasRepository mensalidadesParcelasRepository;
     private final PagamentoService pagamentoService;
     private final PagamentoRepository pagamentoRepository;
     private final AlunoService alunoService;
     private final PlanoService planoService;
+    private final PlanoRepository planoRepository;
     private final EmailService emailService;
     private final ComprovanteService comprovanteService;
     private final MensalidadeCanceladaService mensalidadeCanceladaService;
     private final NotificacaoService notificacaoService;
+
 
     public Mensalidade add(Mensalidade mensalidade){
         Aluno aluno = alunoService.findById(mensalidade.getAluno().getId());
@@ -54,6 +60,57 @@ public class MensalidadeService {
 
     public Mensalidade save(Mensalidade m){
         return mensalidadeRepository.save(m);
+    }
+
+    public MensalidadeComParcelasDTO renovarMensalidade(Long idAluno) {
+        Aluno aluno = alunoService.findById(idAluno);
+        if (aluno == null) throw new RuntimeException("Aluno não encontrado.");
+
+        Mensalidade mensalidadeAnterior = mensalidadeRepository.findTopByAlunoOrderByIdDesc(aluno);
+        if (mensalidadeAnterior == null) throw new RuntimeException("Nenhuma mensalidade encontrada.");
+        if (!"EXPIRADO".equals(mensalidadeAnterior.getStatusLiberacao()))
+            throw new RuntimeException("Mensalidade atual não está expirada.");
+
+        // Busca o plano pelo pagamento da última parcela paga do aluno
+        Long planoId = pagamentoRepository.findPlanoIdByAlunoId(aluno.getId())
+                .orElseThrow(() -> new RuntimeException("Nenhum plano encontrado no histórico de pagamentos."));
+
+        Plano plano = planoRepository.findById(planoId);
+        if (plano == null) throw new RuntimeException("Nenhum plano encontrado no histórico de pagamentos.");
+
+
+        // Pega a última data de vencimento de todas as parcelas do aluno
+        LocalDate novaDataInicio = LocalDate.now();
+
+
+        int numeroParcelas = plano.getDuracaomeses(); // duracaomeses = número de parcelas
+        LocalDate novaDataFim = novaDataInicio.plusMonths(numeroParcelas);
+
+        // Cria nova mensalidade
+        Mensalidade nova = new Mensalidade();
+        nova.setAluno(aluno);
+        nova.setPlano(null); // mantém null como o sistema faz
+        nova.setDataInicio(novaDataInicio);
+        nova.setDataFim(novaDataFim);
+        nova.setValorMensalidade(plano.getValor());
+        nova.setStatusLiberacao("DESATIVADO");
+        nova.setNumero_parcelas_restantes(numeroParcelas);
+        mensalidadeRepository.save(nova);
+
+        // Cria as parcelas
+        List<Mensalidades_parcelas> novasParcelas = new ArrayList<>();
+        for (int i = 0; i < numeroParcelas; i++) {
+            Mensalidades_parcelas parcela = new Mensalidades_parcelas();
+            parcela.setMensalidade(nova);
+            parcela.setNumeroParcela(i + 1);
+            parcela.setValor(plano.getValor());
+            parcela.setDataVencimento(novaDataInicio.plusMonths(i).atStartOfDay());
+            parcela.setStatus("PENDENTE");
+            novasParcelas.add(parcela);
+            mensalidadesParcelasService.save(parcela);
+        }
+
+        return MensalidadeComParcelasMapper.toDTO(nova, novasParcelas);
     }
 
 
@@ -573,5 +630,23 @@ public class MensalidadeService {
 
         // se tiver pendente, retorna ele
         return pendente;
+    }
+
+    public HistoricoMensalidadesDTO historicoCompletoPorIdAluno(Long id) {
+        Aluno aluno = alunoService.findById(id);
+        if (aluno == null) return null;
+
+        List<Mensalidade> todasMensalidades =
+                mensalidadeRepository.findByAlunoOrderByIdDesc(aluno);
+        if (todasMensalidades.isEmpty()) return null;
+
+        // Busca parcelas de todas as mensalidades de uma vez e agrupa por mensalidade_id
+        Map<Long, List<Mensalidades_parcelas>> parcelasPorMensalidade = todasMensalidades.stream()
+                .collect(Collectors.toMap(
+                        m -> m.getId().longValue(),
+                        m -> mensalidadesParcelasService.findAllByMensalidade(m)
+                ));
+
+        return MensalidadeComParcelasMapper.toHistoricoDTO(aluno, todasMensalidades, parcelasPorMensalidade);
     }
 }

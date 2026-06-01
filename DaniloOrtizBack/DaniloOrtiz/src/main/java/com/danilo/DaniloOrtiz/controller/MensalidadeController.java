@@ -41,8 +41,26 @@ public class MensalidadeController {
         return ResponseEntity.ok(mensalidadeComParcelasDTO);
     }
 
+    @GetMapping("/historico/{idAluno}")
+    public ResponseEntity<HistoricoMensalidadesDTO> buscarHistoricoPorIdAluno(@PathVariable Long idAluno) {
+        HistoricoMensalidadesDTO historico = mensalidadeService.historicoCompletoPorIdAluno(idAluno);
 
+        if (historico == null) {
+            return ResponseEntity.notFound().build();
+        }
 
+        return ResponseEntity.ok(historico);
+    }
+
+    @PostMapping("/renovar/{idAluno}")
+    public ResponseEntity<?> renovarMensalidade(@PathVariable Long idAluno) {
+        try {
+            MensalidadeComParcelasDTO dto = mensalidadeService.renovarMensalidade(idAluno);
+            return ResponseEntity.ok(dto);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 
     @PostMapping("/cancelar-mensalidade/{idAluno}")
     public ResponseEntity<Boolean> cancelarMensalidade(
