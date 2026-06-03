@@ -1508,7 +1508,7 @@ function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
 
       {/* COLUNA DIREITA — foto ← estava DENTRO do hero-left, esse é o bug */}
       <div className="hero-right">
-        <img src="/img/img2danilos2.jpeg" alt="Corredores 2D Assessoria" className="hero-img" />
+        <img src="/img/img2Danilosoriginal2.png" alt="Corredores 2D Assessoria" className="hero-img" />
         <div className="hero-img-overlay" />
        
       </div>
@@ -1537,7 +1537,7 @@ function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
 
     <div className="prof-card">
       <div className="prof-img-wrap">
-        <img src="/img/imgDanilo4.png" alt="Professor 1" />
+        <img src="/img/imgDanilo5.jpg" alt="Professor 1" />
       </div>
 
       <div className="prof-info">
