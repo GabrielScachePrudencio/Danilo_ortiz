@@ -1356,11 +1356,7 @@ function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
                 </button>
               )}
             {/* ── ADMIN ── */}
-            {aluno?.tipoUsuario === "ADMIN" && (
-              <button className="nbtn nbtn-ghost" onClick={() => navigate("/home/administrativo")} >
-                Administrativo
-              </button>
-            )}
+           
 
              {/* ── ADMIN NOVO ── */}
             {aluno?.tipoUsuario === "ADMIN" && (
@@ -1370,9 +1366,7 @@ function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
             )}
             {emailLogado ? (
               <>
-               <button className="nbtn nbtn-ghost" onClick={() => navigate("/home/")}>
-                  HomeAntigo: {emailLogado}
-                </button>
+              
                 <button className="nbtn nbtn-ghost" onClick={() => navigate("/home/conta")}>
                   {emailLogado}
                 </button>
