@@ -11,8 +11,9 @@ public interface MensalidadeRepository extends JpaRepository<Mensalidade, Intege
     Mensalidade findByAluno(Aluno aluno);
     Mensalidade findTopByAlunoOrderByIdDesc(Aluno aluno);
     Mensalidade findById(Long id);
-
+    List<Mensalidade> findByAlunoId(Long alunoId);
     List<Mensalidade> findByStatusLiberacaoAndDataFimBefore(String status, LocalDate data);
 
     List<Mensalidade> findByAlunoOrderByIdDesc(Aluno aluno);
+    List<Mensalidade> findByAluno_IdInAndStatusLiberacaoIn(List<Long> alunoIds, List<String> status);
 }

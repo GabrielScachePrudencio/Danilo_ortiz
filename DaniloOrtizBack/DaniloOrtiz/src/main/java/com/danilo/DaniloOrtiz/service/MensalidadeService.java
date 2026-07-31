@@ -49,7 +49,9 @@ public class MensalidadeService {
 
         return mensalidadeRepository.save(mensalidade);
     }
-
+    public List<Mensalidade> findByAlunoId(Long alunoId){
+        return mensalidadeRepository.findByAlunoId(alunoId);
+    }
     public Mensalidade findById(Long id){
         return mensalidadeRepository.findById(id);
     }

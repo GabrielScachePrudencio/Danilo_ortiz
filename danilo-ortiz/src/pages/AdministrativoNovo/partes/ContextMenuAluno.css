@@ -1,0 +1,107 @@
+.ctx-menu{
+    position: fixed;
+    width:260px;
+    background:#222;
+    color:#fff;
+    border-radius:10px;
+
+    overflow:visible;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.35);
+    z-index:99999;
+    animation:menu .15s;
+}
+
+@keyframes menu{
+    from{
+        opacity:0;
+        transform:scale(.95);
+    }
+    to{
+        opacity:1;
+        transform:scale(1);
+    }
+}
+
+.ctx-header{
+    padding:15px;
+}
+
+.ctx-nome{
+    font-weight:bold;
+    font-size:15px;
+}
+
+.ctx-email{
+    color:#999;
+    font-size:12px;
+    margin-top:3px;
+}
+
+.ctx-divider{
+    height:1px;
+    background:#3b3b3b;
+}
+
+.ctx-item{
+    padding:12px 16px;
+    cursor:pointer;
+    transition:.2s;
+    font-size:14px;
+}
+
+.ctx-item:hover{
+    background:#3a7afe;
+}
+
+.submenu{
+
+    position:relative;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+.ctx-submenu{
+
+    position:absolute;
+
+    left:calc(100% + 6px);
+
+    top:-12px;
+
+    width:260px;
+
+    background:#222;
+
+    border-radius:10px;
+
+    border:1px solid #444;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.4);
+
+    overflow:hidden;
+
+    z-index:999999;
+
+}
+
+.ctx-submenu .ctx-item{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+.ctx-submenu .ctx-item small{
+
+    color:#bbb;
+
+}

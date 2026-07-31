@@ -42,4 +42,8 @@ public interface AlunoRepository extends JpaRepository<Aluno, Integer> {
     @Query("UPDATE Aluno a SET a.statusAssinatura = 'DESATIVADO', a.planoAtual = null WHERE a.id = :id")
     void desativarAssinatura(@Param("id") Long id);
 
-}
+    // AlunoRepository
+    List<Aluno> findByStatusAssinatura(String statusAssinatura);
+
+    @Query("SELECT a FROM Aluno a WHERE a.CPF = :cpf")
+    Optional<Aluno> findByCpf(@Param("cpf") String cpf);    }

@@ -1,20 +1,24 @@
 package com.danilo.DaniloOrtiz.controller;
 
-import com.danilo.DaniloOrtiz.model.Mensalidade;
-import com.danilo.DaniloOrtiz.model.Mensalidades_parcelas;
-import com.danilo.DaniloOrtiz.model.Pagamento;
-import com.danilo.DaniloOrtiz.model.Plano;
+import com.danilo.DaniloOrtiz.model.*;
+import com.danilo.DaniloOrtiz.model.dto.AlunoDTO;
 import com.danilo.DaniloOrtiz.model.dto.PagamentoCompletoDTO;
-import com.danilo.DaniloOrtiz.service.MensalidadeService;
-import com.danilo.DaniloOrtiz.service.Mensalidades_parcelasService;
-import com.danilo.DaniloOrtiz.service.PagamentoService;
-import com.danilo.DaniloOrtiz.service.PlanoService;
+import com.danilo.DaniloOrtiz.service.*;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/pagamentos")
@@ -25,8 +29,98 @@ public class PagamentoController {
 
     private final PagamentoService pagamentoService;
     private final PlanoService planoService;
+    private final AlunoService alunoService;
     private final MensalidadeService mensalidadeService;
     private final Mensalidades_parcelasService mensalidadesParcelasService;
+    private final MensagemManualService mensagemManualService;
+
+
+
+
+    @PostMapping("/admin/atribuir-plano")
+    public ResponseEntity<Mensalidade> atribuirPlano(
+            @RequestParam Long idplano,
+            @RequestParam Long idaluno,
+            Authentication authentication) {
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Aluno aluno = alunoService.findById(idaluno);
+        if (aluno == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+
+        String email = authentication.getName();
+
+        Optional<Aluno> administradorOpt = alunoService.findByEmail(email);
+
+        if (administradorOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Aluno administrador = administradorOpt.get();
+
+        Plano planoEscolhido = planoService.buscarPorId(idplano);
+        if (planoEscolhido == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+
+
+        List<Mensalidade> mensalidades = mensalidadeService.findByAlunoId(idaluno);
+
+        boolean temAtiva = mensalidades.stream()
+                .anyMatch(m -> "ATIVADO".equals(m.getStatusLiberacao()));
+
+        if (temAtiva) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        //caso tenha desativado cancela ela e crie uma nova
+        mensalidades.stream()
+                .filter(m -> "DESATIVADO".equals(m.getStatusLiberacao()) || "EXPIRADO".equals(m.getStatusLiberacao()))
+                .forEach(m -> {
+                    m.setStatusLiberacao("CANCELADO");
+                    mensalidadeService.add(m);
+                });
+
+        LocalDate hoje = LocalDate.now();
+
+        Mensalidade mensalidade = new Mensalidade();
+        mensalidade.setAluno(aluno);
+        mensalidade.setPlano(planoEscolhido);
+        mensalidade.setDataInicio(hoje);
+        mensalidade.setDataFim(hoje.plusMonths(planoEscolhido.getDuracaomeses()));
+        mensalidade.setValorMensalidade(planoEscolhido.getValor());
+        mensalidade.setStatusLiberacao("DESATIVADO");
+
+        // Admin que realizou a ação
+        mensalidade.setAtribuidoPorId(administrador.getId());
+        mensalidade.setAtribuidoPorNome(administrador.getNome());
+        mensalidade.setDataAtribuicao(LocalDateTime.now());
+
+        Mensalidade resultado = mensalidadeService.add(mensalidade);
+
+        // mudando o plano e o status de aluno
+        aluno.setStatusAssinatura("DESATIVADO");
+        aluno.setPlanoAtual(planoEscolhido);
+        alunoService.update(aluno);
+
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("adminNome", administrador.getNome());
+            params.put("linkPagamento", "https://2dassessoria.com.br");
+            mensagemManualService.enviar(aluno.getId(), "PLANO_ANEXADO", params);
+        } catch (Exception e) {
+            System.out.println("Falha ao enviar mensagem WhatsApp automática para aluno " + aluno.getId());
+        }
+
+
+        return ResponseEntity.ok(resultado);
+    }
 
     @PostMapping
     public ResponseEntity<Pagamento> novoPagamento(@RequestBody Pagamento pagamento){
@@ -40,16 +134,6 @@ public class PagamentoController {
         if(planoEscolhido == null){
             return ResponseEntity.badRequest().build();
         }
-
-        // ── NOVO: verifica se já existe mensalidade DESATIVADO ou CANCELADO para reusa ──
-        Mensalidade existente = mensalidadeService.findTopByAluno(pagamento.getAluno().getId());
-
-        if (existente != null && "DESATIVADO".equals(existente.getStatusLiberacao())) {
-            // Reusa a mensalidade existente, busca a parcela PENDENTE dela
-            // e retorna sem criar nada novo
-            return ResponseEntity.ok(pagamento);
-        }
-
 
         // 🔹 pega parcelas do front
         int totalParcelas = pagamento.getParcelas() != null ? pagamento.getParcelas() : 1;
@@ -70,27 +154,59 @@ public class PagamentoController {
             valorParcela = valorMensal;
         }
 
-        // 🔹 cria mensalidade
-        Mensalidade mensalidade = new Mensalidade();
+        // ── verifica se já existe mensalidade DESATIVADO para reusar/completar ──
+        Mensalidade mensalidade;
+        Mensalidade existente = mensalidadeService.findTopByAluno(pagamento.getAluno().getId());
 
-        mensalidade.setAluno(pagamento.getAluno());
-        mensalidade.setPlano(planoEscolhido);
+        if (existente != null && "DESATIVADO".equals(existente.getStatusLiberacao())) {
 
-        mensalidade.setDataInicio(pagamento.getDataCriacao().toLocalDate());
+            List<Mensalidades_parcelas> parcelasExistentes =
+                    mensalidadesParcelasService.findAllByMensalidadePendenteFinalizado(existente);
 
-        mensalidade.setDataFim(
-                pagamento.getDataCriacao()
-                        .plusMonths(planoEscolhido.getDuracaomeses())
-                        .toLocalDate()
-        );
+            boolean temPendente = parcelasExistentes.stream()
+                    .anyMatch(p -> "PENDENTE".equals(p.getStatus()));
 
-        mensalidade.setValorMensalidade(valorMensal);
-        mensalidade.setValorParcela(valorParcela);
+            if (temPendente) {
+                // já existe parcela pendente para essa mensalidade, não cria nada novo
+                return ResponseEntity.ok(pagamento);
+            }
 
-        mensalidade.setStatusLiberacao("DESATIVADO");
+            // mensalidade existe (ex: veio do admin/atribuir-plano) mas está sem parcelas
+            // -> reaproveita ela em vez de deixar órfã
+            mensalidade = existente;
+            mensalidade.setPlano(planoEscolhido);
+            mensalidade.setDataInicio(pagamento.getDataCriacao().toLocalDate());
+            mensalidade.setDataFim(
+                    pagamento.getDataCriacao()
+                            .plusMonths(planoEscolhido.getDuracaomeses())
+                            .toLocalDate()
+            );
+            mensalidade.setValorMensalidade(valorMensal);
+            mensalidade.setValorParcela(valorParcela);
+            mensalidade.setNumero_parcelas_restantes(totalParcelas);
 
-        // 🔥 agora usa o que veio do front
-        mensalidade.setNumero_parcelas_restantes(totalParcelas);
+        } else {
+            // 🔹 cria mensalidade nova do zero
+            mensalidade = new Mensalidade();
+
+            mensalidade.setAluno(pagamento.getAluno());
+            mensalidade.setPlano(planoEscolhido);
+
+            mensalidade.setDataInicio(pagamento.getDataCriacao().toLocalDate());
+
+            mensalidade.setDataFim(
+                    pagamento.getDataCriacao()
+                            .plusMonths(planoEscolhido.getDuracaomeses())
+                            .toLocalDate()
+            );
+
+            mensalidade.setValorMensalidade(valorMensal);
+            mensalidade.setValorParcela(valorParcela);
+
+            mensalidade.setStatusLiberacao("DESATIVADO");
+
+            mensalidade.setNumero_parcelas_restantes(totalParcelas);
+        }
 
         Mensalidade mensalidadeResultado = mensalidadeService.add(mensalidade);
 

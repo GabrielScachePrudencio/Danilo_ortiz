@@ -21,7 +21,7 @@ public class MensagemScheduler {
     private final MensagemWhatsappRepository mensagemRepository;
     private final EvolutionApiService evolutionApiService;
 
-    @Scheduled(fixedDelay = 30000) // roda a cada 30 segundos
+    @Scheduled(fixedDelay = 120000) // 2min
     public void processarMensagensPendentes() {
         log.warn("🔄 Scheduler rodando...");
 

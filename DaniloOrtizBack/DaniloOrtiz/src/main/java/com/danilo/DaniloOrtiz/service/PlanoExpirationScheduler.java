@@ -35,10 +35,10 @@ public class PlanoExpirationScheduler {
     @Transactional
     public void verificarInadimplentes() {
 
-        LocalDateTime agora = LocalDateTime.now();
+        LocalDateTime limiteTolerancia = LocalDateTime.now().minusDays(1);
 
         List<Mensalidades_parcelas> parcelasVencidas =
-                parcelasRepository.findByStatusAndDataVencimentoBefore("PENDENTE", agora);
+                parcelasRepository.findByStatusAndDataVencimentoBefore("PENDENTE", limiteTolerancia);
 
         for (Mensalidades_parcelas parcela : parcelasVencidas) {
 
@@ -113,7 +113,7 @@ public class PlanoExpirationScheduler {
                 aluno.setStatusAssinatura("DESATIVADO");
             }
             aluno.setPlanoAtual(null);
-            alunoService.add(aluno);
+            alunoService.update(aluno);
         }
     }
 

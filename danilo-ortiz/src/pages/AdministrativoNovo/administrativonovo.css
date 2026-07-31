@@ -1,0 +1,560 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bgRoot: #0d0d0f;
+  --bgCard: #111114;
+  --bgModal: #17171a;
+  --bgSidebar: #0a0a0c;
+  --textPrimary: #e8e6e1;
+  --accent: #e8b44c;
+  --borderLight: #1e1e22;
+  --borderMedium: #2a2a2e;
+  --borderUltraLight: #141416;
+  --textMuted: #888888;
+  --textDark: #555555;
+  --textUltraDark: #444444;
+  --borderDefault: #333333;
+  --accentTabAlpha: #e8b44c14;
+  --success: #4cde8c;
+  --successBg: #1a3a2a;
+  --error: #de4c4c;
+  --errorBg: #2e1a1a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bgRoot);
+  color: var(--textPrimary);
+  font-family: 'DM Mono', 'Fira Mono', monospace;
+}
+
+.serif {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Botões do Sistema (Padrão Nav) */
+.nbtn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 9px 22px;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+.nbtn-ghost {
+  color: var(--muted, #9ca3af);
+  border: 1px solid var(--border, #374151);
+}
+
+.nbtn-ghost:hover {
+  color: var(--snow, #ffffff);
+  border-color: var(--snow, #ffffff);
+}
+
+.nbtn-gold {
+  background: var(--gold, #d97706);
+  color: var(--ink, #111827);
+}
+
+.nbtn-gold:hover {
+  background: var(--gold2, #b45309);
+}
+
+/* Layout Estrutural Shell */
+.admin-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 232px;
+  flex-shrink: 0;
+  background: var(--bgSidebar);
+  border-right: 1px solid var(--borderLight);
+  display: flex;
+  flex-direction: column;
+  padding: 22px 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.sidebar-logo {
+  padding: 0 22px 22px;
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+  text-transform: uppercase;
+  font-weight: 700;
+  border-bottom: 1px solid var(--borderLight);
+  margin-bottom: 18px;
+}
+
+.nav-group-label {
+  padding: 0 22px;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--textUltraDark);
+  text-transform: uppercase;
+  margin: 10px 0 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 22px;
+  font-size: 12.5px;
+  color: var(--textMuted);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  letter-spacing: 0.02em;
+  transition: all 0.15s ease;
+}
+
+.nav-item:hover {
+  color: var(--textPrimary);
+  background: var(--accentTabAlpha);
+}
+
+.nav-item.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: var(--accentTabAlpha);
+  font-weight: 500;
+}
+
+.nav-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+/* Áreas de Conteúdo */
+.admin-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 36px;
+  border-bottom: 1px solid var(--borderLight);
+  position: sticky;
+  top: 0;
+  background: var(--bgRoot);
+  z-index: 40;
+}
+
+.admin-header h1 {
+  font-size: 20px;
+  margin: 0;
+  font-weight: 600;
+}
+
+.admin-header .crumb {
+  font-size: 11px;
+  color: var(--textDark);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.admin-content {
+  padding: 30px 36px 60px;
+  max-width: 1320px;
+}
+
+/* Visão Geral (Busca estilo PDV + Quick Stats) */
+.visao-search-wrap {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 22px;
+}
+
+.pdv-search-inline {
+  flex: 1;
+  position: relative;
+}
+
+.pdv-search-inline input {
+  width: 100%;
+  background: var(--bgCard);
+  border: 1px solid var(--borderMedium);
+  border-radius: 6px;
+  color: var(--textPrimary);
+  padding: 15px 18px 15px 44px;
+  font-size: 15px;
+  outline: none;
+  font-family: inherit;
+}
+
+.pdv-search-inline input:focus {
+  border-color: var(--accent);
+}
+
+.pdv-search-inline .icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--textDark);
+}
+
+.quick-stats-row {
+  display: flex;
+  gap: 0;
+  margin-bottom: 26px;
+  border: 1px solid var(--borderLight);
+  border-radius: 8px;
+  background: var(--bgCard);
+  overflow: hidden;
+}
+
+.quick-stat {
+  flex: 1;
+  padding: 16px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-right: 1px solid var(--borderLight);
+}
+
+.quick-stat:last-child {
+  border-right: none;
+}
+
+.quick-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.quick-stat-label {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: var(--textDark);
+  text-transform: uppercase;
+}
+
+.pdv-hint {
+  font-size: 11px;
+  color: var(--textUltraDark);
+  letter-spacing: 0.03em;
+  margin: 4px 0 14px;
+}
+
+.pdv-results {
+  width: 100%;
+}
+
+.pdv-result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: var(--bgCard);
+  border: 1px solid var(--borderLight);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.pdv-result-row:hover {
+  border-color: var(--borderDefault);
+}
+
+.pdv-result-name {
+  font-size: 13px;
+}
+
+.pdv-result-email {
+  font-size: 11px;
+  color: var(--textDark);
+  margin-top: 2px;
+}
+
+.pdv-empty {
+  text-align: center;
+  color: var(--textDark);
+  font-size: 12px;
+  padding: 32px 0;
+}
+
+/* Botões, Badges e Utilitários */
+.btn-primary {
+  padding: 11px 22px;
+  background: var(--accent);
+  color: var(--bgRoot);
+  border: none;
+  border-radius: 5px;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+.btn-ghost {
+  padding: 11px 22px;
+  background: transparent;
+  color: var(--textMuted);
+  border: 1px solid var(--borderMedium);
+  border-radius: 5px;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-nowrap {
+  white-space: nowrap;
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.badge-ativo {
+  background: var(--successBg);
+  color: var(--success);
+}
+
+.badge-inativo {
+  background: var(--errorBg);
+  color: var(--error);
+}
+
+.text-muted {
+  color: var(--textMuted);
+}
+
+/* Context Menu */
+.ctx-menu {
+  position: fixed;
+  z-index: 500;
+  background: var(--bgModal);
+  border: 1px solid var(--borderMedium);
+  border-radius: 6px;
+  min-width: 220px;
+  padding: 6px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.ctx-label {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: var(--textUltraDark);
+  text-transform: uppercase;
+  padding: 8px 12px 4px;
+}
+
+.ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  font-size: 12.5px;
+  color: var(--textPrimary);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.ctx-item:hover {
+  background: var(--accentTabAlpha);
+  color: var(--accent);
+}
+
+/* Modal */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 600;
+}
+
+.modal {
+  background: var(--bgModal);
+  border: 1px solid var(--borderMedium);
+  border-radius: 8px;
+  padding: 28px 32px;
+  width: 460px;
+  max-width: 90vw;
+}
+
+.modal-title {
+  font-size: 13px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 18px;
+}
+
+.field {
+  margin-bottom: 14px;
+}
+
+.field label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: var(--textDark);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.field input {
+  width: 100%;
+  background: var(--bgRoot);
+  border: 1px solid var(--borderMedium);
+  border-radius: 4px;
+  color: var(--textPrimary);
+  padding: 9px 12px;
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+
+.modal-row {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.admin-erro {
+  background: var(--errorBg);
+  border: 1px solid rgba(222, 76, 76, 0.27);
+  color: var(--error);
+  border-radius: 4px;
+  padding: 10px 16px;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+
+.nav-group{
+    padding:14px 18px;
+    font-size:.72rem;
+    font-weight:700;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    cursor:pointer;
+    border-bottom:1px solid rgba(255,255,255,.04);
+}
+
+.nav-subitem{
+    padding:10px 32px;
+    cursor:pointer;
+    font-size:.82rem;
+    transition:.2s;
+}
+
+.nav-subitem:hover{
+    background:rgba(255,255,255,.04);
+}
+
+.nav-subitem.active{
+    background:rgba(255,255,255,.08);
+}
+
+.hero-h1 {
+  font-family: var(--cond);
+  font-weight: 800;
+  font-style: italic;
+  /* MUDANÇA AQUI: Tamanho adaptável para mobile (~35px) e desktop (~64px) */
+  font-size: clamp(2.2rem, 4vw, 2rem); 
+  line-height: 1.05; /* Um tiquinho mais espaçado para não encavalar letras */
+  text-transform: uppercase;
+  letter-spacing: -.01em;
+  margin: 20px;
+}
+
+.hero-h1 em {
+  color: var(--gold);
+}
+
+.hero-link {
+  text-decoration: none;
+  color: inherit;
+  display: inline-block;
+}
+/* ── Modal de Cadastro de Aluno (adicionar ao administrativonovo.css) ── */
+
+.modal-cadastro-aluno {
+  max-width: 720px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.modal-secao {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(196, 160, 100, 0.6);
+  margin: 24px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(196, 160, 100, 0.12);
+}
+
+.modal-secao:first-of-type {
+  margin-top: 8px;
+}
+
+.modal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px 16px;
+}
+
+.admin-erro {
+  font-size: 0.8rem;
+  color: #e05555;
+  border: 1px solid rgba(224, 85, 85, 0.3);
+  background: rgba(224, 85, 85, 0.06);
+  padding: 10px 14px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.admin-sucesso {
+  font-size: 0.8rem;
+  color: #6fcf7a;
+  border: 1px solid rgba(111, 207, 122, 0.3);
+  background: rgba(111, 207, 122, 0.06);
+  padding: 10px 14px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+

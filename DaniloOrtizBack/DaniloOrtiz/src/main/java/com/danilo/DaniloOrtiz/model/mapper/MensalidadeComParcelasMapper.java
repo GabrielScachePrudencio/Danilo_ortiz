@@ -22,7 +22,6 @@ public class MensalidadeComParcelasMapper {
 
         dto.setPlanoId(mensalidade.getPlano() != null ? mensalidade.getPlano().getId() : null);
         dto.setNomePlano(mensalidade.getPlano() != null ? mensalidade.getPlano().getNome() : null);
-// qualquer outro campo que acesse mensalidade.getPlano()
 
         dto.setDataInicio(mensalidade.getDataInicio());
         dto.setDataFim(mensalidade.getDataFim());
@@ -31,11 +30,13 @@ public class MensalidadeComParcelasMapper {
         dto.setStatusLiberacao(mensalidade.getStatusLiberacao());
         dto.setNumeroParcelasRestantes(mensalidade.getNumero_parcelas_restantes());
 
+        dto.setAtribuidoPorId(mensalidade.getAtribuidoPorId());
+        dto.setAtribuidoPorNome(mensalidade.getAtribuidoPorNome());
+        dto.setDataAtribuicao(mensalidade.getDataAtribuicao());
+
         List<ParcelaDTO> parcelasDTO = parcelas.stream()
                 .map(MensalidadeComParcelasMapper::toParcelaDTO)
                 .toList();
-
-        dto.setParcelas(parcelasDTO);
 
         dto.setParcelas(parcelasDTO);
 

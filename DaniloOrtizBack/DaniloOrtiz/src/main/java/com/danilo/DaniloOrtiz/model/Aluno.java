@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Entity
 @Data
@@ -17,7 +18,7 @@ public class Aluno {
     @Column(nullable = false)
     private String nome;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String senha;
 
     @Column(nullable = false, unique = true)
@@ -58,4 +59,10 @@ public class Aluno {
     private String bairro;
 
     private String estado;
+
+    private String observacao;
+
+    private Long id_criado_por;
+
+
 }

@@ -424,6 +424,8 @@ const parcelaPendente = mensalidadeDTO?.parcelas
   ?.filter((p) => p.status === "PENDENTE")
   ?.sort((a, b) => new Date(a.dataVencimento) - new Date(b.dataVencimento))[0];
 
+
+
 // CORRETO: nova assinatura = não tem parcela pendente
 const ehNovaAssinatura = !parcelaPendente;
 
@@ -439,32 +441,7 @@ const ehNovaAssinatura = !parcelaPendente;
     new Date(mensalidadeDTO.dataFim) > agora &&
     !!parcelaPendente;
 
-  /* / ── Efeitos
-  useEffect(() => {
-  // Carrega o SDK v1 do MP via script — não exige montar campos no DOM
-  const script = document.createElement("script");
-  script.src = "https://sdk.mercadopago.com/js/v2";
-  script.async = true;
-  script.onload = () => {
-    mpRef.current = new window.MercadoPago(MP_PUBLIC_KEY, {
-      locale: "pt-BR",
-    });
-    console.log("MP SDK carregado");
-  };
-  document.body.appendChild(script);
- 
-  if (idAluno) {
-    buscarAluno(idAluno);
-    buscarMensalidade(idAluno);
-  }
-  if (idplano) buscarPlano();
- 
-  return () => {
-    // limpa o script ao desmontar
-    document.body.removeChild(script);
-  };
-}, []);
-*/
+    const [etapa, setEtapa] = useState("resumo"); // "resumo" | "pagamento"
 
 // useEffect 1 — só busca a public key
 useEffect(() => {
@@ -652,7 +629,7 @@ async function verificarPagamentoJaFeito() {
         }
       }
 
-      if (!parcelaIdFinal) {
+      if (!parcelaIdFinal ){
         mostrarToast("Parcela não encontrada.", false);
         return;
       }
@@ -952,8 +929,23 @@ async function verificarPagamentoJaFeito() {
 
         {erro && <p style={{ color: "#e05555", fontSize: "0.8rem", marginBottom: 24 }}>{erro}</p>}
 
+        {erro && <p style={{ color: "#e05555", fontSize: "0.8rem", marginBottom: 24 }}>{erro}</p>}
+
         {/* RESUMO */}
-        <p style={S.sectionLabel}>Resumo</p>
+        <p style={S.sectionLabel}>
+          {etapa === "resumo" ? "Passo 1 de 2 — Confirme seu plano" : "Passo 2 de 2 — Forma de pagamento"}
+        </p>
+
+        <h2 style={{
+          fontFamily: "'Bebas Neue', sans-serif",
+          fontSize: "1.8rem",
+          color: PALETTE.accent,
+          letterSpacing: "0.04em",
+          marginBottom: 20,
+        }}>
+          {plano?.nome ?? "Mensalidade"}
+        </h2>
+
         <div style={S.grid2}>
           <InfoBox label="Plano" value={plano?.nome ?? "Mensalidade"} />
           <InfoBox label="Total" value={formatarValor(valorTotal)} big />
@@ -974,98 +966,118 @@ async function verificarPagamentoJaFeito() {
           )}
         </div>
 
-          
-
-
-        {/* MÉTODO DE PAGAMENTO */}
-        <p style={S.sectionLabel}>Método de pagamento</p>
-        <div style={S.metodosGrid}>
-          {[
-            { id: "pix", icone: "⚡", nome: "PIX", desc: "Aprovação instantânea" },
-            { id: "credit_card", icone: "💳", nome: "Cartão", desc: "Crédito em até 12x" }
-          ].map((m) => (
-            <div
-              key={m.id}
-              style={S.metodoCard(metodo === m.id)}
-              onClick={() => { setMetodo(m.id); setResultado(null); }}
-            >
-              <span style={S.metodoIcone}>{m.icone}</span>
-              <span style={S.metodoNome}>{m.nome}</span>
-              <span style={S.metodoDesc}>{m.desc}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* FORMULÁRIO CARTÃO */}
-        {metodo === "credit_card" && !resultado && (
+        {/* ── PASSO 1: apenas confirmação do plano, sem gravar nada ── */}
+        {etapa === "resumo" && (
           <>
-            <p style={S.sectionLabel}>Dados do cartão</p>
-            <div style={{ ...S.formGridFull, gridTemplateColumns: "1fr" }}>
-              <Campo label="Número do cartão">
-                <input
-                  style={S.input}
-                  placeholder="0000 0000 0000 0000"
-                  value={cartaoNum}
-                  maxLength={19}
-                  onChange={(e) => setCartaoNum(formatarCartao(e.target.value))}
-                />
-                {bandeira !== "unknown" && cartaoNum.length > 4 && (
-                  <span style={S.bandeira}>🏦 {bandeira.toUpperCase()}</span>
-                )}
-              </Campo>
-            </div>
-            <div style={S.formGrid}>
-              <Campo label="Nome no cartão">
-                <input
-                  style={S.input}
-                  placeholder="COMO ESTÁ NO CARTÃO"
-                  value={cartaoNome}
-                  onChange={(e) => setCartaoNome(e.target.value.toUpperCase())}
-                />
-              </Campo>
-              <Campo label="Validade">
-                <input
-                  style={S.input}
-                  placeholder="MM/AA"
-                  value={cartaoValidade}
-                  maxLength={5}
-                  onChange={(e) => setCartaoValidade(formatarValidade(e.target.value))}
-                />
-              </Campo>
-              <Campo label="CVV">
-                <input
-                  style={S.input}
-                  placeholder="123"
-                  value={cartaoCVV}
-                  maxLength={4}
-                  onChange={(e) => setCartaoCVV(e.target.value.replace(/\D/g, ""))}
-                />
-              </Campo>
-              <Campo label="Parcelas">
-                <div style={{
-                  ...S.input,
-                  color: "rgba(196,160,100,0.7)",
-                  letterSpacing: "0.08em",
-                }}>
-                  1x de {formatarValor(valorTotal)} (à vista)
-                </div>
-              </Campo>
-            </div>
+            <button
+              style={S.btnPrimary(false)}
+              onClick={() => setEtapa("pagamento")}
+            >
+              Continuar para pagamento →
+            </button>
+            <button style={S.btnSecondary} onClick={() => navigate("/")}>
+              Cancelar
+            </button>
           </>
         )}
 
-        {/* AVISO PIX */}
-        {metodo === "pix" && !resultado && (
-          <div style={{ ...S.infoBox, marginBottom: 32, textAlign: "center" }}>
-            <span style={{ fontSize: "2rem" }}>⚡</span>
-            <p style={{ ...S.infoValue, marginTop: 12 }}>
-              Clique em confirmar para gerar o QR Code PIX.<br />
-              <span style={{ color: "rgba(240,236,228,0.4)", fontSize: "0.78rem" }}>
-                Válido por 30 minutos. Aprovação instantânea.
-              </span>
-            </p>
-          </div>
-        )}
+        {/* ── PASSO 2: método de pagamento + confirmação ── */}
+        {etapa === "pagamento" && (
+          <>
+            <button
+              style={{ ...S.btnSecondary, marginBottom: 32, width: "auto", padding: "10px 20px" }}
+              onClick={() => setEtapa("resumo")}
+            >
+              ← Voltar ao plano
+            </button>
+
+            <p style={S.sectionLabel}>Método de pagamento</p>
+            <div style={S.metodosGrid}>
+              {[
+                { id: "pix", icone: "⚡", nome: "PIX", desc: "Aprovação instantânea" },
+                { id: "credit_card", icone: "💳", nome: "Cartão", desc: "Crédito em até 12x" }
+              ].map((m) => (
+                <div
+                  key={m.id}
+                  style={S.metodoCard(metodo === m.id)}
+                  onClick={() => { setMetodo(m.id); setResultado(null); }}
+                >
+                  <span style={S.metodoIcone}>{m.icone}</span>
+                  <span style={S.metodoNome}>{m.nome}</span>
+                  <span style={S.metodoDesc}>{m.desc}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* FORMULÁRIO CARTÃO */}
+            {metodo === "credit_card" && !resultado && (
+              <>
+                <p style={S.sectionLabel}>Dados do cartão</p>
+                <div style={{ ...S.formGridFull, gridTemplateColumns: "1fr" }}>
+                  <Campo label="Número do cartão">
+                    <input
+                      style={S.input}
+                      placeholder="0000 0000 0000 0000"
+                      value={cartaoNum}
+                      maxLength={19}
+                      onChange={(e) => setCartaoNum(formatarCartao(e.target.value))}
+                    />
+                    {bandeira !== "unknown" && cartaoNum.length > 4 && (
+                      <span style={S.bandeira}>🏦 {bandeira.toUpperCase()}</span>
+                    )}
+                  </Campo>
+                </div>
+                <div style={S.formGrid}>
+                  <Campo label="Nome no cartão">
+                    <input
+                      style={S.input}
+                      placeholder="COMO ESTÁ NO CARTÃO"
+                      value={cartaoNome}
+                      onChange={(e) => setCartaoNome(e.target.value.toUpperCase())}
+                    />
+                  </Campo>
+                  <Campo label="Validade">
+                    <input
+                      style={S.input}
+                      placeholder="MM/AA"
+                      value={cartaoValidade}
+                      maxLength={5}
+                      onChange={(e) => setCartaoValidade(formatarValidade(e.target.value))}
+                    />
+                  </Campo>
+                  <Campo label="CVV">
+                    <input
+                      style={S.input}
+                      placeholder="123"
+                      value={cartaoCVV}
+                      maxLength={4}
+                      onChange={(e) => setCartaoCVV(e.target.value.replace(/\D/g, ""))}
+                    />
+                  </Campo>
+                  <Campo label="Parcelas">
+                    <div style={{ ...S.input, color: "rgba(196,160,100,0.7)", letterSpacing: "0.08em" }}>
+                      1x de {formatarValor(valorTotal)} (à vista)
+                    </div>
+                  </Campo>
+                </div>
+              </>
+            )}
+
+            {/* AVISO PIX */}
+            {metodo === "pix" && !resultado && (
+              <div style={{ ...S.infoBox, marginBottom: 32, textAlign: "center" }}>
+                <span style={{ fontSize: "2rem" }}>⚡</span>
+                <p style={{ ...S.infoValue, marginTop: 12 }}>
+                  Clique em confirmar para gerar o QR Code PIX.<br />
+                  <span style={{ color: "rgba(240,236,228,0.4)", fontSize: "0.78rem" }}>
+                    Válido por 30 minutos. Aprovação instantânea.
+                  </span>
+                </p>
+              </div>
+            )}
+
+
+
 
 
         {/* RESULTADO PIX */}
@@ -1188,14 +1200,16 @@ async function verificarPagamentoJaFeito() {
 
 
 
-        <button
-          style={S.btnSecondary}
-          onClick={() => navigate("/")}
-          onMouseEnter={(e) => { e.target.style.color = "#f0ece4"; e.target.style.borderColor = "rgba(240,236,228,0.4)"; }}
-          onMouseLeave={(e) => { e.target.style.color = "rgba(240,236,228,0.35)"; e.target.style.borderColor = "rgba(240,236,228,0.1)"; }}
-        >
-          Cancelar
-        </button>
+         <button
+              style={S.btnSecondary}
+              onClick={() => navigate("/")}
+              onMouseEnter={(e) => { e.target.style.color = "#f0ece4"; e.target.style.borderColor = "rgba(240,236,228,0.4)"; }}
+              onMouseLeave={(e) => { e.target.style.color = "rgba(240,236,228,0.35)"; e.target.style.borderColor = "rgba(240,236,228,0.1)"; }}
+            >
+              Cancelar
+            </button>
+          </>
+        )}
       </main>
 
       {toast && (

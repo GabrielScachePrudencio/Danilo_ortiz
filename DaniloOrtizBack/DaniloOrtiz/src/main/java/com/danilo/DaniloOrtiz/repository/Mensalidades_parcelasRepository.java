@@ -31,4 +31,14 @@ public interface Mensalidades_parcelasRepository extends JpaRepository<Mensalida
     @Query("SELECT MAX(p.dataVencimento) FROM Mensalidades_parcelas p WHERE p.mensalidade.aluno = :aluno")
     LocalDateTime findUltimaDataVencimentoPorAluno(@Param("aluno") Aluno aluno);
 
+    // Mensalidades_parcelasRepository
+    //List<Mensalidades_parcelas> findByStatusAndDataVencimentoBetween(String status, LocalDateTime inicio, LocalDateTime fim);
+    @Query(value = "SELECT * FROM mensalidades_parcelas " +
+            "WHERE status = :status " +
+            "AND data_vencimento BETWEEN :inicio AND :fim",
+            nativeQuery = true)
+    List<Mensalidades_parcelas> findByStatusAndDataVencimentoBetweenNative(
+            @Param("status") String status,
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fim") LocalDateTime fim);
 }

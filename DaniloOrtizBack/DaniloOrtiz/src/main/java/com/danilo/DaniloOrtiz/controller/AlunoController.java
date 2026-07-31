@@ -7,6 +7,7 @@ import com.danilo.DaniloOrtiz.model.dto.AlunoPorPlanoDTO;
 import com.danilo.DaniloOrtiz.model.dto.LoginDTO;
 import com.danilo.DaniloOrtiz.model.mapper.AlunoMapper;
 import com.danilo.DaniloOrtiz.service.AlunoService;
+import com.danilo.DaniloOrtiz.service.NotificacaoService;
 import com.danilo.DaniloOrtiz.service.PlanoExpirationScheduler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/alunos")
@@ -26,6 +28,7 @@ public class AlunoController {
     private final PlanoExpirationScheduler planoExpirationScheduler; // <-- adiciona
     private final AlunoService alunoService;
     private final AlunoMapper mapper;
+    private final NotificacaoService notificacaoService;
 
     @GetMapping
     public ResponseEntity<List<AlunoDTO>> todosAlunos() {
@@ -124,6 +127,20 @@ public class AlunoController {
         return ResponseEntity.ok(alunoService.add(aluno));
     }
 
+    @PostMapping("/admin/criar")
+    public ResponseEntity<AlunoDTO> addAlunoAdmin(@RequestBody Aluno aluno,
+              Authentication authentication) {
+
+        String email = authentication.getName();
+        Optional<Aluno> administradorOpt = alunoService.findByEmail(email);
+
+        if(!"ADMIN".equals(administradorOpt.get().getTipoUsuario())){
+            return ResponseEntity.badRequest().build();
+        }
+
+        return ResponseEntity.ok(alunoService.addAdmin(aluno, administradorOpt));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Aluno> buscarPorId(@PathVariable Long id){
         Aluno aluno = alunoService.findById(id);
@@ -153,8 +170,58 @@ public class AlunoController {
         planoExpirationScheduler.verificarInadimplentes();
         planoExpirationScheduler.verificarPlanosExpirados();
 
+        notificacaoService.verificarMensalidadesProximasDoFim();
+        notificacaoService.verificarCobrancasDoDia();
+        notificacaoService.verificarAlunosInativos();
+
+
+
         return ResponseEntity.ok(tokenCompleto);
     }
 
+    @GetMapping("/verifica-criado-admin")
+    public ResponseEntity<?> loginParaContasCriadasPeloAdmin(@RequestParam String cpf){
+
+        if(cpf == null || cpf.isBlank()){
+            return ResponseEntity.badRequest().body("CPF é obrigatório");
+        }
+
+        // Remova formatações caso o usuário digite pontos/traços
+        String cpfLimpo = cpf.replaceAll("\\D", "");
+
+        Optional<Aluno> alunoOpt = alunoService.findByCpf(cpfLimpo);
+
+        if(alunoOpt.isEmpty()){
+            return ResponseEntity.status(401).body("Erro aluno nao encontrado");
+        }
+
+        Aluno aluno = alunoOpt.get();
+
+        if(aluno.getId_criado_por() == null || aluno.getId_criado_por() <= 0 || aluno.getSenha() != null){
+            return ResponseEntity.status(401).body("Erro aluno");
+        }
+
+        Aluno administrador = alunoService.findById(aluno.getId_criado_por());
+
+        if(administrador == null){
+            return ResponseEntity.status(401).body("Erro administrador");
+        }
+
+        if(!"ADMIN".equals(administrador.getTipoUsuario())){
+            return ResponseEntity.status(401).body("Erro somente administradores");
+        }
+
+        return ResponseEntity.ok(true);
+    }
+
+    @PostMapping("/definir-senha")
+    public ResponseEntity<?> definirSenha(@RequestBody Map<String, String> body) {
+        try {
+            alunoService.definirSenhaInicial(body.get("cpf"), body.get("novaSenha"));
+            return ResponseEntity.ok(Map.of("message", "Senha definida com sucesso."));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(Map.of("message", e.getMessage()));
+        }
+    }
 }
 

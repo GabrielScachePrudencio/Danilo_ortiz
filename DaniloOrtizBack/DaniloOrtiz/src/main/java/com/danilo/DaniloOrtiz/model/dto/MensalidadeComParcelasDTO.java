@@ -8,6 +8,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -31,4 +32,9 @@ public class MensalidadeComParcelasDTO {
     private Integer numeroParcelasRestantes;
 
     private List<ParcelaDTO> parcelas;
+
+
+    private Long atribuidoPorId;
+    private String atribuidoPorNome;
+    private LocalDateTime dataAtribuicao;
 }

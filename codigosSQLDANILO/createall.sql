@@ -36,17 +36,18 @@ CREATE TABLE alunos (
     plano_atual_id INTEGER REFERENCES planos(id),
     status_assinatura VARCHAR(50) DEFAULT 'DESATIVADO', -- 'ATIVO', 'INATIVO', 'PENDENTE'
     data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CPF varchar(10),
-    CNPJ varchar(10),
+    CPF varchar(20),
+    CNPJ varchar(20),
     rua varchar(254),
     número int,
     cidade varchar(30),
-    CEP int
-);
+    estado varchar(30),
+    CEP int,
+    bairro varchar(255)
+    );
 
 
-
-
+alter table alunos add column estado varchar(255);
 -- 4. TABELA DE PAGAMENTOS (Histórico de tentativas e Webhook)
 CREATE TABLE pagamentos (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -95,5 +96,42 @@ CREATE TABLE mensalidades_parcelas (
     status VARCHAR(50) DEFAULT 'PENDENTE', -- PENDENTE, PAGO, ATRASADO
     pagamento_id INTEGER REFERENCES pagamentos(id)
 );
+alter table alunos add column observacao varchar(255);
+CREATE TABLE mensagens_whatsapp (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    numero VARCHAR(255) NOT NULL,
+    mensagem TEXT NOT NULL,
+    status VARCHAR(255) NOT NULL,
+    tentativas INT DEFAULT 0,
+    data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    data_envio DATETIME,
+
+    pagamento_id INT,
+    erro_detalhe TEXT,
+    CONSTRAINT fk_mensagens_whatsapp_pagamentos 
+        FOREIGN KEY (pagamento_id) REFERENCES pagamentos(id) 
+        ON DELETE SET NULL 
+        ON UPDATE CASCADE
+        
+);
 
 
+CREATE TABLE modelo_mensagem (
+    id int auto_increment PRIMARY KEY,
+    tipo VARCHAR(60) NOT NULL UNIQUE,
+    descricao VARCHAR(255),
+    conteudo TEXT NOT NULL,
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+    atualizado_em TIMESTAMP NOT NULL DEFAULT now()
+);
+
+ALTER TABLE mensagens_whatsapp
+    ADD COLUMN tipo VARCHAR(60);
+
+ALTER TABLE mensalidades
+ADD COLUMN atribuido_por_id BIGINT NULL,
+ADD COLUMN atribuido_por_nome VARCHAR(255) NULL,
+ADD COLUMN data_atribuicao DATETIME NULL;
+
+	
+alter table alunos add column id_criado_por BIGINT NULL;

@@ -14,7 +14,7 @@ public class EvolutionApiService {
     private String evolutionUrl;
 
     @Value("${evolution.api.key:minha-chave-123}")
-    private String apiKey;
+    private String  apiKey;
 
     @Value("${evolution.api.instance:academia}")
     private String instanceName;

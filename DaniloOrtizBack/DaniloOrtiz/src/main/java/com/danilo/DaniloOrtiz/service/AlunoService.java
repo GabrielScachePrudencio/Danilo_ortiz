@@ -2,18 +2,19 @@ package com.danilo.DaniloOrtiz.service;
 
 import com.danilo.DaniloOrtiz.config.JwtUtil;
 import com.danilo.DaniloOrtiz.model.Aluno;
+import com.danilo.DaniloOrtiz.model.Mensalidade;
 import com.danilo.DaniloOrtiz.model.dto.AlunoDTO;
 import com.danilo.DaniloOrtiz.model.dto.AlunoPorPlanoDTO;
 import com.danilo.DaniloOrtiz.model.mapper.AlunoMapper;
 import com.danilo.DaniloOrtiz.repository.AlunoRepository;
+import com.danilo.DaniloOrtiz.repository.MensalidadeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +22,10 @@ public class AlunoService {
 
     private final AlunoRepository ar;
     private final AlunoMapper mapper;
+    private final MensalidadeRepository mensalidadeRepository;
+    private final MensagemManualService mensagemManualService;
+
+
 
     public List<AlunoPorPlanoDTO> QtddAlunosPorPlano(){
         return ar.relatorioPorPlano();
@@ -47,11 +52,69 @@ public class AlunoService {
         return mapper.toDTO(salvo);
     }
 
-    public List<AlunoDTO> findAll(){
-        return ar.findAll()
-                .stream()
-                .map(mapper::toDTO)
+    public Optional<Aluno> findByCpf(String cpf){
+        return ar.findByCpf(cpf);
+    }
+
+    public AlunoDTO addAdmin(Aluno aluno, Optional<Aluno> administrador) {
+        if (aluno == null) return null;
+
+        aluno.setId_criado_por(administrador.get().getId());
+        aluno.setSenha(null);
+
+        Aluno salvo = ar.save(aluno);
+
+        enviarMensagemSeguro(() -> {
+            Map<String, Object> params = new HashMap<>();
+            params.put("adminNome", administrador.get().getNome());
+            params.put("linkLogin", "https://2dassessoria.com.br" + "/login");
+            mensagemManualService.enviar(salvo.getId(), "CRIACAO_CONTA", params);
+        }, salvo.getId());
+
+        return mapper.toDTO(salvo);
+    }
+
+    private void enviarMensagemSeguro(Runnable envio, Long alunoId) {
+        try {
+            envio.run();
+        } catch (Exception e) {
+            System.out.println("Falha ao enviar mensagem WhatsApp automática para aluno alunoId");
+        }
+    }
+    public List<AlunoDTO> findAll() {
+        List<Aluno> alunos = ar.findAll();
+
+        List<Long> alunoIds = alunos.stream().map(Aluno::getId).toList();
+
+        List<Mensalidade> mensalidadesRelevantes =
+                mensalidadeRepository.findByAluno_IdInAndStatusLiberacaoIn(
+                        alunoIds, List.of("ATIVADO", "DESATIVADO", "EXPIRADO"));
+
+        Map<Long, Mensalidade> mensalidadePorAluno = new HashMap<>();
+        for (Mensalidade m : mensalidadesRelevantes) {
+            Long alunoId = m.getAluno().getId();
+            Mensalidade atual = mensalidadePorAluno.get(alunoId);
+
+            if (atual == null || prevalece(m, atual)) {
+                mensalidadePorAluno.put(alunoId, m);
+            }
+        }
+
+        return alunos.stream()
+                .map(aluno -> mapper.toDTO(aluno, mensalidadePorAluno.get(aluno.getId())))
                 .toList();
+    }
+
+    private static final List<String> PRIORIDADE = List.of("ATIVADO", "DESATIVADO", "EXPIRADO");
+
+    private boolean prevalece(Mensalidade candidata, Mensalidade atual) {
+        int prioridadeCandidata = PRIORIDADE.indexOf(candidata.getStatusLiberacao());
+        int prioridadeAtual = PRIORIDADE.indexOf(atual.getStatusLiberacao());
+
+        if (prioridadeCandidata != prioridadeAtual) {
+            return prioridadeCandidata < prioridadeAtual; // índice menor = prioridade maior
+        }
+        return candidata.getDataInicio().isAfter(atual.getDataInicio());
     }
 
     public AlunoDTO login(String email, String senha){
@@ -82,6 +145,8 @@ public class AlunoService {
 
         Aluno aluno = ar.findByEmail(email).orElse(null);
 
+        if(aluno.getSenha() == null) throw new RuntimeException("SENHA_NAO_DEFINIDA");
+
         if(aluno == null) return null;
 
         if(encoder.matches(senha, aluno.getSenha())){
@@ -90,6 +155,17 @@ public class AlunoService {
 
         return null;
     }
+
+    public void definirSenhaInicial(String cpf, String novaSenha) {
+        Aluno aluno = ar.findByCpf(cpf).orElse(null);
+        if (aluno == null) throw new RuntimeException("Aluno não encontrado.");
+        if (aluno.getSenha() != null) throw new RuntimeException("Senha já definida. Faça login normalmente.");
+
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        aluno.setSenha(encoder.encode(novaSenha));
+        ar.save(aluno);
+    }
+
     public void ativarAssinatura(Long idAluno) {
         ar.atualizarStatusAssinatura(idAluno, "ATIVADO");
     }
@@ -145,6 +221,7 @@ public class AlunoService {
         if (alunoAtualizado.getCEP()      != null) aluno.setCEP(alunoAtualizado.getCEP());
         if (alunoAtualizado.getBairro() != null) aluno.setBairro(alunoAtualizado.getBairro());
         if (alunoAtualizado.getEstado() != null) aluno.setEstado(alunoAtualizado.getEstado());
+        if (alunoAtualizado.getObservacao() != null) aluno.setObservacao(alunoAtualizado.getObservacao());
 
 
         // senha: só atualiza se vier E não for vazia

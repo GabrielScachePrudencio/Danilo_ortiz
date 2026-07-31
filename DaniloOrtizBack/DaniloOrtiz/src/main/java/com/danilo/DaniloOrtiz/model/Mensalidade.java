@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -37,4 +38,10 @@ public class Mensalidade {
     private Integer numero_parcelas_restantes;
 
     private BigDecimal valorParcela;
+
+    private Long atribuidoPorId;
+
+    private String atribuidoPorNome;
+
+    private LocalDateTime dataAtribuicao;
 }

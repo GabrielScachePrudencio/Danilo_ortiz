@@ -1361,8 +1361,18 @@ function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
                 Administrativo
               </button>
             )}
+
+             {/* ── ADMIN NOVO ── */}
+            {aluno?.tipoUsuario === "ADMIN" && (
+              <button className="nbtn nbtn-ghost" onClick={() => navigate("/home/administrativonovo")} >
+                Administrativo Novo
+              </button>
+            )}
             {emailLogado ? (
               <>
+               <button className="nbtn nbtn-ghost" onClick={() => navigate("/home/")}>
+                  HomeAntigo: {emailLogado}
+                </button>
                 <button className="nbtn nbtn-ghost" onClick={() => navigate("/home/conta")}>
                   {emailLogado}
                 </button>

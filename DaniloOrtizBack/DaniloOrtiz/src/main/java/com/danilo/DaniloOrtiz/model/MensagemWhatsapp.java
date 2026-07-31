@@ -22,6 +22,10 @@ public class MensagemWhatsapp {
     @Column(nullable = false)
     private String status; // PENDENTE, ENVIADO, ERRO
 
+
+    @Column(nullable = false, length = 60)
+    private String tipo;
+
     private Integer tentativas = 0;
 
     @Column(name = "data_criacao")

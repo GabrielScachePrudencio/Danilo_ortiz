@@ -28,8 +28,11 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 
                         // 🔓 rotas públicas
+                        // 🔓 rotas públicas
                         .requestMatchers("/alunos/login").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST,"/alunos").permitAll()
+                        .requestMatchers("/alunos/verifica-criado-admin").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/alunos/definir-senha").permitAll()
                         .requestMatchers("/planos/**").permitAll()
                         .requestMatchers("/v1/pagamentos/notifications").permitAll()
 

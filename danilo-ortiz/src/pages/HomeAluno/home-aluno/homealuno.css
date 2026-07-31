@@ -1,0 +1,65 @@
+.aluno-shell {
+  min-height: 100vh;
+}
+
+.aluno-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: #0d0d0f;
+  border-right: 1px solid rgba(196, 160, 100, 0.1);
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.aluno-nav-group {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(240, 236, 228, 0.55);
+  padding: 14px 4px 6px;
+  cursor: pointer;
+}
+.aluno-nav-group:hover {
+  color: #c4a064;
+}
+
+.aluno-nav-subitem {
+  font-size: 0.82rem;
+  padding: 10px 14px;
+  margin-left: 4px;
+  color: rgba(240, 236, 228, 0.4);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all 0.15s;
+}
+.aluno-nav-subitem:hover {
+  color: #f0ece4;
+}
+.aluno-nav-subitem.active {
+  color: #c4a064;
+  border-left-color: #c4a064;
+  background: rgba(196, 160, 100, 0.05);
+}
+
+/* ── correção do layout quebrado (grid não abria colunas) ── */
+.aluno-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.aluno-content {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── modo admin: link de voltar ao painel, dentro da sidebar ── */
+.aluno-nav-group.voltar-admin {
+  color: #4ca8de;
+}
+.aluno-nav-group.voltar-admin:hover {
+  color: #6fc0f0;
+}

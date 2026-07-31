@@ -40,9 +40,9 @@ public class ApiMercadoPago {
             : "MP_ACCESS_TOKEN";
 
 
-    public static void main(String[] args) {
-        consultarPagamento(148337041604L);
-    }
+//    public static void main(String[] args) {
+//        consultarPagamento(148337041604L);
+//    }
 
     public static Preference gerarPagamento(PagamentoCompletoDTO pagamentoCompletoDTO, Long idPagamentoInterno) {
         if (configuracaoServiceStatic == null) {

@@ -306,8 +306,7 @@ function CampoForm({ label, name, type = "text", value, onChange, placeholder })
 export default function Login() {
   const navigate = useNavigate();
   const { idplano } = useParams();
-
- /*
+/*
   const url =
   window.location.hostname === "localhost" ||
   window.location.hostname === "192.168.15.19"
@@ -324,6 +323,14 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState(null);
   const [sucesso, setSucesso] = useState(null);
+
+  const [subEtapaAdmin, setSubEtapaAdmin] = useState("cpf"); // "email" | "senha"
+const [cpfAdminCriado, setCpfAdminCriado] = useState("");
+
+  const [novaSenha, setNovaSenha] = useState("");
+    const [confirmarSenha, setConfirmarSenha] = useState("");
+
+ 
 
   const [formLogin, setFormLogin] = useState({ email: "", senha: "" });
   const [formCadastro, setFormCadastro] = useState({ 
@@ -382,6 +389,40 @@ export default function Login() {
     setModo(null);
   }
 
+// Função focada exclusivamente em buscar o perfil e decidir a navegação
+async function buscarUsuarioERedirecionar(token) {
+  try {
+    const resMe = await fetch(`${API}/alunos/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!resMe.ok) {
+      setErro("Erro ao carregar os dados do perfil.");
+      return;
+    }
+
+    const aluno = await resMe.json();
+
+    // Guardamos o tipo de usuário se precisar em outro lugar da aplicação
+    if (aluno.tipoUsuario) {
+      localStorage.setItem("tipo_usuario", aluno.tipoUsuario);
+    }
+
+    // Regra de Redirecionamento
+    const tipo = aluno.tipoUsuario?.toUpperCase();
+
+    if (tipo === "ADMIN") {
+      navigate("/home/administrativonovo");
+    } else if (idplano) {
+      navigate(`/home/telapagamento/${idplano}`);
+    } else {
+      navigate("/");
+    }
+  } catch (err) {
+    setErro("Erro de conexão ao validar o perfil.");
+  }
+}
+
   async function logar() {
     limpar();
     setLoading(true);
@@ -408,8 +449,9 @@ export default function Login() {
     localStorage.setItem("token", token);
 
 
-    setTimeout(() => navigate(idplano ? `/home/telapagamento/${idplano}` : "/"), 800);
-    } catch (e) {
+    await buscarUsuarioERedirecionar(token);
+
+  } catch (e) {
  
   setErro("Erro de conexão com o servidor.");
 
@@ -417,6 +459,84 @@ export default function Login() {
       setLoading(false);
     }
   }
+
+
+
+  async function verificarContaCriadaPeloAdmin() {
+    limpar();
+
+    if (!cpfAdminCriado || cpfAdminCriado.trim() === "") {
+      setErro("Informe o CPF.");
+      return;
+    }
+
+    // Remove qualquer caractere não numérico do CPF antes de enviar
+    const cpfLimpo = cpfAdminCriado.replace(/\D/g, "");
+
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${API}/alunos/verifica-criado-admin?cpf=${encodeURIComponent(cpfLimpo)}`
+      );
+
+      if (!res.ok) {
+        setErro("Não encontramos uma conta pendente com esse CPF.");
+        return;
+      }
+
+      setSubEtapaAdmin("senha");
+    } catch {
+      setErro("Erro de conexão com o servidor.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+async function definirSenhaContaAdmin() {
+    limpar();
+
+    if (!novaSenha || novaSenha.length < 6) {
+      setErro("A senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+    if (novaSenha !== confirmarSenha) {
+      setErro("As senhas não coincidem.");
+      return;
+    }
+
+    const cpfLimpo = cpfAdminCriado.replace(/\D/g, "");
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/alunos/definir-senha`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cpf: cpfLimpo, novaSenha }), // Enviando CPF em vez de email
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setErro(data?.message || "Erro ao definir senha.");
+        return;
+      }
+
+      setSucesso("Senha definida com sucesso! Faça login para continuar.");
+      setTimeout(() => {
+        setModo("login");
+        setSubEtapaAdmin("cpf");
+        setCpfAdminCriado("");
+        setNovaSenha("");
+        setConfirmarSenha("");
+        limpar();
+      }, 1500);
+    } catch {
+      setErro("Erro de conexão com o servidor.");
+    } finally {
+      setLoading(false);
+    }
+  }
+  
+
 
   async function cadastrar() {
     limpar();
@@ -515,6 +635,16 @@ export default function Login() {
               >
                 Criar conta
               </button>
+
+              <button
+                style={{ ...S.btnSecondary, marginTop: 4 }}
+                onClick={() => { limpar(); setModo("admin-criado"); }}
+                onMouseEnter={(e) => { e.target.style.color = "#f0ece4"; }}
+                onMouseLeave={(e) => { e.target.style.color = "rgba(240,236,228,0.35)"; }}
+              >
+                Administrador criou minha conta
+              </button>
+
             </div>
           </>
         )}
@@ -551,6 +681,85 @@ export default function Login() {
 
            
         )}
+
+{/* ── CONTA CRIADA PELO ADMIN ── */}
+{modo === "admin-criado" && (
+  <>
+    {subEtapaAdmin === "cpf" && (
+      <>
+        <p style={S.formTitle}>Definir senha de acesso</p>
+        <p style={{ fontSize: "0.75rem", color: "rgba(240,236,228,0.5)", marginBottom: 20 }}>
+          Informe o CPF que o administrador cadastrou pra você.
+        </p>
+
+        <Campo
+          label="CPF"
+          name="cpfAdminCriado"
+          type="text"
+          placeholder="000.000.000-00"
+          value={cpfAdminCriado}
+          onChange={(e) => {
+            // Máscara simples ou apenas números
+            let val = e.target.value.replace(/\D/g, "").slice(0, 11);
+            setCpfAdminCriado(val);
+          }}
+        />
+
+        <div style={S.actions}>
+          <button
+            style={{ ...S.btnPrimary, opacity: loading ? 0.6 : 1 }}
+            onClick={verificarContaCriadaPeloAdmin}
+            disabled={loading}
+          >
+            {loading ? "Verificando..." : "Continuar"}
+          </button>
+
+          <button style={S.btnSecondary} onClick={voltar}>
+            ← Voltar
+          </button>
+        </div>
+      </>
+    )}
+
+    {subEtapaAdmin === "senha" && (
+      <>
+        <p style={S.formTitle}>Crie sua senha</p>
+        <p style={{ fontSize: "0.75rem", color: "rgba(240,236,228,0.5)", marginBottom: 20 }}>
+          Conta encontrada. Agora defina uma senha pra acessar.
+        </p>
+
+        <Campo
+          label="Nova senha"
+          name="novaSenha"
+          type="password"
+          value={novaSenha}
+          onChange={(e) => setNovaSenha(e.target.value)}
+        />
+        <Campo
+          label="Confirmar senha"
+          name="confirmarSenha"
+          type="password"
+          value={confirmarSenha}
+          onChange={(e) => setConfirmarSenha(e.target.value)}
+        />
+
+        <div style={S.actions}>
+          <button
+            style={{ ...S.btnPrimary, opacity: loading ? 0.6 : 1 }}
+            onClick={definirSenhaContaAdmin}
+            disabled={loading}
+          >
+            {loading ? "Salvando..." : "Salvar senha"}
+          </button>
+
+          <button style={S.btnSecondary} onClick={() => setSubEtapaAdmin("cpf")}>
+            ← Voltar
+          </button>
+        </div>
+      </>
+    )}
+  </>
+)}
 
         {/* ── CADASTRO ── */}
 {modo === "cadastro" && (
