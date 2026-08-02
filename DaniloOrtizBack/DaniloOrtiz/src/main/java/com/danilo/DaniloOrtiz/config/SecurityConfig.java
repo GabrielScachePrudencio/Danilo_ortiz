@@ -30,6 +30,8 @@ public class SecurityConfig {
                         // 🔓 rotas públicas
                         // 🔓 rotas públicas
                         .requestMatchers("/alunos/login").permitAll()
+                        .requestMatchers("/health").permitAll()
+
                         .requestMatchers(org.springframework.http.HttpMethod.POST,"/alunos").permitAll()
                         .requestMatchers("/alunos/verifica-criado-admin").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/alunos/definir-senha").permitAll()
