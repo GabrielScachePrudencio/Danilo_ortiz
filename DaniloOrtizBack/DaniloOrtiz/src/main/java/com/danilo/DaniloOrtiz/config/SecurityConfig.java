@@ -33,6 +33,7 @@ public class SecurityConfig {
                         .requestMatchers("/health").permitAll()
 
                         .requestMatchers(org.springframework.http.HttpMethod.POST,"/alunos").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST,"/alunos/login").permitAll()
                         .requestMatchers("/alunos/verifica-criado-admin").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/alunos/definir-senha").permitAll()
                         .requestMatchers("/planos/**").permitAll()

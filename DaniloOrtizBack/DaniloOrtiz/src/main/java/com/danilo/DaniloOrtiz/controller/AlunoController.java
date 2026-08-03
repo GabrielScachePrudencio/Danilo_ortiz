@@ -23,7 +23,6 @@ import java.util.Optional;
 @RequestMapping("/alunos")
 @RequiredArgsConstructor
 //@CrossOrigin(origins = "http://localhost:3000")
-@CrossOrigin(origins = "*")
 public class AlunoController {
     private final PlanoExpirationScheduler planoExpirationScheduler; // <-- adiciona
     private final AlunoService alunoService;
@@ -153,11 +152,11 @@ public class AlunoController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO){
-
+        String frontendUrl = System.getenv("FRONTEND_URL");
         if(loginDTO.getEmail() == null || loginDTO.getSenha() == null){
             return ResponseEntity.badRequest().body("Email e senha são obrigatórios");
         }
-
+        System.out.println("FRONTEND_URL = " + System.getenv("FRONTEND_URL"));
         String tokenCompleto = alunoService.loginComToken(
                 loginDTO.getEmail(),
                 loginDTO.getSenha()
