@@ -135,3 +135,35 @@ ADD COLUMN data_atribuicao DATETIME NULL;
 
 	
 alter table alunos add column id_criado_por BIGINT NULL;
+
+
+
+ALTER TABLE pagamentos
+    ADD COLUMN nome_admin_confirmou VARCHAR(255);
+
+ALTER TABLE mensalidades_parcelas
+    ADD COLUMN nome_admin_confirmou VARCHAR(255);
+
+ALTER TABLE mensalidades
+    ADD COLUMN nome_admin_confirmou VARCHAR(255);
+
+-- Tabela de pagamentos
+ALTER TABLE pagamentos
+    ADD COLUMN confirmado_manualmente BOOLEAN DEFAULT FALSE,
+    ADD COLUMN id_admin_confirmou BIGINT,
+    ADD COLUMN observacao_confirmacao VARCHAR(500),
+    ADD COLUMN data_confirmacao_manual TIMESTAMP;
+
+-- Tabela de parcelas
+ALTER TABLE mensalidades_parcelas
+    ADD COLUMN confirmado_manualmente BOOLEAN DEFAULT FALSE,
+    ADD COLUMN id_admin_confirmou BIGINT,
+    ADD COLUMN observacao_confirmacao VARCHAR(500),
+    ADD COLUMN data_confirmacao_manual TIMESTAMP;
+
+-- Tabela de mensalidade
+ALTER TABLE mensalidades
+    ADD COLUMN confirmado_manualmente BOOLEAN DEFAULT FALSE,
+    ADD COLUMN id_admin_confirmou BIGINT,
+    ADD COLUMN observacao_confirmacao VARCHAR(500),
+    ADD COLUMN data_confirmacao_manual TIMESTAMP;

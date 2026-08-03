@@ -35,7 +35,7 @@ export function Vendas() {
       <table style={S.table}>
         <thead>
           <tr>
-            {["Data", "Aluno", "Plano", "Valor", "Status", "ID Mercado Pago", "Método"].map((h) => (
+            {["Data", "Aluno", "Plano", "Valor", "Status", "ID Mercado Pago", "Método / Obs"].map((h) => (
               <th key={h} style={S.th}>{h}</th>
             ))}
           </tr>
@@ -55,15 +55,25 @@ export function Vendas() {
                   R$ {v.valor ? v.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : "0,00"}
                 </td>
                 <td style={S.td}>
-                  <Badge status={v.statusLiberacao === "approved" ? "ATIVADO" : "DESATIVADO"} />
+                  <Badge 
+                    status={
+                      v.statusLiberacao === "approved" || v.statusLiberacao === "FINALIZADO" || v.confirmadoManualmente 
+                        ? "ATIVADO" 
+                        : "DESATIVADO"
+                    } 
+                  />
                 </td>
                 <td style={{ ...S.td, fontSize: 10, color: "#666" }}>{v.mpPaymentId || "—"}</td>
                 <td style={S.td}>
-                  {v.formaPagamento === "account_money"
-                    ? "Saldo MP"
-                    : v.formaPagamento === "pix"
-                    ? "PIX"
-                    : v.formaPagamento || "—"}
+                  {v.confirmadoManualmente ? (
+                    <span style={{ color: "#c4a064", fontSize: "0.85rem" }} title={`Confirmado por: ${v.nomeAdminConfirmou || 'Admin'}`}>
+                      {v.formaPagamento ? `${v.formaPagamento}` : "Manual"} {v.observacaoConfirmacao ? `- ${v.observacaoConfirmacao}` : ""}
+                    </span>
+                  ) : (
+                    v.formaPagamento === "account_money" ? "Saldo MP" :
+                    v.formaPagamento === "pix" ? "PIX" :
+                    v.formaPagamento || "—"
+                  )}
                 </td>
               </tr>
             ))

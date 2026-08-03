@@ -44,4 +44,10 @@ public class Mensalidade {
     private String atribuidoPorNome;
 
     private LocalDateTime dataAtribuicao;
+
+    private Boolean confirmadoManualmente;
+    private Long idAdminConfirmou;
+    private String observacaoConfirmacao;
+    private LocalDateTime dataConfirmacaoManual;
+    private String nomeAdminConfirmou;
 }

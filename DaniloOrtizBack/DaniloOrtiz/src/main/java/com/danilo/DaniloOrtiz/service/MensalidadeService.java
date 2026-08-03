@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -650,5 +651,142 @@ public class MensalidadeService {
                 ));
 
         return MensalidadeComParcelasMapper.toHistoricoDTO(aluno, todasMensalidades, parcelasPorMensalidade);
+    }
+
+
+    @Transactional
+    public boolean confirmarPagamentoManualAdmin(Long parcelaId, Long idAdmin, String nomeAdmin,
+                                                 String formaPagamento, String observacao) {
+        Mensalidades_parcelas parcela = mensalidadesParcelasService.findById(parcelaId);
+        if (parcela == null) {
+            throw new RuntimeException("Parcela não encontrada.");
+        }
+
+        if ("FINALIZADO".equals(parcela.getStatus())) {
+            throw new RuntimeException("Parcela já está finalizada.");
+        }
+
+        Mensalidade mensalidade = parcela.getMensalidade();
+        LocalDateTime agora = LocalDateTime.now();
+
+        Pagamento pagamento = parcela.getPagamento();
+
+        if (pagamento == null) {
+            pagamento = new Pagamento();
+            pagamento.setAluno(mensalidade.getAluno());
+            pagamento.setPlano(mensalidade.getPlano());
+            pagamento.setMensalidades_parcelas(parcela);
+            pagamento.setValorPago(parcela.getValor());
+            pagamento.setId_mercadopago(null);
+            pagamento.setMpPaymentId(null);
+            pagamento.setStatus_mercadopago(null);
+            pagamento.setMetodo_pagamento_mercadopago(null);
+            pagamento.setCodigoVenda(null);
+        }
+
+        // ── atualiza PAGAMENTO ──────────────────────────────────────────
+        pagamento.setFormaPagamento(formaPagamento);
+        pagamento.setStatusPagamento("FINALIZADO");
+        pagamento.setPago(true);
+        pagamento.setEnvioEmailConfirmando(1);
+        pagamento.setConfirmadoManualmente(true);
+        pagamento.setIdAdminConfirmou(idAdmin);
+        pagamento.setNomeAdminConfirmou(nomeAdmin);
+        pagamento.setObservacaoConfirmacao(observacao);
+        pagamento.setDataConfirmacaoManual(agora);
+        pagamentoService.save(pagamento);
+
+        // ── atualiza PARCELA ─────────────────────────────────────────────
+        parcela.setPagamento(pagamento);
+        parcela.setStatus("FINALIZADO");
+        parcela.setConfirmadoManualmente(true);
+        parcela.setIdAdminConfirmou(idAdmin);
+        parcela.setNomeAdminConfirmou(nomeAdmin);
+        parcela.setObservacaoConfirmacao(observacao);
+        parcela.setDataConfirmacaoManual(agora);
+        mensalidadesParcelasService.save(parcela);
+
+        // ── atualiza MENSALIDADE ─────────────────────────────────────────
+        mensalidade.setStatusLiberacao("ATIVADO");
+        mensalidade.setConfirmadoManualmente(true);
+        mensalidade.setIdAdminConfirmou(idAdmin);
+        mensalidade.setNomeAdminConfirmou(nomeAdmin);
+        mensalidade.setObservacaoConfirmacao(observacao);
+        mensalidade.setDataConfirmacaoManual(agora);
+        save(mensalidade);
+
+        // ── ativa o aluno ─────────────────────────────────────────────────
+        alunoService.ativarAssinatura(mensalidade.getAluno().getId());
+
+        return true;
+    }
+
+
+    @Transactional
+    public List<Mensalidades_parcelas> criarParcelasParaMensalidade(
+            Mensalidade mensalidade, int totalParcelas, BigDecimal valorMensal, BigDecimal valorTotal) {
+
+        BigDecimal valorParcela = totalParcelas == 1 ? valorTotal : valorMensal;
+
+        List<Mensalidades_parcelas> novasParcelas = new ArrayList<>();
+
+        for (int i = 1; i <= totalParcelas; i++) {
+            Mensalidades_parcelas parcela = new Mensalidades_parcelas();
+            parcela.setMensalidade(mensalidade);
+            parcela.setNumeroParcela(i);
+            parcela.setValor(valorParcela);
+            parcela.setDataVencimento(mensalidade.getDataInicio().plusMonths(i).atStartOfDay());
+            parcela.setStatus(i == 1 ? "PENDENTE" : "AGUARDANDO");
+            mensalidadesParcelasService.save(parcela);
+            novasParcelas.add(parcela);
+        }
+
+        mensalidade.setValorParcela(valorParcela);
+        mensalidade.setNumero_parcelas_restantes(totalParcelas);
+        save(mensalidade);
+
+        return novasParcelas;
+    }
+
+    @Transactional
+    public Mensalidades_parcelas criarParcelasEConfirmarPrimeira(
+            Long alunoId, Integer totalParcelas,
+            Long idAdmin, String nomeAdmin,
+            String formaPagamento, String observacao) {
+
+        Mensalidade mensalidade = findTopByAluno(alunoId);
+        if (mensalidade == null) {
+            throw new RuntimeException("Nenhuma mensalidade encontrada para este aluno.");
+        }
+        if (!"DESATIVADO".equals(mensalidade.getStatusLiberacao())) {
+            throw new RuntimeException("Mensalidade não está pendente de pagamento.");
+        }
+
+        List<Mensalidades_parcelas> jaExistentes = mensalidadesParcelasService.findAllByMensalidade(mensalidade);
+        if (!jaExistentes.isEmpty()) {
+            throw new RuntimeException("Essa mensalidade já possui parcelas geradas.");
+        }
+
+        Plano plano = mensalidade.getPlano();
+        // se atribuirPlano seta plano=null na mensalidade em algum fluxo, cai pro plano atual do aluno
+        if (plano == null) {
+            plano = mensalidade.getAluno().getPlanoAtual();
+        }
+        if (plano == null) {
+            throw new RuntimeException("Não foi possível identificar o plano desta mensalidade.");
+        }
+
+        BigDecimal valorMensal = plano.getValor();
+        BigDecimal valorTotal = valorMensal.multiply(BigDecimal.valueOf(plano.getDuracaomeses()));
+        int parcelas = (totalParcelas != null && totalParcelas > 0) ? totalParcelas : 1;
+
+        List<Mensalidades_parcelas> novasParcelas =
+                criarParcelasParaMensalidade(mensalidade, parcelas, valorMensal, valorTotal);
+
+        Mensalidades_parcelas primeira = novasParcelas.get(0);
+
+        confirmarPagamentoManualAdmin(primeira.getId(), idAdmin, nomeAdmin, formaPagamento, observacao);
+
+        return primeira;
     }
 }

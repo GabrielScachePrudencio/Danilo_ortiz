@@ -263,7 +263,8 @@ public class MensalidadeController {
 
         return ResponseEntity.ok(response);
 
-    } catch (Exception e) {
+    }  catch (Exception e) {
+        e.printStackTrace(); // ou logger.error("Erro ao processar pagamento", e);
         return ResponseEntity.internalServerError()
                 .body("Erro ao processar pagamento: " + e.getMessage());
     }
@@ -350,5 +351,14 @@ public class MensalidadeController {
                     "mensagem", "Erro interno: " + e.getMessage()
             ));
         }
+    }
+
+    @GetMapping("/completa/{alunoId}")
+    public ResponseEntity<MensalidadeComParcelasDTO> mensalidadeCompleta(@PathVariable Long alunoId) {
+        MensalidadeComParcelasDTO dto = mensalidadeService.mensalidadeCompletaPorIdAluno(alunoId);
+        if (dto == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(dto);
     }
 }

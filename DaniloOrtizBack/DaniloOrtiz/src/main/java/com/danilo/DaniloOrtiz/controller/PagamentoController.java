@@ -2,6 +2,8 @@ package com.danilo.DaniloOrtiz.controller;
 
 import com.danilo.DaniloOrtiz.model.*;
 import com.danilo.DaniloOrtiz.model.dto.AlunoDTO;
+import com.danilo.DaniloOrtiz.model.dto.ConfirmacaoManualDTO;
+import com.danilo.DaniloOrtiz.model.dto.CriarParcelasConfirmarDTO;
 import com.danilo.DaniloOrtiz.model.dto.PagamentoCompletoDTO;
 import com.danilo.DaniloOrtiz.service.*;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -41,6 +43,7 @@ public class PagamentoController {
     public ResponseEntity<Mensalidade> atribuirPlano(
             @RequestParam Long idplano,
             @RequestParam Long idaluno,
+            @RequestParam(required = false, defaultValue = "1") Integer parcelas,
             Authentication authentication) {
 
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -52,15 +55,11 @@ public class PagamentoController {
             return ResponseEntity.badRequest().build();
         }
 
-
         String email = authentication.getName();
-
         Optional<Aluno> administradorOpt = alunoService.findByEmail(email);
-
         if (administradorOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
         Aluno administrador = administradorOpt.get();
 
         Plano planoEscolhido = planoService.buscarPorId(idplano);
@@ -68,7 +67,11 @@ public class PagamentoController {
             return ResponseEntity.badRequest().build();
         }
 
-
+        // ── valida quantidade de parcelas contra a duração do plano ──
+        int totalParcelas = (parcelas != null && parcelas > 0) ? parcelas : 1;
+        if (totalParcelas > planoEscolhido.getDuracaomeses()) {
+            return ResponseEntity.badRequest().build();
+        }
 
         List<Mensalidade> mensalidades = mensalidadeService.findByAlunoId(idaluno);
 
@@ -79,7 +82,6 @@ public class PagamentoController {
             return ResponseEntity.badRequest().build();
         }
 
-        //caso tenha desativado cancela ela e crie uma nova
         mensalidades.stream()
                 .filter(m -> "DESATIVADO".equals(m.getStatusLiberacao()) || "EXPIRADO".equals(m.getStatusLiberacao()))
                 .forEach(m -> {
@@ -96,15 +98,19 @@ public class PagamentoController {
         mensalidade.setDataFim(hoje.plusMonths(planoEscolhido.getDuracaomeses()));
         mensalidade.setValorMensalidade(planoEscolhido.getValor());
         mensalidade.setStatusLiberacao("DESATIVADO");
-
-        // Admin que realizou a ação
+        mensalidade.setNumero_parcelas_restantes(parcelas);
         mensalidade.setAtribuidoPorId(administrador.getId());
         mensalidade.setAtribuidoPorNome(administrador.getNome());
         mensalidade.setDataAtribuicao(LocalDateTime.now());
 
         Mensalidade resultado = mensalidadeService.add(mensalidade);
 
-        // mudando o plano e o status de aluno
+        // ── NOVO: cria as parcelas de acordo com o que o admin escolheu ──
+        BigDecimal valorMensal = planoEscolhido.getValor();
+        BigDecimal valorTotal = valorMensal.multiply(BigDecimal.valueOf(planoEscolhido.getDuracaomeses()));
+
+        mensalidadeService.criarParcelasParaMensalidade(resultado, totalParcelas, valorMensal, valorTotal);
+
         aluno.setStatusAssinatura("DESATIVADO");
         aluno.setPlanoAtual(planoEscolhido);
         alunoService.update(aluno);
@@ -117,7 +123,6 @@ public class PagamentoController {
         } catch (Exception e) {
             System.out.println("Falha ao enviar mensagem WhatsApp automática para aluno " + aluno.getId());
         }
-
 
         return ResponseEntity.ok(resultado);
     }
@@ -245,5 +250,74 @@ public class PagamentoController {
     public ResponseEntity<List<PagamentoCompletoDTO>> buscarUltimasVendas() {
         List<PagamentoCompletoDTO> vendas = pagamentoService.listarUltimasVendas();
         return ResponseEntity.ok(vendas);
+    }
+
+    @PostMapping("/confirmar-manual")
+    public ResponseEntity<?> confirmarPagamentoManual(
+            @RequestBody ConfirmacaoManualDTO dto,
+            Authentication authentication) {
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String email = authentication.getName();
+
+        Optional<Aluno> administradorOpt = alunoService.findByEmail(email);
+
+        if (administradorOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Aluno administrador = administradorOpt.get();
+
+        try {
+            boolean sucesso = mensalidadeService.confirmarPagamentoManualAdmin(
+                    dto.getParcelaId(),
+                    administrador.getId(),
+                    administrador.getNome(),
+                    dto.getFormaPagamento(),
+                    dto.getObservacao()
+            );
+
+            return sucesso
+                    ? ResponseEntity.ok().build()
+                    : ResponseEntity.badRequest().build();
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/admin/criar-parcelas-confirmar")
+    public ResponseEntity<?> criarParcelasEConfirmar(
+            @RequestBody CriarParcelasConfirmarDTO dto,
+            Authentication authentication) {
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Optional<Aluno> administradorOpt = alunoService.findByEmail(authentication.getName());
+        if (administradorOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Aluno administrador = administradorOpt.get();
+
+        try {
+            Mensalidades_parcelas resultado = mensalidadeService.criarParcelasEConfirmarPrimeira(
+                    dto.getAlunoId(),
+                    dto.getTotalParcelas(),
+                    administrador.getId(),
+                    administrador.getNome(),
+                    dto.getFormaPagamento(),
+                    dto.getObservacao()
+            );
+
+            return ResponseEntity.ok(resultado);
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

@@ -17,27 +17,64 @@ function diasRestantes(dataFimIso) {
   return Math.round(diffMs / (1000 * 60 * 60 * 24));
 }
 
+function formatarData(dataIso) {
+  if (!dataIso) return "-";
+  const d = new Date(dataIso);
+  return d.toLocaleDateString("pt-BR");
+}
+
+function formatarValor(valor) {
+  return Number(valor || 0).toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+  });
+}
+
+const STATUS_PARCELA_LABEL = {
+  PENDENTE: "Pendente",
+  AGUARDANDO: "Aguardando",
+  FINALIZADO: "Pago",
+  CANCELADO: "Cancelado",
+};
+
 export default function ContextMenuAluno({
   contextMenu,
   setContextMenu,
   navigate,
   admin,
-  onAtualizado, // callback opcional pro pai recarregar a lista de alunos
+  onAtualizado,
 }) {
   const [planos, setPlanos] = useState([]);
   const [mostrarPlanos, setMostrarPlanos] = useState(false);
-  const [processando, setProcessando] = useState(false); // trava geral (atribuir/cancelar/enviar msg)
+  const [processando, setProcessando] = useState(false);
 
-  // { tipo, titulo, descricao, params } | null — controla o modal de confirmação de envio
   const [confirmacaoMsg, setConfirmacaoMsg] = useState(null);
 
-  // ── posicionamento do menu, ajustado para não estourar a viewport ──────
+  // ── submenu de parcelas ──────────────────────────────────────────────
+  const [mostrarParcelas, setMostrarParcelas] = useState(false);
+  const [parcelas, setParcelas] = useState([]);
+  const [carregandoParcelas, setCarregandoParcelas] = useState(false);
+  const parcelasCarregadasRef = useRef(false);
+
+  // parcela selecionada para confirmar pagamento manual
+  // { parcela } | null
+  const [confirmarParcela, setConfirmarParcela] = useState(null);
+  const [formaPagamento, setFormaPagamento] = useState("DINHEIRO");
+  const [observacao, setObservacao] = useState("");
+
   const menuRef = useRef(null);
   const [posicao, setPosicao] = useState({ top: 0, left: 0 });
 
   const token =
     localStorage.getItem("admin_token") ||
     localStorage.getItem("token");
+
+// novo estado
+const [criarParcelas, setCriarParcelas] = useState(false); // abre o modal de criação
+const [totalParcelasCriar, setTotalParcelasCriar] = useState(1);
+const [duracaoPlano, setDuracaoPlano] = useState(1);
+
+const [planoSelecionado, setPlanoSelecionado] = useState(null);
+
 
   useEffect(() => {
     fetch(`${API}/planos`, {
@@ -69,9 +106,7 @@ export default function ContextMenuAluno({
     }
 
     setPosicao({ top, left });
-    // recalcula também quando o submenu de planos abre/fecha ou quando o
-    // modal de confirmação some (o menu volta a aparecer)
-  }, [contextMenu, mostrarPlanos, confirmacaoMsg]);
+  }, [contextMenu, mostrarPlanos, mostrarParcelas, confirmacaoMsg, confirmarParcela]);
 
   if (!contextMenu) return null;
 
@@ -83,8 +118,10 @@ export default function ContextMenuAluno({
   const acessoDesativadoComMensalidadeAtiva =
     aluno.statusAssinatura !== "ATIVADO" && aluno.statusMensalidade === "ATIVADO";
 
-  // ── regras de visibilidade dos botões de mensagem ──────────────────────
   const podeEnviarCobranca = aluno.statusMensalidade === "DESATIVADO";
+
+  // ── mensalidade pendente de pagamento → pode confirmar parcela manual ──
+  const temMensalidadePendente = aluno.statusMensalidade === "DESATIVADO";
 
   const diasParaFim = diasRestantes(aluno.dataFimMensalidade);
   const podeEnviarFimMensalidade =
@@ -95,43 +132,113 @@ export default function ContextMenuAluno({
 
   const podeEnviarIncentivo = aluno.statusAssinatura !== "ATIVADO";
 
-  // Requisitos específicos para os 2 novos modelos
-  // Só aparece se houver indicação de conta criada no banco (ex: ID de quem criou ou se tem senha)
   const temContaCriadaNoBanco = Boolean(aluno.idCriadoPor || aluno.senha || aluno.password);
 
-  // Só aparece se estiver com mensalidade em vigor E possuir o ID de quem atribuiu
   const temMensalidadeComAtribuidoPor = Boolean(temMensalidadeEmVigor && aluno.atribuidoPorId);
 
-  const atribuirPlano = async (planoId) => {
-    if (processando) return;
-    setProcessando(true);
-    try {
-      const response = await fetch(
-        `${API}/pagamentos/admin/atribuir-plano?idplano=${planoId}&idaluno=${aluno.id}&idadmin=${admin.id}&nomeAdmin=${encodeURIComponent(
-          admin.nome
-        )}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+  // ── busca as parcelas da mensalidade atual (lazy, uma vez só) ──────────
+  const carregarParcelas = async () => {
+  if (parcelasCarregadasRef.current || carregandoParcelas) return;
+  parcelasCarregadasRef.current = true;
+  setCarregandoParcelas(true);
 
-      if (!response.ok) {
-        alert("Erro ao atribuir plano.");
-        return;
-      }
+  try {
+    const response = await fetch(`${API}/mensalidades/completa/${aluno.id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      alert("Plano atribuído com sucesso!");
-      setContextMenu(null);
-      onAtualizado?.();
-    } catch {
-      alert("Erro de conexão ao atribuir plano.");
-    } finally {
-      setProcessando(false);
+    if (!response.ok) {
+      setParcelas([]);
+      return;
     }
-  };
+
+    const data = await response.json();
+    setParcelas(data?.parcelas || []);
+
+    // duração do plano pra saber em quantas vezes pode parcelar
+    const duracao =
+      data?.plano?.duracaomeses ||
+      data?.duracaoMeses ||
+      aluno.planoAtual?.duracaomeses ||
+      1;
+    setDuracaoPlano(duracao);
+  } catch {
+    setParcelas([]);
+  } finally {
+    setCarregandoParcelas(false);
+  }
+};
+
+
+
+  const criarParcelasEConfirmar = async () => {
+  if (processando) return;
+  setProcessando(true);
+  try {
+    const response = await fetch(`${API}/pagamentos/admin/criar-parcelas-confirmar`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        alunoId: aluno.id,
+        totalParcelas: totalParcelasCriar,
+        formaPagamento,
+        observacao,
+      }),
+    });
+
+    if (!response.ok) {
+      const texto = await response.text().catch(() => "");
+      alert(`Erro ao criar/confirmar pagamento.${texto ? ` ${texto}` : ""}`);
+      return;
+    }
+
+    alert("Pagamento confirmado com sucesso!");
+    setCriarParcelas(false);
+    setContextMenu(null);
+    onAtualizado?.();
+  } catch {
+    alert("Erro de conexão ao confirmar pagamento.");
+  } finally {
+    setProcessando(false);
+  }
+};
+
+
+  const atribuirPlano = async (planoId, totalParcelas) => {
+      if (processando) return;
+      setProcessando(true);
+      try {
+        const response = await fetch(
+          `${API}/pagamentos/admin/atribuir-plano?idplano=${planoId}&idaluno=${aluno.id}&parcelas=${totalParcelas}`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          alert("Erro ao atribuir plano.");
+          return;
+        }
+
+        alert("Plano atribuído com sucesso!");
+        setPlanoSelecionado(null);
+        setContextMenu(null);
+        onAtualizado?.();
+      } catch {
+        alert("Erro de conexão ao atribuir plano.");
+      } finally {
+        setProcessando(false);
+      }
+    };
+
 
   const enviarMensagem = async (tipo, paramsExtra = {}) => {
     if (processando) return;
@@ -204,11 +311,47 @@ export default function ContextMenuAluno({
     }
   };
 
+  // ── confirma pagamento manual de uma parcela ────────────────────────────
+  const confirmarPagamentoManual = async () => {
+    if (!confirmarParcela || processando) return;
+
+    setProcessando(true);
+    try {
+      const response = await fetch(`${API}/pagamentos/confirmar-manual`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          parcelaId: confirmarParcela.parcela.id,
+          formaPagamento,
+          observacao,
+        }),
+      });
+
+      if (!response.ok) {
+        const texto = await response.text().catch(() => "");
+        alert(`Erro ao confirmar pagamento.${texto ? ` ${texto}` : ""}`);
+        return;
+      }
+
+      alert("Pagamento confirmado com sucesso!");
+      setConfirmarParcela(null);
+      setContextMenu(null);
+      onAtualizado?.();
+    } catch {
+      alert("Erro de conexão ao confirmar pagamento.");
+    } finally {
+      setProcessando(false);
+    }
+  };
+
   return (
     <>
-      {/* menu principal só aparece quando não há confirmação pendente */}
-      {!confirmacaoMsg && (
-        <div
+  {!confirmacaoMsg && !confirmarParcela && !criarParcelas && !planoSelecionado && (
+  
+  <div
           className="ctx-menu"
           ref={menuRef}
           style={{
@@ -248,28 +391,111 @@ export default function ContextMenuAluno({
               <span>➕ Escolher plano</span>
               <span>▶</span>
 
-              {mostrarPlanos && (
+             {mostrarPlanos && (
+              <div className="ctx-submenu" onMouseEnter={() => setMostrarPlanos(true)} onMouseLeave={() => setMostrarPlanos(false)}>
+                {planos.map((plano) => (
+                  <div
+                    key={plano.id}
+                    className="ctx-item"
+                    onClick={processando ? undefined : () => setPlanoSelecionado({ plano })}
+                    style={processando ? { opacity: 0.5, pointerEvents: "none" } : undefined}
+                  >
+                    <div>{plano.nome}</div>
+                    <small>
+                      R${Number(plano.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </small>
+                  </div>
+                ))}
+              </div>
+            )}
+            </div>
+          )}
+
+          {/* ── NOVO: submenu de parcelas para confirmar pagamento manual ── */}
+          {temMensalidadePendente && (
+            <div
+              className="ctx-item submenu"
+              onMouseEnter={() => {
+                setMostrarParcelas(true);
+                carregarParcelas();
+              }}
+              onMouseLeave={() => setMostrarParcelas(false)}
+            >
+              <span>🧾 Parcelas</span>
+              <span>▶</span>
+
+              {mostrarParcelas && (
                 <div
                   className="ctx-submenu"
-                  onMouseEnter={() => setMostrarPlanos(true)}
-                  onMouseLeave={() => setMostrarPlanos(false)}
+                  onMouseEnter={() => setMostrarParcelas(true)}
+                  onMouseLeave={() => setMostrarParcelas(false)}
                 >
-                  {planos.map((plano) => (
-                    <div
-                      key={plano.id}
-                      className="ctx-item"
-                      onClick={processando ? undefined : () => atribuirPlano(plano.id)}
-                      style={processando ? { opacity: 0.5, pointerEvents: "none" } : undefined}
-                    >
-                      <div>{plano.nome}</div>
-                      <small>
-                        R$
-                        {Number(plano.valor).toLocaleString("pt-BR", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </small>
+                  {carregandoParcelas && (
+                    <div className="ctx-item" style={{ opacity: 0.6, pointerEvents: "none" }}>
+                      Carregando...
                     </div>
-                  ))}
+                  )}
+
+                  {!carregandoParcelas && parcelas.length === 0 && (
+                    <>
+                      <div className="ctx-item" style={{ opacity: 0.6, pointerEvents: "none" }}>
+                        Nenhuma parcela encontrada
+                      </div>
+                      <div
+                          className="ctx-item"
+                          onClick={
+                            processando
+                              ? undefined
+                              : () => {
+                                  setFormaPagamento("DINHEIRO");
+                                  setObservacao("");
+                                  setTotalParcelasCriar(1);
+                                  setCriarParcelas(true);
+                                }
+                          }
+                          style={processando ? { opacity: 0.5, pointerEvents: "none" } : undefined}
+                        >
+                          ➕ Criar e confirmar pagamento
+                      </div>
+                   </>
+
+                    
+                  )}
+
+                  {!carregandoParcelas &&
+                    parcelas.map((parcela) => {
+                      const confirmavel =
+                        parcela.status === "PENDENTE" || parcela.status === "AGUARDANDO";
+
+                      return (
+                        <div
+                          key={parcela.id}
+                          className="ctx-item"
+                          onClick={
+                            confirmavel && !processando
+                              ? () => {
+                                  setFormaPagamento("DINHEIRO");
+                                  setObservacao("");
+                                  setConfirmarParcela({ parcela });
+                                }
+                              : undefined
+                          }
+                          style={
+                            !confirmavel || processando
+                              ? { opacity: 0.4, pointerEvents: "none" }
+                              : undefined
+                          }
+                        >
+                          <div>
+                            Parcela {parcela.numeroParcela} — R$ {formatarValor(parcela.valor)}
+                          </div>
+                          <small>
+                            {formatarData(parcela.dataVencimento)} ·{" "}
+                            {STATUS_PARCELA_LABEL[parcela.status] || parcela.status}
+                          </small>
+                        </div>
+                      );
+                    })}
                 </div>
               )}
             </div>
@@ -285,7 +511,6 @@ export default function ContextMenuAluno({
             </div>
           )}
 
-          {/* ── mensagens condicionais antigas ── */}
           {(podeEnviarCobranca || podeEnviarFimMensalidade || podeEnviarIncentivo || temContaCriadaNoBanco || temMensalidadeComAtribuidoPor) && (
             <>
               <div className="ctx-divider"></div>
@@ -356,7 +581,6 @@ export default function ContextMenuAluno({
                 </div>
               )}
 
-              {/* ── 1. NOVO MODELO: Criação de Conta (Apenas se aluno tiver conta criada no banco) ── */}
               {temContaCriadaNoBanco && (
                 <div
                   className="ctx-item"
@@ -380,7 +604,6 @@ export default function ContextMenuAluno({
                 </div>
               )}
 
-              {/* ── 2. NOVO MODELO: Plano Anexado / Pagamento (Apenas se tiver mensalidade com atribuido_por_id) ── */}
               {temMensalidadeComAtribuidoPor && (
                 <div
                   className="ctx-item"
@@ -408,7 +631,7 @@ export default function ContextMenuAluno({
         </div>
       )}
 
-      {/* ── modal de confirmação — impede envio acidental ── */}
+      {/* ── modal de confirmação de mensagem (antigo) ── */}
       {confirmacaoMsg && (
         <div
           style={{
@@ -473,6 +696,252 @@ export default function ContextMenuAluno({
                 }}
               >
                 {processando ? "Enviando..." : "Confirmar envio"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {criarParcelas && (
+      
+  <div
+    style={{ position: "fixed", inset: 0, zIndex: 900, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+    onClick={(e) => e.target === e.currentTarget && !processando && setCriarParcelas(false)}
+  >
+    <div
+      style={{ background: "#161616", border: "1px solid rgba(196,160,100,0.2)", borderRadius: 4, padding: 24, width: "100%", maxWidth: 380, boxShadow: "0 30px 60px rgba(0,0,0,0.6)" }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <p style={{ fontSize: "0.95rem", color: "#f0ece4", fontWeight: 600, marginBottom: 4 }}>
+        Criar parcela e confirmar pagamento
+      </p>
+      <p style={{ fontSize: "0.78rem", color: "rgba(240,236,228,0.6)", lineHeight: 1.5, marginBottom: 16 }}>
+        Essa mensalidade de {aluno.nome} ainda não tem parcelas geradas. Isso vai criar as parcelas do plano
+        e já marcar a primeira como paga, com o registro de que <strong>{admin?.nome || "você"}</strong> confirmou manualmente.
+      </p>
+
+      <label style={{ fontSize: "0.72rem", color: "rgba(240,236,228,0.7)", display: "block", marginBottom: 4 }}>
+        Quantidade de parcelas
+      </label>
+      <select
+        value={totalParcelasCriar}
+        onChange={(e) => setTotalParcelasCriar(Number(e.target.value))}
+        disabled={processando}
+        style={{ width: "100%", padding: "8px 10px", marginBottom: 14, background: "#0f0f0f", color: "#f0ece4", border: "1px solid rgba(240,236,228,0.15)", borderRadius: 3, fontSize: "0.8rem" }}
+      >
+        <option value={1}>À vista (1x)</option>
+        {duracaoPlano > 1 &&
+          Array.from({ length: duracaoPlano - 1 }, (_, i) => i + 2).map((n) => (
+            <option key={n} value={n}>{n}x</option>
+          ))}
+      </select>
+
+      <label style={{ fontSize: "0.72rem", color: "rgba(240,236,228,0.7)", display: "block", marginBottom: 4 }}>
+        Forma de pagamento
+      </label>
+      <select
+        value={formaPagamento}
+        onChange={(e) => setFormaPagamento(e.target.value)}
+        disabled={processando}
+        style={{ width: "100%", padding: "8px 10px", marginBottom: 14, background: "#0f0f0f", color: "#f0ece4", border: "1px solid rgba(240,236,228,0.15)", borderRadius: 3, fontSize: "0.8rem" }}
+      >
+        <option value="DINHEIRO">Dinheiro</option>
+        <option value="TRANSFERENCIA">Transferência / Pix</option>
+        <option value="CARTAO">Cartão (fora do sistema)</option>
+        <option value="OUTRO">Outro</option>
+      </select>
+
+      <label style={{ fontSize: "0.72rem", color: "rgba(240,236,228,0.7)", display: "block", marginBottom: 4 }}>
+        Observação (opcional)
+      </label>
+      <textarea
+        value={observacao}
+        onChange={(e) => setObservacao(e.target.value)}
+        disabled={processando}
+        rows={3}
+        placeholder="Ex: pago na recepção em dinheiro"
+        style={{ width: "100%", padding: "8px 10px", marginBottom: 20, background: "#0f0f0f", color: "#f0ece4", border: "1px solid rgba(240,236,228,0.15)", borderRadius: 3, fontSize: "0.8rem", resize: "vertical" }}
+      />
+
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+        <button
+          onClick={() => setCriarParcelas(false)}
+          disabled={processando}
+          style={{ padding: "8px 16px", fontSize: "0.75rem", background: "transparent", color: "rgba(240,236,228,0.6)", border: "1px solid rgba(240,236,228,0.15)", cursor: processando ? "not-allowed" : "pointer", borderRadius: 3 }}
+        >
+          Cancelar
+        </button>
+        <button
+          onClick={criarParcelasEConfirmar}
+          disabled={processando}
+          style={{ padding: "8px 16px", fontSize: "0.75rem", fontWeight: 600, background: processando ? "rgba(196,160,100,0.3)" : "#c4a064", color: "#161616", border: "none", cursor: processando ? "not-allowed" : "pointer", borderRadius: 3 }}
+        >
+          {processando ? "Confirmando..." : "Criar e confirmar"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{planoSelecionado && (
+  <div
+    style={{ position: "fixed", inset: 0, zIndex: 900, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+    onClick={(e) => e.target === e.currentTarget && !processando && setPlanoSelecionado(null)}
+  >
+    <div
+      style={{ background: "#161616", border: "1px solid rgba(196,160,100,0.2)", borderRadius: 4, padding: 24, width: "100%", maxWidth: 340, boxShadow: "0 30px 60px rgba(0,0,0,0.6)" }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <p style={{ fontSize: "0.95rem", color: "#f0ece4", fontWeight: 600, marginBottom: 16 }}>
+        Como {aluno.nome} vai pagar o plano {planoSelecionado.plano.nome}?
+      </p>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <button
+          onClick={() => atribuirPlano(planoSelecionado.plano.id, 1)}
+          disabled={processando}
+          style={{ padding: "10px 14px", fontSize: "0.8rem", background: "#c4a064", color: "#161616", border: "none", borderRadius: 3, cursor: "pointer", fontWeight: 600 }}
+        >
+          À vista (1 parcela — R$
+          {Number(planoSelecionado.plano.valor * planoSelecionado.plano.duracaomeses).toLocaleString("pt-BR", { minimumFractionDigits: 2 })})
+        </button>
+
+        {planoSelecionado.plano.duracaomeses > 1 && (
+          <button
+            onClick={() => atribuirPlano(planoSelecionado.plano.id, planoSelecionado.plano.duracaomeses)}
+            disabled={processando}
+            style={{ padding: "10px 14px", fontSize: "0.8rem", background: "transparent", color: "#f0ece4", border: "1px solid rgba(240,236,228,0.2)", borderRadius: 3, cursor: "pointer" }}
+          >
+            Parcelado ({planoSelecionado.plano.duracaomeses}x de R$
+            {Number(planoSelecionado.plano.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })})
+          </button>
+        )}
+      </div>
+
+      <button
+        onClick={() => setPlanoSelecionado(null)}
+        disabled={processando}
+        style={{ marginTop: 12, width: "100%", padding: "8px", fontSize: "0.75rem", background: "transparent", color: "rgba(240,236,228,0.6)", border: "none", cursor: "pointer" }}
+      >
+        Cancelar
+      </button>
+    </div>
+  </div>
+)}
+
+      {/* ── NOVO: modal de confirmação de pagamento manual ── */}
+      {confirmarParcela && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 900,
+            background: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 20,
+          }}
+          onClick={(e) => e.target === e.currentTarget && !processando && setConfirmarParcela(null)}
+        >
+          <div
+            style={{
+              background: "#161616",
+              border: "1px solid rgba(196,160,100,0.2)",
+              borderRadius: 4,
+              padding: 24,
+              width: "100%",
+              maxWidth: 380,
+              boxShadow: "0 30px 60px rgba(0,0,0,0.6)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p style={{ fontSize: "0.95rem", color: "#f0ece4", fontWeight: 600, marginBottom: 4 }}>
+              Confirmar pagamento manual
+            </p>
+            <p style={{ fontSize: "0.78rem", color: "rgba(240,236,228,0.6)", lineHeight: 1.5, marginBottom: 16 }}>
+              Parcela {confirmarParcela.parcela.numeroParcela} de {aluno.nome} — R${" "}
+              {formatarValor(confirmarParcela.parcela.valor)}. Isso marca a parcela como paga e{" "}
+              <strong>fica registrado que {admin?.nome || "você"} confirmou manualmente</strong>.
+            </p>
+
+            <label style={{ fontSize: "0.72rem", color: "rgba(240,236,228,0.7)", display: "block", marginBottom: 4 }}>
+              Forma de pagamento
+            </label>
+            <select
+              value={formaPagamento}
+              onChange={(e) => setFormaPagamento(e.target.value)}
+              disabled={processando}
+              style={{
+                width: "100%",
+                padding: "8px 10px",
+                marginBottom: 14,
+                background: "#0f0f0f",
+                color: "#f0ece4",
+                border: "1px solid rgba(240,236,228,0.15)",
+                borderRadius: 3,
+                fontSize: "0.8rem",
+              }}
+            >
+              <option value="DINHEIRO">Dinheiro</option>
+              <option value="TRANSFERENCIA">Transferência / Pix</option>
+              <option value="CARTAO">Cartão (fora do sistema)</option>
+              <option value="OUTRO">Outro</option>
+            </select>
+
+            <label style={{ fontSize: "0.72rem", color: "rgba(240,236,228,0.7)", display: "block", marginBottom: 4 }}>
+              Observação (opcional)
+            </label>
+            <textarea
+              value={observacao}
+              onChange={(e) => setObservacao(e.target.value)}
+              disabled={processando}
+              rows={3}
+              placeholder="Ex: pago na recepção em dinheiro"
+              style={{
+                width: "100%",
+                padding: "8px 10px",
+                marginBottom: 20,
+                background: "#0f0f0f",
+                color: "#f0ece4",
+                border: "1px solid rgba(240,236,228,0.15)",
+                borderRadius: 3,
+                fontSize: "0.8rem",
+                resize: "vertical",
+              }}
+            />
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button
+                onClick={() => setConfirmarParcela(null)}
+                disabled={processando}
+                style={{
+                  padding: "8px 16px",
+                  fontSize: "0.75rem",
+                  background: "transparent",
+                  color: "rgba(240,236,228,0.6)",
+                  border: "1px solid rgba(240,236,228,0.15)",
+                  cursor: processando ? "not-allowed" : "pointer",
+                  borderRadius: 3,
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarPagamentoManual}
+                disabled={processando}
+                style={{
+                  padding: "8px 16px",
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  background: processando ? "rgba(196,160,100,0.3)" : "#c4a064",
+                  color: "#161616",
+                  border: "none",
+                  cursor: processando ? "not-allowed" : "pointer",
+                  borderRadius: 3,
+                }}
+              >
+                {processando ? "Confirmando..." : "Confirmar pagamento"}
               </button>
             </div>
           </div>

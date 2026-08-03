@@ -59,4 +59,11 @@ public class Pagamento {
 
     @Column(name = "envioEmailConfirmando")
     private Integer  envioEmailConfirmando = 0;
+
+
+    private Boolean confirmadoManualmente;
+    private Long idAdminConfirmou;
+    private String observacaoConfirmacao;
+    private LocalDateTime dataConfirmacaoManual;
+    private String nomeAdminConfirmou;
 }

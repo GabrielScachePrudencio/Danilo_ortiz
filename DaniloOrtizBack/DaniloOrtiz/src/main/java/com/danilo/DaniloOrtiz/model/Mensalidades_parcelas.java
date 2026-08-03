@@ -33,4 +33,11 @@ public class Mensalidades_parcelas {
     @ManyToOne
     @JoinColumn(name = "pagamento_id")
     private Pagamento pagamento;
+
+
+    private Boolean confirmadoManualmente;
+    private Long idAdminConfirmou;
+    private String observacaoConfirmacao;
+    private LocalDateTime dataConfirmacaoManual;
+    private String nomeAdminConfirmou;
 }

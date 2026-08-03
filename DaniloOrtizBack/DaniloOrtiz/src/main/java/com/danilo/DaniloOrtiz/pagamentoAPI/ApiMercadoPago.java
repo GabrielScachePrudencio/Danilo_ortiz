@@ -30,6 +30,7 @@ public class ApiMercadoPago {
 
     public ApiMercadoPago(ConfiguracaoService configuracaoService,
                           AppConfig appConfig) {
+        System.out.println("ApiMercadoPago criada");
 
         ApiMercadoPago.configuracaoServiceStatic = configuracaoService;
         ApiMercadoPago.appConfig = appConfig;

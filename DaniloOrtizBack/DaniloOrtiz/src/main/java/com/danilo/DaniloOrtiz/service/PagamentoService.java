@@ -44,85 +44,75 @@ public class PagamentoService {
 
 
     public List<PagamentoCompletoDTO> listarUltimasVendas() {
-
-        // Busca todos os pagamentos ordenados
         List<Pagamento> pagamentos = pagamentoRepository.findAllByOrderByDataCriacaoDesc();
-
-        // Lista final
         List<PagamentoCompletoDTO> listaDTO = new ArrayList<>();
 
-        // Percorre cada pagamento
         for (Pagamento pagamento : pagamentos) {
 
-            // DEBUG
             String idMercadoPago = pagamento.getId_mercadopago();
+            boolean possuiIdMercadoPago = idMercadoPago != null && !idMercadoPago.isEmpty();
 
-            // Verifica se possui id do Mercado Pago
-            boolean possuiIdMercadoPago =
-                    idMercadoPago != null &&
-                            !idMercadoPago.isEmpty();
+            // Verifica se foi confirmado manualmente
+            boolean confirmadoManualmente = pagamento.getConfirmadoManualmente() != null && pagamento.getConfirmadoManualmente() == true;
 
-            // DEBUG
-
-            // Ignora se não tiver ID Mercado Pago
-            if (!possuiIdMercadoPago) {
+            // Ignora se não tiver ID do Mercado Pago E NÃO foi confirmado manualmente
+            if (!possuiIdMercadoPago && !confirmadoManualmente) {
                 continue;
             }
 
             PagamentoCompletoDTO dto = new PagamentoCompletoDTO();
 
-            // ID pagamento
-            Long idPagamento = pagamento.getId();
-            dto.setIdPagamento(idPagamento);
+            dto.setIdPagamento(pagamento.getId());
 
             // ALUNO
             Aluno aluno = pagamento.getAluno();
-
             if (aluno != null) {
-
-                Long alunoId = aluno.getId();
-                String nomeAluno = aluno.getNome();
-
-                dto.setAlunoId(alunoId);
-                dto.setNomeAluno(nomeAluno);
-
+                dto.setAlunoId(aluno.getId());
+                dto.setNomeAluno(aluno.getNome());
             }
 
             // PLANO
             Plano plano = pagamento.getPlano();
-
             if (plano != null) {
-
-                String nomePlano = plano.getNome();
-
-                dto.setNomePlano(nomePlano);
-
+                dto.setNomePlano(plano.getNome());
             }
 
             // DATA
-            LocalDateTime dataCriacao = pagamento.getDataCriacao();
-            dto.setData(dataCriacao);
+            dto.setData(pagamento.getDataCriacao());
 
             // VALOR
-            BigDecimal valorPago = pagamento.getValorPago();
-            dto.setValor(valorPago);
+            dto.setValor(pagamento.getValorPago());
 
             // STATUS
             String statusMercadoPago = pagamento.getStatus_mercadopago();
-            dto.setStatusLiberacao(statusMercadoPago);
+            if (confirmadoManualmente) {
+                dto.setStatusLiberacao("FINALIZADO");
+            } else {
+                dto.setStatusLiberacao(statusMercadoPago);
+            }
 
-            // PAYMENT ID
             dto.setMpPaymentId(idMercadoPago);
 
-            // FORMA PAGAMENTO
-            String metodoPagamento = pagamento.getMetodo_pagamento_mercadopago();
+            // FORMA PAGAMENTO (Verifica primeiro a forma de pagamento geral/manual, se não tiver, pega do MP)
+            String metodoPagamento = pagamento.getFormaPagamento();
+            if (metodoPagamento == null || metodoPagamento.isEmpty()) {
+                metodoPagamento = pagamento.getMetodo_pagamento_mercadopago();
+            }
             dto.setFormaPagamento(metodoPagamento);
+
+            // ── CAMPOS DE CONFIRMAÇÃO MANUAL ──
+            dto.setConfirmadoManualmente(confirmadoManualmente);
+            dto.setIdAdminConfirmou(pagamento.getIdAdminConfirmou());
+            dto.setObservacaoConfirmacao(pagamento.getObservacaoConfirmacao());
+            dto.setDataConfirmacaoManual(pagamento.getDataConfirmacaoManual());
+            dto.setNomeAdminConfirmou(pagamento.getNomeAdminConfirmou());
 
             listaDTO.add(dto);
         }
 
         return listaDTO;
     }
+
     // PagamentoService
     public Pagamento findByParcelaId(Long parcelaId) {
         return pagamentoRepository

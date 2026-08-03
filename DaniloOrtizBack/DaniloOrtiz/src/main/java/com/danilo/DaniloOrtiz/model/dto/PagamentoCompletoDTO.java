@@ -36,5 +36,9 @@ public class PagamentoCompletoDTO {
 
     private String formaPagamento;
 
-
+    private Boolean confirmadoManualmente;
+    private Long idAdminConfirmou;
+    private String observacaoConfirmacao;
+    private LocalDateTime dataConfirmacaoManual;
+    private String nomeAdminConfirmou;
 }
