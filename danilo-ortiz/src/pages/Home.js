@@ -980,6 +980,12 @@ const syncLogin = () => {
   };
 
   useEffect(() => {
+    fetch(`${API}/health`).catch(() => {
+      // ignora erro silenciosamente, é só um "wake up call"
+    });
+  }, [API]);
+
+  useEffect(() => {
 
       if (!token) {
         setCarregando(false);

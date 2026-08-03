@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams  } from "react-router-dom";
 
 /* ─── paleta de cores centralizada ─────────────────────────────────── */
 const PALETTE = {
@@ -328,6 +328,8 @@ function CampoForm({ label, name, type = "text", value, onChange, placeholder })
   );
 }
 
+
+
 /* ─── página principal ───────────────────────────────────────────────── */
 export default function Login() {
   const navigate = useNavigate();
@@ -335,6 +337,12 @@ export default function Login() {
 
   const API = process.env.REACT_APP_API_URL || "http://localhost:3001";
   const url = API + "/alunos";
+
+  useEffect(() => {
+    fetch(`${API}/health`).catch(() => {
+      // ignora erro silenciosamente, é só um "wake up call"
+    });
+  }, [API]);
 
   const [modo, setModo] = useState(null); // null | "login" | "cadastro"
   const [loading, setLoading] = useState(false);
@@ -364,6 +372,7 @@ export default function Login() {
     cep: ""
   });
 
+  
   function handleLogin(e) {
     setFormLogin({ ...formLogin, [e.target.name]: e.target.value });
   }
