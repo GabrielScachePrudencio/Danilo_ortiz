@@ -398,72 +398,76 @@ export default function Login() {
   }
 
   async function buscarUsuarioERedirecionar(token) {
-    try {
-      const resMe = await fetch(`${API}/alunos/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+  try {
+    const resMe = await fetch(`${API}/alunos/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-      if (!resMe.ok) {
-        setErro("Erro ao carregar os dados do perfil.");
-        return;
-      }
-
-      const aluno = await resMe.json();
-
-      if (aluno.tipoUsuario) {
-        localStorage.setItem("tipo_usuario", aluno.tipoUsuario);
-      }
-
-      const tipo = aluno.tipoUsuario?.toUpperCase();
-
-      setLoadingText("Redirecionando...");
-      
-      if (tipo === "ADMIN") {
-        navigate("/home/administrativonovo");
-      } else if (idplano) {
-        navigate(`/home/telapagamento/${idplano}`);
-      } else {
-        navigate("/");
-      }
-    } catch (err) {
-      setErro("Erro de conexão ao validar o perfil.");
+    if (!resMe.ok) {
+      setErro("Erro ao carregar os dados do perfil.");
+      setLoading(false); // <-- desliga o loading no erro
+      return;
     }
-  }
 
-  async function logar() {
-    limpar();
-    setLoadingText("Autenticando...");
-    setLoading(true);
-    try {
-      const res = await fetch(url + "/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formLogin),
-      });
+    const aluno = await resMe.json();
 
-      if (res.status === 401) {
-        setErro("E-mail ou senha incorretos.");
-        return;
-      }
-
-      if (!res.ok) {
-        setErro("Erro no servidor. Tente novamente.");
-        return;
-      }
-
-      const token = await res.text();
-      localStorage.setItem("token", token);
-
-      setLoadingText("Carregando perfil...");
-      await buscarUsuarioERedirecionar(token);
-
-    } catch (e) {
-      setErro("Erro de conexão com o servidor.");
-    } finally {
-      // Deixamos o loading ativado caso vá redirecionar para evitar piscar a tela
+    if (aluno.tipoUsuario) {
+      localStorage.setItem("tipo_usuario", aluno.tipoUsuario);
     }
-  }
 
+    const tipo = aluno.tipoUsuario?.toUpperCase();
+
+    setLoadingText("Redirecionando...");
+
+    if (tipo === "ADMIN") {
+      navigate("/home/administrativonovo");
+    } else if (idplano) {
+      navigate(`/home/telapagamento/${idplano}`);
+    } else {
+      navigate("/");
+    }
+    // loading continua true aqui de propósito: a navegação vai
+    // desmontar essa tela em seguida, então não precisa desligar.
+  } catch (err) {
+    setErro("Erro de conexão ao validar o perfil.");
+    setLoading(false); // <-- desliga o loading no erro
+  }
+}
+
+async function logar() {
+  limpar();
+  setLoadingText("Autenticando...");
+  setLoading(true);
+  try {
+    const res = await fetch(url + "/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formLogin),
+    });
+
+    if (res.status === 401) {
+      setErro("E-mail ou senha incorretos.");
+      setLoading(false); // <-- desliga o loading no erro
+      return;
+    }
+
+    if (!res.ok) {
+      setErro("Erro no servidor. Tente novamente.");
+      setLoading(false); // <-- desliga o loading no erro
+      return;
+    }
+
+    const token = await res.text();
+    localStorage.setItem("token", token);
+
+    setLoadingText("Carregando perfil...");
+    await buscarUsuarioERedirecionar(token);
+
+  } catch (e) {
+    setErro("Erro de conexão com o servidor.");
+    setLoading(false); // <-- desliga o loading no erro
+  }
+}
   async function verificarContaCriadaPeloAdmin() {
     limpar();
 
@@ -611,8 +615,6 @@ export default function Login() {
           </div>
         )}
 
-        {erro    && <p style={S.erroMsg}>{erro}</p>}
-        {sucesso && <p style={S.successMsg}>✓ &nbsp;{sucesso}</p>}
 
         {modo === null && (
           <>
@@ -747,7 +749,45 @@ export default function Login() {
             )}
           </>
         )}
-
+        <br></br>
+{erro && (
+  <div style={{
+    ...S.erroMsg,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 20,
+  }}>
+    <span>{erro}</span>
+    <button
+      onClick={() => {
+        setErro(null);
+        if (modo === "login") logar();
+        else if (modo === "cadastro") cadastrar();
+        else if (modo === "admin-criado") {
+          subEtapaAdmin === "cpf" ? verificarContaCriadaPeloAdmin() : definirSenhaContaAdmin();
+        }
+      }}
+      style={{
+        fontFamily: "'Barlow', sans-serif",
+        fontSize: "0.65rem",
+        fontWeight: 600,
+        letterSpacing: "0.15em",
+        textTransform: "uppercase",
+        background: "transparent",
+        color: PALETTE.error,
+        border: `1px solid ${PALETTE.errorBorder}`,
+        padding: "6px 16px",
+        cursor: "pointer",
+        transition: "all 0.2s ease",
+      }}
+    >
+      Tentar novamente
+    </button>
+  </div>
+)}
+{sucesso && <p style={S.successMsg}>✓ &nbsp;{sucesso}</p>}
         {modo === "cadastro" && (
           <div style={{
             position: "fixed", inset: 0, zIndex: 100,
@@ -798,6 +838,7 @@ export default function Login() {
             </div>
 
             <div style={{ maxWidth: 860, margin: "0 auto", padding: "48px 48px 100px", position: "relative", zIndex: 1 }}>
+
               {erro    && <p style={{ ...S.erroMsg,    marginBottom: 32 }}>{erro}</p>}
               {sucesso && <p style={{ ...S.successMsg, marginBottom: 32 }}>✓ &nbsp;{sucesso}</p>}
 

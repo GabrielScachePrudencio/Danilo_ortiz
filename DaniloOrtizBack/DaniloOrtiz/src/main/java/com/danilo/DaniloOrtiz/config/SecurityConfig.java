@@ -71,6 +71,10 @@ public class SecurityConfig {
         origins.add("http://localhost:3000");
         origins.add("http://192.168.15.19:3000");
         origins.add("https://*.vercel.app");
+        origins.add("https://2dassessoria.com.br");
+        origins.add("https://www.2dassessoria.com.br");
+
+
 
         String frontendUrl = System.getenv("FRONTEND_URL");
         if (frontendUrl != null && !frontendUrl.isBlank()) {
