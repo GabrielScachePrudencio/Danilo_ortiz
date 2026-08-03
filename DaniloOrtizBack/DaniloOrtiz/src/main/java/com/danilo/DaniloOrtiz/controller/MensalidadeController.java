@@ -104,127 +104,134 @@ public class MensalidadeController {
     public ResponseEntity<?> abrirPagamentoTransparente(
             @RequestBody PagamentoTransparenteDTO dto
     ) {
-      try {
+        try {
             // 1. Busca aluno e parcela no banco
             Aluno aluno = alunoService.findById(dto.getAlunoId());
             if (aluno == null) {
                 return ResponseEntity.badRequest().body("Aluno não encontrado.");
             }
 
-          List<String> pendencias =
-                  alunoService.validarDadosPagamento(aluno);
-
-          if (!pendencias.isEmpty()) {
-
-              return ResponseEntity.badRequest().body(
-                      Map.of(
-                              "status", "CADASTRO_INCOMPLETO",
-                              "mensagem", "Complete seu cadastro.",
-                              "campos", pendencias
-                      )
-              );
-          }
+            List<String> pendencias = alunoService.validarDadosPagamento(aluno);
+            if (!pendencias.isEmpty()) {
+                return ResponseEntity.badRequest().body(
+                        Map.of(
+                                "status", "CADASTRO_INCOMPLETO",
+                                "mensagem", "Complete seu cadastro.",
+                                "campos", pendencias
+                        )
+                );
+            }
 
             Mensalidades_parcelas parcela = mensalidadesParcelasService.findById(dto.getParcelaId());
             if (parcela == null) {
                 return ResponseEntity.badRequest().body("Parcela não encontrada.");
             }
 
-          // 3. Não deixa pagar parcela cancelada
-          if ("CANCELADO".equalsIgnoreCase(parcela.getStatus())) {
-              return ResponseEntity.badRequest()
-                      .body("Esta parcela foi cancelada.");
-          }
+            // Não deixa pagar parcela cancelada
+            if ("CANCELADO".equalsIgnoreCase(parcela.getStatus())) {
+                return ResponseEntity.badRequest().body("Esta parcela foi cancelada.");
+            }
 
-          // 4. Não deixa pagar parcela já finalizada
-          if ("FINALIZADO".equalsIgnoreCase(parcela.getStatus())) {
-              return ResponseEntity.badRequest()
-                      .body("Esta parcela já foi paga.");
-          }
+            // Não deixa pagar parcela já finalizada
+            if ("FINALIZADO".equalsIgnoreCase(parcela.getStatus())) {
+                return ResponseEntity.badRequest().body("Esta parcela já foi paga.");
+            }
 
-          // valida pagamentos anteriores
-          Pagamento pagamentoExistente =
-                  mensalidadeService.validarOuRetornarPagamento(parcela.getId());
+            // valida pagamentos anteriores
+            Pagamento pagamentoExistente =
+                    mensalidadeService.validarOuRetornarPagamento(parcela.getId());
 
-          if(pagamentoExistente != null && "FINALIZADO".equalsIgnoreCase(
-                  pagamentoExistente.getStatusPagamento())) {
-              return ResponseEntity.badRequest()
-                      .body("Esta parcela já foi paga.");
-          }
+            if (pagamentoExistente != null
+                    && "FINALIZADO".equalsIgnoreCase(pagamentoExistente.getStatusPagamento())) {
+                return ResponseEntity.badRequest().body("Esta parcela já foi paga.");
+            }
 
-          if (pagamentoExistente != null
-                  && "PENDENTE".equalsIgnoreCase(pagamentoExistente.getStatusPagamento())) {
+            if (pagamentoExistente != null
+                    && "PENDENTE".equalsIgnoreCase(pagamentoExistente.getStatusPagamento())) {
 
-              Payment mpPayment =
-                      ApiMercadoPago.consultarPagamento(
-                              Long.parseLong(pagamentoExistente.getMpPaymentId())
-                      );
+                if (pagamentoExistente.getMpPaymentId() == null) {
+                    // pagamento "fantasma": nunca chegou a ser criado no MP.
+                    // apaga e segue o fluxo abaixo para criar um pagamento novo.
+                    pagamentoService.delete(pagamentoExistente);
+                } else {
+                    // já existe pagamento pendente de verdade no MP — reconsulta e retorna
+                    Payment mpPayment =
+                            ApiMercadoPago.consultarPagamento(
+                                    Long.parseLong(pagamentoExistente.getMpPaymentId())
+                            );
 
-              return ResponseEntity.ok(
-                      PagamentoTransparenteResponseDTO.builder()
-                              .pagamentoId(pagamentoExistente.getId())
-                              .status(mpPayment.getStatus())
-                              .pixQrCode(mpPayment.getPointOfInteraction()
-                                      .getTransactionData().getQrCode())
-                              .pixQrCodeBase64(mpPayment.getPointOfInteraction()
-                                      .getTransactionData().getQrCodeBase64())
-                              .build()
-              );
-          }
-
-
-
-
-        // 2. Usa o valor real da parcela (nunca confia só no front)
-        dto.setValor(parcela.getValor());
-
-        // 3. Cria pagamento interno (status PENDENTE) para rastrear
-        Pagamento pagamento = new Pagamento();
-        pagamento.setAluno(aluno);
-        pagamento.setPlano(parcela.getMensalidade().getPlano());
-        pagamento.setMensalidades_parcelas(parcela);
-        pagamento.setValorPago(parcela.getValor());
-        pagamento.setFormaPagamento(dto.getFormaPagamento());
-        pagamento.setStatusPagamento("PENDENTE");
-        pagamento.setPago(false);
-        Pagamento pagamentoSalvo = pagamentoService.save(pagamento);
-
-        // 4. Chama o MP — pagamento transparente
-        Payment mpPayment = ApiMercadoPago.criarPagamentoTransparente(dto, aluno);
-
-        if (mpPayment == null) {
-            return ResponseEntity.internalServerError().body("Erro ao criar pagamento no Mercado Pago.");
-        }
-
-        // 5. Salva o ID do MP no pagamento interno
-        pagamentoSalvo.setMpPaymentId(mpPayment.getId().toString());
-        pagamentoService.save(pagamentoSalvo);
-
-        // 6. Se cartão foi aprovado na hora (status = approved), confirma direto
-        if ("approved".equals(mpPayment.getStatus())) {
-            mensalidadeService.confirmarPagamentoDoWebHook(
-                    pagamentoSalvo.getId(),
-                    mpPayment.getId().toString(),
-                    mpPayment.getStatus(),
-                    mpPayment.getPaymentMethodId()
-            );
-        }
-
-        // 7. Monta resposta para o frontend
-        PagamentoTransparenteResponseDTO response = PagamentoTransparenteResponseDTO.builder()
-                .pagamentoId(pagamentoSalvo.getId())
-                .status(mpPayment.getStatus())
-                .statusDetail(mpPayment.getStatusDetail())
-                .build();
-
-        // Dados específicos do PIX
-        if ("pix".equalsIgnoreCase(dto.getFormaPagamento())) {
-                if (mpPayment.getPointOfInteraction() != null) {
-                if (mpPayment.getPointOfInteraction().getTransactionData() != null) {
+                    return ResponseEntity.ok(
+                            PagamentoTransparenteResponseDTO.builder()
+                                    .pagamentoId(pagamentoExistente.getId())
+                                    .status(mpPayment.getStatus())
+                                    .pixQrCode(mpPayment.getPointOfInteraction()
+                                            .getTransactionData().getQrCode())
+                                    .pixQrCodeBase64(mpPayment.getPointOfInteraction()
+                                            .getTransactionData().getQrCodeBase64())
+                                    .build()
+                    );
                 }
             }
 
-            if (mpPayment.getPointOfInteraction() != null
+            // ── A partir daqui: cria um pagamento novo ──────────────────────
+            // (chega aqui se: não havia pagamentoExistente, OU ele era "fantasma" e foi apagado)
+
+            // 2. Usa o valor real da parcela (nunca confia só no front)
+            dto.setValor(parcela.getValor());
+
+            // 3. Cria pagamento interno (status PENDENTE) para rastrear
+            Pagamento pagamento = new Pagamento();
+            pagamento.setAluno(aluno);
+            pagamento.setPlano(parcela.getMensalidade().getPlano());
+            pagamento.setMensalidades_parcelas(parcela);
+            pagamento.setValorPago(parcela.getValor());
+            pagamento.setFormaPagamento(dto.getFormaPagamento());
+            pagamento.setStatusPagamento("PENDENTE");
+            pagamento.setPago(false);
+            Pagamento pagamentoSalvo = pagamentoService.save(pagamento);
+
+            // 4. Chama o MP — pagamento transparente
+            Payment mpPayment;
+            try {
+                mpPayment = ApiMercadoPago.criarPagamentoTransparente(dto, aluno);
+            } catch (Exception e) {
+                // se o MP falhar, marca o pagamento como erro em vez de deixar "PENDENTE" sem mpPaymentId
+                pagamentoSalvo.setStatusPagamento("ERRO");
+                pagamentoService.save(pagamentoSalvo);
+                return ResponseEntity.internalServerError()
+                        .body("Erro ao criar pagamento no Mercado Pago: " + e.getMessage());
+            }
+
+            if (mpPayment == null) {
+                pagamentoSalvo.setStatusPagamento("ERRO");
+                pagamentoService.save(pagamentoSalvo);
+                return ResponseEntity.internalServerError().body("Erro ao criar pagamento no Mercado Pago.");
+            }
+
+            // 5. Salva o ID do MP no pagamento interno
+            pagamentoSalvo.setMpPaymentId(mpPayment.getId().toString());
+            pagamentoService.save(pagamentoSalvo);
+
+            // 6. Se cartão foi aprovado na hora (status = approved), confirma direto
+            if ("approved".equals(mpPayment.getStatus())) {
+                mensalidadeService.confirmarPagamentoDoWebHook(
+                        pagamentoSalvo.getId(),
+                        mpPayment.getId().toString(),
+                        mpPayment.getStatus(),
+                        mpPayment.getPaymentMethodId()
+                );
+            }
+
+            // 7. Monta resposta para o frontend
+            PagamentoTransparenteResponseDTO response = PagamentoTransparenteResponseDTO.builder()
+                    .pagamentoId(pagamentoSalvo.getId())
+                    .status(mpPayment.getStatus())
+                    .statusDetail(mpPayment.getStatusDetail())
+                    .build();
+
+            // Dados específicos do PIX
+            if ("pix".equalsIgnoreCase(dto.getFormaPagamento())
+                    && mpPayment.getPointOfInteraction() != null
                     && mpPayment.getPointOfInteraction().getTransactionData() != null) {
                 response.setPixQrCode(
                         mpPayment.getPointOfInteraction().getTransactionData().getQrCode()
@@ -233,44 +240,37 @@ public class MensalidadeController {
                         mpPayment.getPointOfInteraction().getTransactionData().getQrCodeBase64()
                 );
             }
-        }
 
-        // Dados específicos do Boleto
-        if ("boleto".equalsIgnoreCase(dto.getFormaPagamento())) {
-            if (mpPayment.getTransactionDetails() != null) {
-                // URL para abrir/imprimir o PDF do boleto
+            // Dados específicos do Boleto
+            if ("boleto".equalsIgnoreCase(dto.getFormaPagamento())
+                    && mpPayment.getTransactionDetails() != null) {
                 response.setBoletoUrl(
                         mpPayment.getTransactionDetails().getExternalResourceUrl()
                 );
-                // Linha digitável (código de barras) — campo correto
                 response.setBoletoBarCode(
                         mpPayment.getTransactionDetails().getBarcode() != null
                                 ? mpPayment.getTransactionDetails().getBarcode().getContent()
                                 : mpPayment.getTransactionDetails().getExternalResourceUrl()
                 );
             }
-        }
 
-        // Mensagem por status do cartão
-        if ("credit_card".equalsIgnoreCase(dto.getFormaPagamento())) {
-            switch (mpPayment.getStatus()) {
-                case "approved"  -> response.setMensagem("Pagamento aprovado! ✓");
-                case "rejected"  -> response.setMensagem("Pagamento recusado. Verifique os dados do cartão.");
-                case "in_process"-> response.setMensagem("Pagamento em análise. Aguarde.");
-                default          -> response.setMensagem("Status: " + mpPayment.getStatus());
+            // Mensagem por status do cartão
+            if ("credit_card".equalsIgnoreCase(dto.getFormaPagamento())) {
+                switch (mpPayment.getStatus()) {
+                    case "approved" -> response.setMensagem("Pagamento aprovado! ✓");
+                    case "rejected" -> response.setMensagem("Pagamento recusado. Verifique os dados do cartão.");
+                    case "in_process" -> response.setMensagem("Pagamento em análise. Aguarde.");
+                    default -> response.setMensagem("Status: " + mpPayment.getStatus());
+                }
             }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("Erro ao processar pagamento: " + e.getMessage());
         }
-
-        return ResponseEntity.ok(response);
-
-    }  catch (Exception e) {
-        e.printStackTrace(); // ou logger.error("Erro ao processar pagamento", e);
-        return ResponseEntity.internalServerError()
-                .body("Erro ao processar pagamento: " + e.getMessage());
-    }
-
-
-
     }
 
 

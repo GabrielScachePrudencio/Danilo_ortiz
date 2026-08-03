@@ -13,6 +13,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 const isRailway = window.location.hostname.includes("railway.app");
 const API = process.env.REACT_APP_API_URL || "http://localhost:3001";
 
+console.log(window.location.protocol);
 
 // ─── Bandeiras por BIN (primeiros 6 dígitos) ─────────────────────────
 function detectarBandeira(numero) {
@@ -628,7 +629,6 @@ async function verificarPagamentoJaFeito() {
           parcelaIdFinal = primeiraPendente?.id;
         }
       }
-
       if (!parcelaIdFinal ){
         mostrarToast("Parcela não encontrada.", false);
         return;

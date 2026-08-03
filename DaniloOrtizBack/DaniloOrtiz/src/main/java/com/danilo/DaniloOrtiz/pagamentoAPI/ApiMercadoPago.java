@@ -115,7 +115,7 @@ public class ApiMercadoPago {
         try {
             Payment payment = client.get(paymentId);
 
-           return payment;
+            return payment;
 
         } catch (MPException | MPApiException e) {
             System.err.println("Erro ao consultar pagamento: " + e.getMessage());

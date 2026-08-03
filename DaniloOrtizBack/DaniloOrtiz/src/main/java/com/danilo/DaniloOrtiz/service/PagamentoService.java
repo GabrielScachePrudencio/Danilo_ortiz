@@ -26,6 +26,9 @@ public class PagamentoService {
         Pagamento p = pagamentoRepository.save(pagamento);
         return p;
     }
+    public void delete(Pagamento pagamento){
+        pagamentoRepository.delete(pagamento);
+    }
 
     public List<Pagamento> findAllByParcelaId(Long parcelaId) {
         return pagamentoRepository
