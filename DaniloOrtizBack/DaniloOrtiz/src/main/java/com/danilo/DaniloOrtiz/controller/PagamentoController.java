@@ -60,6 +60,14 @@ public class PagamentoController {
         if (administradorOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
+        boolean isAdmin = "ADMIN".equals(administradorOpt.get().getTipoUsuario());
+
+        if(!isAdmin){
+            return ResponseEntity.badRequest().build();
+        }
+
+
         Aluno administrador = administradorOpt.get();
 
         Plano planoEscolhido = planoService.buscarPorId(idplano);
@@ -247,7 +255,17 @@ public class PagamentoController {
     }
 
     @GetMapping("/ultimas-vendas")
-    public ResponseEntity<List<PagamentoCompletoDTO>> buscarUltimasVendas() {
+    public ResponseEntity<?> buscarUltimasVendas(Authentication authentication) {
+        String email = authentication.getName();
+        Aluno usuarioLogado = alunoService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        boolean isAdmin = "ADMIN".equals(usuarioLogado.getTipoUsuario());
+
+        if(!isAdmin) {
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
+
         List<PagamentoCompletoDTO> vendas = pagamentoService.listarUltimasVendas();
         return ResponseEntity.ok(vendas);
     }
@@ -269,7 +287,14 @@ public class PagamentoController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
+
+
         Aluno administrador = administradorOpt.get();
+        boolean isAdmin = "ADMIN".equals(administrador.getTipoUsuario());
+
+        if(!isAdmin){
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
 
         try {
             boolean sucesso = mensalidadeService.confirmarPagamentoManualAdmin(
@@ -303,6 +328,13 @@ public class PagamentoController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         Aluno administrador = administradorOpt.get();
+
+        boolean isAdmin = "ADMIN".equals(administrador.getTipoUsuario());
+
+        if(!isAdmin){
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
+
 
         try {
             Mensalidades_parcelas resultado = mensalidadeService.criarParcelasEConfirmarPrimeira(

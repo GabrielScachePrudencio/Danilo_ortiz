@@ -46,4 +46,12 @@ public interface AlunoRepository extends JpaRepository<Aluno, Integer> {
     List<Aluno> findByStatusAssinatura(String statusAssinatura);
 
     @Query("SELECT a FROM Aluno a WHERE a.CPF = :cpf")
-    Optional<Aluno> findByCpf(@Param("cpf") String cpf);    }
+    Optional<Aluno> findByCpf(@Param("cpf") String cpf);
+
+
+    boolean existsByEmail(String email);
+    boolean existsByCPF(String cpf);
+
+    // usado pra checar duplicidade por nome (ignorando maiúsculas)
+    boolean existsByNomeIgnoreCase(String nome);
+}

@@ -30,7 +30,18 @@ public class AlunoController {
     private final NotificacaoService notificacaoService;
 
     @GetMapping
-    public ResponseEntity<List<AlunoDTO>> todosAlunos() {
+    public ResponseEntity<?> todosAlunos(Authentication authentication) {
+        String email = authentication.getName();
+        Aluno usuarioLogado = alunoService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        boolean isAdmin = "ADMIN".equals(usuarioLogado.getTipoUsuario());
+
+        if(!isAdmin){
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
+
+
         List<AlunoDTO> alunoDTOS = alunoService.findAll();
 
         if(alunoDTOS == null) return ResponseEntity.notFound().build();
@@ -41,11 +52,24 @@ public class AlunoController {
     @PostMapping("/{id}/trocar-senha")
     public ResponseEntity<?> trocarSenha(
             @PathVariable Long id,
-            @RequestBody Map<String, String> body
+            @RequestBody Map<String, String> body,
+            Authentication authentication
     ) {
+        String email = authentication.getName();
+        Aluno usuarioLogado = alunoService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        boolean isAdmin = "ADMIN".equals(usuarioLogado.getTipoUsuario());
+        boolean isDonoDoRecurso = usuarioLogado.getId().equals(id);
+
+        if(!isAdmin && !isDonoDoRecurso){
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
+
+
         try {
             String senhaAtual = body.get("senhaAtual");
-            String senhaNova  = body.get("senhaNova");
+            String senhaNova  = body.get("novaSenha");
 
             alunoService.trocarSenha(id, senhaAtual, senhaNova);
 
@@ -60,6 +84,7 @@ public class AlunoController {
 
     @GetMapping("/me")
     public ResponseEntity<AlunoDTO> getMe(Authentication authentication) {
+
         String email = authentication.getName(); // vem do token
 
         Aluno aluno = alunoService.findByEmail(email)
@@ -71,7 +96,17 @@ public class AlunoController {
     }
 
     @GetMapping("/qtdd-aluno-por-plano")
-    public ResponseEntity<List<AlunoPorPlanoDTO>> qtddplanoaluno(){
+    public ResponseEntity<?> qtddplanoaluno(Authentication authentication){
+        String email = authentication.getName();
+        Aluno usuarioLogado = alunoService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        boolean isAdmin = "ADMIN".equals(usuarioLogado.getTipoUsuario());
+
+        if(!isAdmin){
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
+
         List<AlunoPorPlanoDTO> lista = alunoService.QtddAlunosPorPlano();
 
         if(lista==null) return ResponseEntity.notFound().build();
@@ -81,7 +116,18 @@ public class AlunoController {
 
 
     @PostMapping("/atualizar-status-aluno/{id}")
-    public ResponseEntity<Boolean> atualizarStatusAluno(@PathVariable Long id){
+    public ResponseEntity<?> atualizarStatusAluno(@PathVariable Long id, Authentication authentication){
+        String email = authentication.getName();
+        Aluno usuarioLogado = alunoService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        boolean isAdmin = "ADMIN".equals(usuarioLogado.getTipoUsuario());
+        boolean isDonoDoRecurso = usuarioLogado.getId().equals(id);
+
+        if(!isAdmin && !isDonoDoRecurso){
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
+
         boolean res = alunoService.atualizarStatus(id);
 
         if(!res){
@@ -92,7 +138,18 @@ public class AlunoController {
     }
 
     @PostMapping("/atualizar-status-contasisrun-aluno/{id}")
-    public ResponseEntity<Boolean> atualizarStatusContaSisrunAluno(@PathVariable Long id){
+    public ResponseEntity<?> atualizarStatusContaSisrunAluno(@PathVariable Long id, Authentication authentication){
+        String email = authentication.getName();
+        Aluno usuarioLogado = alunoService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        boolean isAdmin = "ADMIN".equals(usuarioLogado.getTipoUsuario());
+        boolean isDonoDoRecurso = usuarioLogado.getId().equals(id);
+
+        if(!isAdmin && !isDonoDoRecurso){
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
+
         boolean res = alunoService.atualizarStatusSisrun(id);
 
         if(!res){
@@ -105,8 +162,20 @@ public class AlunoController {
     @PutMapping("/{id}")
     public ResponseEntity<?> atualizarAluno(
             @PathVariable Long id,
-            @RequestBody Aluno alunoAtualizado
+            @RequestBody Aluno alunoAtualizado,
+            Authentication authentication
     ) {
+        String email = authentication.getName();
+        Aluno usuarioLogado = alunoService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        boolean isAdmin = "ADMIN".equals(usuarioLogado.getTipoUsuario());
+        boolean isDonoDoRecurso = usuarioLogado.getId().equals(id);
+
+        if(!isAdmin && !isDonoDoRecurso){
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
+
         try {
             Aluno aluno = alunoService.atualizar(id, alunoAtualizado);
 
@@ -141,12 +210,23 @@ public class AlunoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Aluno> buscarPorId(@PathVariable Long id){
-        Aluno aluno = alunoService.findById(id);
+    public ResponseEntity<?> buscarPorId(@PathVariable Long id, Authentication authentication){
+        String email = authentication.getName();
+        Aluno usuarioLogado = alunoService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        if(aluno == null) return ResponseEntity.notFound().build();
+        boolean isAdmin = "ADMIN".equals(usuarioLogado.getTipoUsuario());
+        boolean isDonoDoRecurso = usuarioLogado.getId().equals(id);
 
-        return ResponseEntity.ok(aluno);
+        if(!isAdmin && !isDonoDoRecurso){
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
+
+        Aluno alunoPesquisado = alunoService.findById(id);
+
+        if(alunoPesquisado == null) return ResponseEntity.notFound().build();
+
+        return ResponseEntity.ok(alunoPesquisado);
     }
 
 

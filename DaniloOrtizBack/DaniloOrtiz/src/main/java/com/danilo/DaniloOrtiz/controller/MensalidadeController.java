@@ -11,6 +11,7 @@ import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.mercadopago.resources.payment.Payment;
 
@@ -31,7 +32,18 @@ public class MensalidadeController {
     private final MensalidadeCanceladaService mensalidadeCanceladaService;
 
     @GetMapping("/{idAluno}")
-    public ResponseEntity<MensalidadeComParcelasDTO> buscarMensalidadePorIdAluno(@PathVariable Long idAluno){
+    public ResponseEntity<?> buscarMensalidadePorIdAluno(@PathVariable Long idAluno, Authentication authentication){
+        String email = authentication.getName();
+        Aluno usuarioLogado = alunoService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        boolean isAdmin = "ADMIN".equals(usuarioLogado.getTipoUsuario());
+        boolean isDonoDoRecurso = usuarioLogado.getId().equals(idAluno);
+
+        if(!isAdmin && !isDonoDoRecurso){
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
+
         MensalidadeComParcelasDTO mensalidadeComParcelasDTO = mensalidadeService.mensalidadeCompletaPorIdAluno(idAluno);
 
         if(mensalidadeComParcelasDTO == null){
@@ -42,7 +54,19 @@ public class MensalidadeController {
     }
 
     @GetMapping("/historico/{idAluno}")
-    public ResponseEntity<HistoricoMensalidadesDTO> buscarHistoricoPorIdAluno(@PathVariable Long idAluno) {
+    public ResponseEntity<?> buscarHistoricoPorIdAluno(@PathVariable Long idAluno, Authentication authentication) {
+        String email = authentication.getName();
+        Aluno usuarioLogado = alunoService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        boolean isAdmin = "ADMIN".equals(usuarioLogado.getTipoUsuario());
+        boolean isDonoDoRecurso = usuarioLogado.getId().equals(idAluno);
+
+        if(!isAdmin && !isDonoDoRecurso){
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
+
+
         HistoricoMensalidadesDTO historico = mensalidadeService.historicoCompletoPorIdAluno(idAluno);
 
         if (historico == null) {
@@ -53,7 +77,18 @@ public class MensalidadeController {
     }
 
     @PostMapping("/renovar/{idAluno}")
-    public ResponseEntity<?> renovarMensalidade(@PathVariable Long idAluno) {
+    public ResponseEntity<?> renovarMensalidade(@PathVariable Long idAluno, Authentication authentication) {
+        String email = authentication.getName();
+        Aluno usuarioLogado = alunoService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        boolean isAdmin = "ADMIN".equals(usuarioLogado.getTipoUsuario());
+        boolean isDonoDoRecurso = usuarioLogado.getId().equals(idAluno);
+
+        if(!isAdmin && !isDonoDoRecurso){
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
+
         try {
             MensalidadeComParcelasDTO dto = mensalidadeService.renovarMensalidade(idAluno);
             return ResponseEntity.ok(dto);
@@ -63,9 +98,22 @@ public class MensalidadeController {
     }
 
     @PostMapping("/cancelar-mensalidade/{idAluno}")
-    public ResponseEntity<Boolean> cancelarMensalidade(
+    public ResponseEntity<?> cancelarMensalidade(
             @PathVariable Long idAluno,
-            @RequestParam Long idQuemCancelou) {
+            @RequestParam Long idQuemCancelou,
+            Authentication authentication
+
+    ) {
+        String email = authentication.getName();
+        Aluno usuarioLogado = alunoService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        boolean isAdmin = "ADMIN".equals(usuarioLogado.getTipoUsuario());
+        boolean isDonoDoRecurso = usuarioLogado.getId().equals(idAluno);
+
+        if(!isAdmin && !isDonoDoRecurso){
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
 
         boolean resultado = mensalidadeService.cancelarMensalidade(idAluno, idQuemCancelou);
 
@@ -77,7 +125,8 @@ public class MensalidadeController {
     // Retorna detalhes da parcela + dados do pagamento interno + consulta MP
     @GetMapping("/parcela/{idParcela}")
     public ResponseEntity<ParcelaDetalheDTO> verificarParcela(
-            @PathVariable Long idParcela) {
+            @PathVariable Long idParcela
+            ) {
 
         ParcelaDetalheDTO dto = mensalidadeService.verificarParcela(idParcela);
 
@@ -275,12 +324,34 @@ public class MensalidadeController {
 
 
     @GetMapping("/canceladas")
-    public ResponseEntity<List<MensalidadeCancelada>> listarCanceladas() {
+    public ResponseEntity<?> listarCanceladas(Authentication authentication) {
+        String email = authentication.getName();
+        Aluno usuarioLogado = alunoService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        boolean isAdmin = "ADMIN".equals(usuarioLogado.getTipoUsuario());
+
+        if(!isAdmin){
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
+
         return ResponseEntity.ok(mensalidadeCanceladaService.listarTodas());
     }
 
     @PostMapping("/cancelar-sem-log/{idAluno}")
-    public ResponseEntity<Boolean> cancelarSemLog(@PathVariable Long idAluno) {
+    public ResponseEntity<?> cancelarSemLog(@PathVariable Long idAluno,
+                                                  Authentication authentication) {
+        String email = authentication.getName();
+        Aluno usuarioLogado = alunoService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        boolean isAdmin = "ADMIN".equals(usuarioLogado.getTipoUsuario());
+        boolean isDonoDoRecurso = usuarioLogado.getId().equals(idAluno);
+
+        if(!isAdmin && !isDonoDoRecurso){
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
+
         boolean resultado = mensalidadeService.cancelarSemLog(idAluno);
         if (!resultado) return ResponseEntity.badRequest().build();
         return ResponseEntity.ok(true);
@@ -354,7 +425,20 @@ public class MensalidadeController {
     }
 
     @GetMapping("/completa/{alunoId}")
-    public ResponseEntity<MensalidadeComParcelasDTO> mensalidadeCompleta(@PathVariable Long alunoId) {
+    public ResponseEntity<?> mensalidadeCompleta(@PathVariable Long alunoId
+    ,Authentication authentication ) {
+        String email = authentication.getName();
+        Aluno usuarioLogado = alunoService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        boolean isAdmin = "ADMIN".equals(usuarioLogado.getTipoUsuario());
+        boolean isDonoDoRecurso = usuarioLogado.getId().equals(alunoId);
+
+        if(!isAdmin && !isDonoDoRecurso){
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
+
+
         MensalidadeComParcelasDTO dto = mensalidadeService.mensalidadeCompletaPorIdAluno(alunoId);
         if (dto == null) {
             return ResponseEntity.notFound().build();

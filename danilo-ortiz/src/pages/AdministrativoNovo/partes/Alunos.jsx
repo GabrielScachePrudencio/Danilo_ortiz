@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { S } from "./estilos";
 import { ModalCadastroAluno } from "./ModalCadastroAluno";
+import { ModalImportarPlanilha } from "./ModalImportarPlanilha"; // no topo
 
 const API = process.env.REACT_APP_API_URL || "http://localhost:3001";
 
@@ -27,6 +28,7 @@ export function Alunos({ navigate, abrirContexto }) {
   const [erro, setErro] = useState("");
   const [modalCadastro, setModalCadastro] = useState(false);
   const [refreshAlunos, setRefreshAlunos] = useState(0);
+const [modalImportar, setModalImportar] = useState(false);
 
   useEffect(() => {
     pegarAlunos();
@@ -95,34 +97,30 @@ export function Alunos({ navigate, abrirContexto }) {
       {erro && <div style={S.erro}>{erro}</div>}
 
       <div style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center", 
-        marginBottom: "16px" 
-        }}>
-        <p style={{ ...S.sectionTitle, margin: 0 }}>Gerenciar Alunos</p>
-        <button
-            className="btn-primary btn-nowrap"
-            onClick={() => setModalCadastro(true)}
-            style={{ padding: "6px 12px", fontSize: "13px" }}
-        >
-            + cadastrar aluno
-        </button>
-        </div>
-      <div style={S.searchRow}>
-        <input
-          style={S.input}
-          placeholder="Pesquise por nome ou e-mail..."
-          value={inputBusca}
-          onChange={(e) => setInputBusca(e.target.value)}
-          onKeyDown={(e) => e.key === "Escape" && setInputBusca("")}
-        />
-        {inputBusca && (
-          <button style={S.btnGhost} onClick={() => setInputBusca("")}>
-            Limpar
-          </button>
-        )}
-      </div>
+  display: "flex", 
+  justifyContent: "space-between", 
+  alignItems: "center", 
+  marginBottom: "16px" 
+  }}>
+  <p style={{ ...S.sectionTitle, margin: 0 }}>Gerenciar Alunos</p>
+  <div style={{ display: "flex", gap: "8px" }}>
+    <button
+      className="btn-primary btn-nowrap"
+      onClick={() => setModalCadastro(true)}
+      style={{ padding: "6px 12px", fontSize: "13px" }}
+    >
+        + cadastrar aluno
+    </button>
+    <button
+      className="btn-primary btn-nowrap"
+      onClick={() => setModalImportar(true)}
+      style={{ padding: "6px 12px", fontSize: "13px" }}
+    >
+        importar planilha
+    </button>
+  </div>
+</div>
+
 
       <table style={S.table}>
         <thead>
@@ -218,6 +216,12 @@ export function Alunos({ navigate, abrirContexto }) {
               aoFechar={() => setModalCadastro(false)}
               aoCadastrar={() => setRefreshAlunos((n) => n + 1)}
             />
+
+      <ModalImportarPlanilha
+      aberto={modalImportar}
+      aoFechar={() => setModalImportar(false)}
+      aoImportar={() => setRefreshAlunos((n) => n + 1)}
+    />
     </>
   );
 }

@@ -1,11 +1,14 @@
 package com.danilo.DaniloOrtiz.controller;
 
+import com.danilo.DaniloOrtiz.model.Aluno;
 import com.danilo.DaniloOrtiz.model.Configuracao;
 import com.danilo.DaniloOrtiz.model.dto.AtualizarCredenciaisDTO;
 import com.danilo.DaniloOrtiz.pagamentoAPI.ApiMercadoPago;
+import com.danilo.DaniloOrtiz.service.AlunoService;
 import com.danilo.DaniloOrtiz.service.ConfiguracaoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -17,17 +20,42 @@ import java.util.Optional;
 @CrossOrigin(origins = "*")
 public class ConfiguracaoController {
     private final ConfiguracaoService configuracaoService;
+    private final AlunoService alunoService;
 
     @GetMapping
-    public Configuracao pegarConf(){
-        return configuracaoService.getConfiguracao()
+    public ResponseEntity<?> pegarConf(Authentication authentication){
+        String email = authentication.getName();
+        Aluno usuarioLogado = alunoService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        boolean isAdmin = "ADMIN".equals(usuarioLogado.getTipoUsuario());
+
+        if(!isAdmin){
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
+
+        Configuracao configuracao = configuracaoService.getConfiguracao()
                 .orElseThrow(() -> new RuntimeException("Configuração não encontrada"));
+
+        return ResponseEntity.ok(configuracao);
     }
 
     @PutMapping
-    public ResponseEntity<Configuracao> atualizarCredenciais(
-            @RequestBody AtualizarCredenciaisDTO dto
+    public ResponseEntity<?> atualizarCredenciais(
+            @RequestBody AtualizarCredenciaisDTO dto,
+            Authentication authentication
     ) {
+        String email = authentication.getName();
+        Aluno usuarioLogado = alunoService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        boolean isAdmin = "ADMIN".equals(usuarioLogado.getTipoUsuario());
+
+        if(!isAdmin){
+            return ResponseEntity.status(403).body(Map.of("message", "Acesso negado"));
+        }
+
+
         Configuracao cfg = configuracaoService.getConfiguracao()
                 .orElseThrow(() -> new RuntimeException("Configuração não encontrada"));
 

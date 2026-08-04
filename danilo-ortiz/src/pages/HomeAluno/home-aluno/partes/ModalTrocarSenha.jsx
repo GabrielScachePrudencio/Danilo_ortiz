@@ -26,7 +26,7 @@ export function ModalTrocarSenha({ onClose, idAluno, token, API, mostrarToast })
 
     setSalvando(true);
     try {
-      const res = await fetch(`${API}/alunos/trocar-senha/${idAluno}`, {
+      const res = await fetch(`${API}/alunos/${idAluno}/trocar-senha`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
