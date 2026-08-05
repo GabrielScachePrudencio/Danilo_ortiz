@@ -1,6 +1,9 @@
 package com.danilo.DaniloOrtiz.service;
 
 import com.danilo.DaniloOrtiz.model.Aluno;
+import com.danilo.DaniloOrtiz.model.Mensalidade;
+import com.danilo.DaniloOrtiz.model.Mensalidades_parcelas;
+import com.danilo.DaniloOrtiz.model.Plano;
 import com.danilo.DaniloOrtiz.model.dto.ImportResultDTO;
 import com.danilo.DaniloOrtiz.repository.AlunoRepository;
 import org.apache.poi.ss.usermodel.*;
@@ -10,9 +13,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.text.Normalizer;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @Service
@@ -20,6 +28,12 @@ public class AlunoImportService {
 
     @Autowired private AlunoRepository ar;
     @Autowired private AlunoService alunoService;
+    @Autowired private MensalidadeService mensalidadeService;
+    @Autowired private Mensalidades_parcelasService mensalidadesParcelasService;
+    @Autowired private PlanoService planoService;
+
+    private static final String NOME_PLANO_IMPORTADO = "Importado Manual";
+    private static final DateTimeFormatter FORMATO_DATA = DateTimeFormatter.ofPattern("dd/MM/yy");
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -34,7 +48,8 @@ public class AlunoImportService {
     private static final List<String> OBRIGATORIOS = List.of("nome");
     private static final List<String> NAO_MAPEADOS = List.of("vencimento", "valor");
 
-    public ImportResultDTO importar(MultipartFile file, Aluno admin) throws Exception {
+    // 🔥 NOVO parâmetro: criarMensalidade
+    public ImportResultDTO importar(MultipartFile file, Aluno admin, boolean criarMensalidade) throws Exception {
         String nomeArquivo = file.getOriginalFilename();
         boolean isCsv = nomeArquivo != null && nomeArquivo.toLowerCase().endsWith(".csv");
 
@@ -55,10 +70,12 @@ public class AlunoImportService {
 
         Map<Integer, String> colunaParaCampo = mapearCabecalho(linhasBrutas.get(0));
 
-        // controla duplicados e colisões DENTRO do próprio arquivo (nome, email, cpf)
         Set<String> nomesUsados = new HashSet<>();
         Set<String> emailsUsados = new HashSet<>();
         Set<String> cpfsUsados = new HashSet<>();
+
+        // 🔥 NOVO: busca/cria o plano genérico UMA VEZ, fora do loop, só se for usar
+        Plano planoImportado = criarMensalidade ? obterOuCriarPlanoImportado() : null;
 
         for (int i = 1; i < linhasBrutas.size(); i++) {
             String[] linhaBruta = linhasBrutas.get(i);
@@ -82,7 +99,6 @@ public class AlunoImportService {
                 continue;
             }
 
-            // ---- checagem de duplicidade por NOME (banco + dentro do próprio arquivo) ----
             String nomeNormalizado = normalizar(nome);
             if (nomesUsados.contains(nomeNormalizado) || ar.existsByNomeIgnoreCase(nome)) {
                 linhaResult.setStatus("ERRO");
@@ -92,7 +108,6 @@ public class AlunoImportService {
                 continue;
             }
 
-            // ---- email: usa o da planilha se tiver, senão gera baseado no nome ----
             String email = valores.get("email");
             boolean emailGerado = vazio(email);
             if (emailGerado) {
@@ -106,7 +121,6 @@ public class AlunoImportService {
             }
             linhaResult.setEmail(email);
 
-            // ---- cpf: sempre gera aleatório único (placeholder) ----
             String cpfGerado = gerarCpfUnico(cpfsUsados);
 
             try {
@@ -125,9 +139,37 @@ public class AlunoImportService {
                 List<String> pendencias = new ArrayList<>();
                 if (emailGerado) pendencias.add("email (gerado automaticamente, precisa completar)");
                 pendencias.add("CPF (gerado automaticamente, precisa completar)");
-                NAO_MAPEADOS.stream()
-                        .filter(campo -> !vazio(valores.get(campo)))
-                        .forEach(campo -> pendencias.add(campo + " (não importado, cadastre manualmente)"));
+
+                // 🔥 NOVO: tenta criar a mensalidade se o admin marcou a opção
+                if (criarMensalidade) {
+                    String valorStr = valores.get("valor");
+                    String vencimentoStr = valores.get("vencimento");
+
+                    if (vazio(valorStr) || vazio(vencimentoStr)) {
+                        pendencias.add("mensalidade não criada: faltou valor ou vencimento na planilha");
+                    } else {
+                        try {
+                            BigDecimal valor = new BigDecimal(valorStr.replace(",", "."));
+                            LocalDate vencimento = LocalDate.parse(vencimentoStr, FORMATO_DATA);
+
+                            criarMensalidadeImportada(aluno, valor, vencimento, admin,
+                                    valores.get("observacoes"), planoImportado);
+
+                            pendencias.add("mensalidade criada e marcada como paga: R$ " + valor
+                                    + " até " + vencimento.format(FORMATO_DATA));
+                        } catch (DateTimeParseException e) {
+                            pendencias.add("mensalidade não criada: data de vencimento inválida (\"" + vencimentoStr + "\")");
+                        } catch (NumberFormatException e) {
+                            pendencias.add("mensalidade não criada: valor inválido (\"" + valorStr + "\")");
+                        } catch (Exception e) {
+                            pendencias.add("mensalidade não criada: " + e.getMessage());
+                        }
+                    }
+                } else {
+                    NAO_MAPEADOS.stream()
+                            .filter(campo -> !vazio(valores.get(campo)))
+                            .forEach(campo -> pendencias.add(campo + " (não importado, cadastre manualmente)"));
+                }
 
                 linhaResult.setStatus("PENDENTE");
                 linhaResult.setCamposFaltando(pendencias);
@@ -180,9 +222,7 @@ public class AlunoImportService {
         for (int i = 0; i < 11; i++) {
             sb.append(RANDOM.nextInt(10));
         }
-        String digitos = sb.toString();
-        return digitos.substring(0, 3) + "." + digitos.substring(3, 6) + "."
-                + digitos.substring(6, 9) + "-" + digitos.substring(9, 11);
+        return sb.toString();
     }
 
     // ---------- leitura de arquivo ----------
@@ -295,5 +335,58 @@ public class AlunoImportService {
             if (v != null && !v.isBlank()) return false;
         }
         return true;
+    }
+
+    // ---------- plano genérico pra mensalidades importadas ----------
+
+    private Plano obterOuCriarPlanoImportado() {
+        Plano existente = planoService.findByNome(NOME_PLANO_IMPORTADO);
+        if (existente != null) return existente;
+
+        Plano novo = new Plano();
+        novo.setNome(NOME_PLANO_IMPORTADO);
+        novo.setValor(BigDecimal.ZERO);
+        novo.setDuracaomeses(1);
+        novo.setAtivo(false);
+        return planoService.salvar(novo);
+    }
+
+    // ---------- criação da mensalidade + parcela + confirmação ----------
+
+    private void criarMensalidadeImportada(Aluno aluno, BigDecimal valor, LocalDate vencimento,
+                                           Aluno admin, String observacao, Plano planoImportado) {
+        LocalDate hoje = LocalDate.now();
+
+        Mensalidade mensalidade = new Mensalidade();
+        mensalidade.setAluno(aluno);
+        mensalidade.setPlano(planoImportado);
+        mensalidade.setDataInicio(hoje);
+        mensalidade.setDataFim(vencimento);
+        mensalidade.setValorMensalidade(valor);
+        mensalidade.setValorParcela(valor);
+        mensalidade.setStatusLiberacao("DESATIVADO"); // vira ATIVADO dentro do confirmarPagamentoManualAdmin
+        mensalidade.setNumero_parcelas_restantes(1);
+        mensalidade.setAtribuidoPorId(admin.getId());
+        mensalidade.setAtribuidoPorNome(admin.getNome());
+        mensalidade.setDataAtribuicao(LocalDateTime.now());
+
+        Mensalidade mensalidadeSalva = mensalidadeService.add(mensalidade);
+
+        Mensalidades_parcelas parcela = new Mensalidades_parcelas();
+        parcela.setMensalidade(mensalidadeSalva);
+        parcela.setNumeroParcela(1);
+        parcela.setValor(valor);
+        parcela.setDataVencimento(vencimento.atStartOfDay());
+        parcela.setStatus("PENDENTE");
+
+        Mensalidades_parcelas parcelaSalva = mensalidadesParcelasService.add(parcela);
+
+        mensalidadeService.confirmarPagamentoManualAdmin(
+                parcelaSalva.getId(),
+                admin.getId(),
+                admin.getNome(),
+                "IMPORTACAO_MANUAL",
+                observacao
+        );
     }
 }

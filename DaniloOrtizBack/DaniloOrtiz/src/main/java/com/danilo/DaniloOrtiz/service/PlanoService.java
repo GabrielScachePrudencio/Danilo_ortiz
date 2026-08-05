@@ -31,5 +31,9 @@ public class PlanoService {
         return pr.save(plano);
     }
 
+    public Plano findByNome(String nome){
+        return pr.findByNome(nome);
+    }
+
 
 }

@@ -23,8 +23,11 @@ public class AlunoImportController {
     private final AlunoImportService alunoImportService;
 
     @PostMapping("/admin/importar-planilha")
-    public ResponseEntity<?> importarPlanilha(@RequestParam("file") MultipartFile file,
-                                              Authentication authentication) {
+    public ResponseEntity<?> importarPlanilha(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(defaultValue = "false") boolean criarMensalidade,
+            Authentication authentication) {
+
         String email = authentication.getName();
         Optional<Aluno> administradorOpt = alunoService.findByEmail(email);
 
@@ -33,10 +36,9 @@ public class AlunoImportController {
         }
 
         try {
-            ImportResultDTO resultado = alunoImportService.importar(file, administradorOpt.get());
+            ImportResultDTO resultado = alunoImportService.importar(file, administradorOpt.get(), criarMensalidade);
             return ResponseEntity.ok(resultado);
         } catch (Exception e) {
-            System.out.println(e.getMessage());
             return ResponseEntity.internalServerError().body("Erro ao processar planilha: " + e.getMessage());
         }
     }

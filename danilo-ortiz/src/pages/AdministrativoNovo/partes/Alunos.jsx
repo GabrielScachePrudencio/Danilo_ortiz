@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { S } from "./estilos";
 import { ModalCadastroAluno } from "./ModalCadastroAluno";
-import { ModalImportarPlanilha } from "./ModalImportarPlanilha"; // no topo
+import { ModalImportarPlanilha } from "./ModalImportarPlanilha";
 
 const API = process.env.REACT_APP_API_URL || "http://localhost:3001";
 
@@ -28,7 +28,13 @@ export function Alunos({ navigate, abrirContexto }) {
   const [erro, setErro] = useState("");
   const [modalCadastro, setModalCadastro] = useState(false);
   const [refreshAlunos, setRefreshAlunos] = useState(0);
-const [modalImportar, setModalImportar] = useState(false);
+  const [modalImportar, setModalImportar] = useState(false);
+
+  // ---- novos estados: filtros e ordenação ----
+  const [filtroStatus, setFiltroStatus] = useState("TODOS"); // TODOS | ATIVADO | DESATIVADO
+  const [filtroDataInicio, setFiltroDataInicio] = useState(""); // yyyy-mm-dd
+  const [filtroDataFim, setFiltroDataFim] = useState(""); // yyyy-mm-dd
+  const [ordemId, setOrdemId] = useState("desc"); // asc | desc
 
   useEffect(() => {
     pegarAlunos();
@@ -82,13 +88,49 @@ const [modalImportar, setModalImportar] = useState(false);
     }
   }
 
-  const alunosFiltrados = inputBusca.trim()
-    ? allAlunos.filter(
+  function limparFiltros() {
+    setInputBusca("");
+    setFiltroStatus("TODOS");
+    setFiltroDataInicio("");
+    setFiltroDataFim("");
+    setOrdemId("desc");
+  }
+
+  const alunosFiltrados = useMemo(() => {
+    let lista = [...allAlunos];
+
+    // busca por nome/email
+    if (inputBusca.trim()) {
+      const termo = inputBusca.toLowerCase();
+      lista = lista.filter(
         (a) =>
-          a.nome.toLowerCase().includes(inputBusca.toLowerCase()) ||
-          a.email.toLowerCase().includes(inputBusca.toLowerCase())
-      )
-    : allAlunos;
+          a.nome?.toLowerCase().includes(termo) ||
+          a.email?.toLowerCase().includes(termo)
+      );
+    }
+
+    // filtro por status (ativado/desativado)
+    if (filtroStatus !== "TODOS") {
+      lista = lista.filter((a) => a.statusAssinatura === filtroStatus);
+    }
+
+    // filtro por data de mensalidade (dataFimMensalidade dentro do intervalo)
+    if (filtroDataInicio) {
+      lista = lista.filter(
+        (a) => a.dataFimMensalidade && a.dataFimMensalidade >= filtroDataInicio
+      );
+    }
+    if (filtroDataFim) {
+      lista = lista.filter(
+        (a) => a.dataFimMensalidade && a.dataFimMensalidade <= filtroDataFim
+      );
+    }
+
+    // ordenação por ID
+    lista.sort((a, b) => (ordemId === "asc" ? a.id - b.id : b.id - a.id));
+
+    return lista;
+  }, [allAlunos, inputBusca, filtroStatus, filtroDataInicio, filtroDataFim, ordemId]);
 
   const colunas = ["ID", "Nome", "E-mail", "Status", "Mensalidade", "Sisrun", ""];
 
@@ -96,31 +138,113 @@ const [modalImportar, setModalImportar] = useState(false);
     <>
       {erro && <div style={S.erro}>{erro}</div>}
 
-      <div style={{ 
-  display: "flex", 
-  justifyContent: "space-between", 
-  alignItems: "center", 
-  marginBottom: "16px" 
-  }}>
-  <p style={{ ...S.sectionTitle, margin: 0 }}>Gerenciar Alunos</p>
-  <div style={{ display: "flex", gap: "8px" }}>
-    <button
-      className="btn-primary btn-nowrap"
-      onClick={() => setModalCadastro(true)}
-      style={{ padding: "6px 12px", fontSize: "13px" }}
-    >
-        + cadastrar aluno
-    </button>
-    <button
-      className="btn-primary btn-nowrap"
-      onClick={() => setModalImportar(true)}
-      style={{ padding: "6px 12px", fontSize: "13px" }}
-    >
-        importar planilha
-    </button>
-  </div>
-</div>
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "16px"
+      }}>
+        <p style={{ ...S.sectionTitle, margin: 0 }}>Gerenciar Alunos</p>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button
+            className="btn-primary btn-nowrap"
+            onClick={() => setModalCadastro(true)}
+            style={{ padding: "6px 12px", fontSize: "13px" }}
+          >
+            + cadastrar aluno
+          </button>
+          <button
+            className="btn-primary btn-nowrap"
+            onClick={() => setModalImportar(true)}
+            style={{ padding: "6px 12px", fontSize: "13px" }}
+          >
+            importar planilha
+          </button>
+        </div>
+      </div>
 
+      {/* barra de busca, igual à Visão Geral */}
+      <div className="visao-search-wrap">
+        <div className="pdv-search-inline">
+          <span className="icon">&#9906;</span>
+          <input
+            type="text"
+            placeholder="buscar aluno por nome ou e-mail..."
+            value={inputBusca}
+            onChange={(e) => setInputBusca(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* filtros: status, data de mensalidade e ordenação */}
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "10px",
+          alignItems: "flex-end",
+          margin: "12px 0",
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <label style={{ fontSize: 11, color: "#666" }}>Status</label>
+          <select
+            value={filtroStatus}
+            onChange={(e) => setFiltroStatus(e.target.value)}
+            style={S.select || { padding: "6px 8px", fontSize: 13, borderRadius: 6 }}
+          >
+            <option value="TODOS">Todos</option>
+            <option value="ATIVADO">Ativado</option>
+            <option value="DESATIVADO">Desativado</option>
+          </select>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <label style={{ fontSize: 11, color: "#666" }}>Mensalidade de</label>
+          <input
+            type="date"
+            value={filtroDataInicio}
+            onChange={(e) => setFiltroDataInicio(e.target.value)}
+            style={{ padding: "6px 8px", fontSize: 13, borderRadius: 6 }}
+          />
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <label style={{ fontSize: 11, color: "#666" }}>até</label>
+          <input
+            type="date"
+            value={filtroDataFim}
+            onChange={(e) => setFiltroDataFim(e.target.value)}
+            style={{ padding: "6px 8px", fontSize: 13, borderRadius: 6 }}
+          />
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <label style={{ fontSize: 11, color: "#666" }}>Ordenar ID</label>
+          <button
+            className="btn-primary btn-nowrap"
+            onClick={() => setOrdemId((o) => (o === "asc" ? "desc" : "asc"))}
+            style={{ padding: "6px 12px", fontSize: "13px" }}
+          >
+            {ordemId === "asc" ? "Crescente ↑" : "Decrescente ↓"}
+          </button>
+        </div>
+
+        <button
+          onClick={limparFiltros}
+          style={{
+            padding: "6px 12px",
+            fontSize: "13px",
+            background: "transparent",
+            border: "1px solid #ccc",
+            borderRadius: 6,
+            cursor: "pointer",
+            color: "white"
+          }}
+        >
+          limpar filtros
+        </button>
+      </div>
 
       <table style={S.table}>
         <thead>
@@ -142,7 +266,7 @@ const [modalImportar, setModalImportar] = useState(false);
               return (
                 <tr
                   key={a.id}
-                  onContextMenu={(e)=>abrirContexto(e,a)}
+                  onContextMenu={(e) => abrirContexto(e, a)}
                   style={rowHover === a.id ? S.rowHover : {}}
                   onMouseEnter={() => setRowHover(a.id)}
                   onMouseLeave={() => setRowHover(null)}
@@ -189,7 +313,6 @@ const [modalImportar, setModalImportar] = useState(false);
                       Ver
                     </button>
                   </td>
-
                 </tr>
               );
             })
@@ -210,18 +333,17 @@ const [modalImportar, setModalImportar] = useState(false);
         </div>
       )}
 
-
       <ModalCadastroAluno
-              aberto={modalCadastro}
-              aoFechar={() => setModalCadastro(false)}
-              aoCadastrar={() => setRefreshAlunos((n) => n + 1)}
-            />
+        aberto={modalCadastro}
+        aoFechar={() => setModalCadastro(false)}
+        aoCadastrar={() => setRefreshAlunos((n) => n + 1)}
+      />
 
       <ModalImportarPlanilha
-      aberto={modalImportar}
-      aoFechar={() => setModalImportar(false)}
-      aoImportar={() => setRefreshAlunos((n) => n + 1)}
-    />
+        aberto={modalImportar}
+        aoFechar={() => setModalImportar(false)}
+        aoImportar={() => setRefreshAlunos((n) => n + 1)}
+      />
     </>
   );
 }
