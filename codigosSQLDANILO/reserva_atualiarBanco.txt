@@ -1,0 +1,129 @@
+- adicionar no banco do railway :
+
+///// 08/08 autalizacao para implementar dias da semnaa no plano 
+   alter table planos add column frequencia_semanal integer;
+
+
+
+/// 02/08/2026 para permitir pagamentos manualmente confirmado pelo danilo
+
+ALTER TABLE pagamento
+    ADD COLUMN nome_admin_confirmou VARCHAR(255);
+
+ALTER TABLE mensalidades_parcelas
+    ADD COLUMN nome_admin_confirmou VARCHAR(255);
+
+ALTER TABLE mensalidade
+    ADD COLUMN nome_admin_confirmou VARCHAR(255);
+
+-- Tabela de pagamentos
+ALTER TABLE pagamentos
+    ADD COLUMN confirmado_manualmente BOOLEAN DEFAULT FALSE,
+    ADD COLUMN id_admin_confirmou BIGINT,
+    ADD COLUMN observacao_confirmacao VARCHAR(500),
+    ADD COLUMN data_confirmacao_manual TIMESTAMP;
+
+-- Tabela de parcelas
+ALTER TABLE mensalidades_parcelas
+    ADD COLUMN confirmado_manualmente BOOLEAN DEFAULT FALSE,
+    ADD COLUMN id_admin_confirmou BIGINT,
+    ADD COLUMN observacao_confirmacao VARCHAR(500),
+    ADD COLUMN data_confirmacao_manual TIMESTAMP;
+
+-- Tabela de mensalidade
+ALTER TABLE mensalidades
+    ADD COLUMN confirmado_manualmente BOOLEAN DEFAULT FALSE,
+    ADD COLUMN id_admin_confirmou BIGINT,
+    ADD COLUMN observacao_confirmacao VARCHAR(500),
+    ADD COLUMN data_confirmacao_manual TIMESTAMP;
+
+
+/// atualização 31/07/2026
+
+
+
+alter table alunos add column observacao varchar(255);
+
+
+CREATE TABLE modelo_mensagem (
+    id int auto_increment PRIMARY KEY,
+    tipo VARCHAR(60) NOT NULL UNIQUE,
+    descricao VARCHAR(255),
+    conteudo TEXT NOT NULL,
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+    atualizado_em TIMESTAMP NOT NULL DEFAULT now()
+);
+
+ALTER TABLE mensagens_whatsapp
+    ADD COLUMN tipo VARCHAR(60);
+
+ALTER TABLE mensalidades
+ADD COLUMN atribuido_por_id BIGINT NULL,
+ADD COLUMN atribuido_por_nome VARCHAR(255) NULL,
+ADD COLUMN data_atribuicao DATETIME NULL;
+
+
+alter table alunos add column id_criado_por BIGINT NULL;
+
+
+INSERT INTO modelo_mensagem (tipo, descricao, conteudo) VALUES
+('CONFIRMACAO_PAGAMENTO', 'Enviada automaticamente quando o pagamento é aprovado',
+'✅ *Pagamento confirmado!*
+
+Olá, {{nome}}! Somos da *2DASSESSORIA* e recebemos o seu pagamento com sucesso. 🎉
+
+📋 *Plano:* {{plano}}
+💰 *Valor pago:* R$ {{valor}}
+📅 *Válido até:* {{validade}}
+
+Agora é só criar sua conta no *SisRun* pelo link abaixo:
+🔗 {{linkCadastro}}
+
+Qualquer dúvida estamos à disposição! 🏋️'),
+
+('COBRANCA', 'Disparada manualmente pelo front para cobrar pendência',
+'⚠️ *Pagamento pendente*
+
+Olá, {{nome}}! Notamos que sua mensalidade ainda está em aberto.
+
+Para regularizar rapidinho, acesse:
+🔗 {{linkPagamento}}
+
+Qualquer dúvida, estamos à disposição! 🏋️'),
+
+('MENSALIDADE_FINAL', 'Aviso de vencimento próximo',
+'📅 *Mensalidade chegando ao fim*
+
+Olá, {{nome}}! Sua mensalidade vence em *{{dataVencimento}}*.
+
+Renove pelo link ou fale com a gente pra continuar treinando sem interrupção! 💪'),
+
+('INCENTIVO_VOLTAR_TREINAR', 'Reengajamento de aluno inativo',
+'💪 *Sentimos sua falta!*
+
+E aí, {{nome}}! Faz um tempinho que você não aparece por aqui.
+
+Bora voltar a treinar essa semana? A gente te espera! 🔥');
+
+
+
+
+
+INSERT INTO modelo_mensagem (tipo, descricao, conteudo) VALUES
+('CRIACAO_CONTA', 'Enviada quando a conta do aluno é criada pelo admin',
+'👤 *Conta criada com sucesso!*
+
+Olá, {{nome}}! Sua conta foi criada por {{adminNome}}. 
+Por favor, entre com seu e-mail e seu CPF para definir sua senha de acesso no site:
+🔗 {{linkLogin}}
+
+Qualquer dúvida, estamos à disposição! 🏋️'),
+
+('PLANO_ANEXADO', 'Enviada quando um plano/cobrança é anexado ao aluno',
+'💳 *Plano atribuído!*
+
+Olá, {{nome}}! {{adminNome}} anexou um plano para você.
+Por favor, acesse o link abaixo para realizar o pagamento pelo site:
+🔗 {{linkPagamento}}
+
+Qualquer dúvida, estamos à disposição! 🏋️');

@@ -27,5 +27,12 @@ public class Plano {
     @Column(name = "ativo")
     private boolean ativo;
 
+    @Column(name = "frequencia_semanal")
+    private Integer frequenciaSemanal;
 
+    @Column(name =  "grupo", nullable = false)
+    private String grupo; // FIT, INTENSE, POWER
+
+    @Column(name = "periodo", nullable = false)
+    private String periodo; // MENSAL, SEMESTRAL
 }

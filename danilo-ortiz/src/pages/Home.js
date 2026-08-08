@@ -932,7 +932,7 @@ export default function Home() {
   const [carregando, setCarregando]   = useState(true);
   const [MensalidadeParcelasDTOS, setMensalidadeParcelasDTOS] = useState({});
   const [toast, setToast] = useState(null);
-
+const [periodoSelecionado, setPeriodoSelecionado] = useState({});
 
   const [temParcelaPendente, setTemParcelaPendente] = useState(false);
   const [bannerPendenteFechado, setBannerPendenteFechado] = useState(false);
@@ -1782,176 +1782,216 @@ function BannerSisrun({ nomeAluno, onConfirmarCriou  }) {
     ))}
   </div>
 </section>
-
-        {/* PLANOS */}
-        <section className="planos-sec" id="planos">
-          <div className="sec-header">
-            <div>
-              <p className="sec-tag">Assessoria Online</p>
-              <h2 className="sec-h2">ESCOLHA<br />SEU PLANO</h2>
-            </div>
-            <p className="sec-note">Pagamento via Pix.<br />Acesso em até 24h.</p>
-          </div>
-
-          {erro && <p className="state-box">{erro}</p>}
-
-          {carregando ? (
-  <div className="state-box"><div className="dots"><span /><span /><span /></div></div>
-) : (
-  <>
-
-    <div style={{
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-  gap: 16,
-  marginBottom: 48,
-}}>
-  {planos.map((plano, i) => {
-    const ehPlanoDoAluno = aluno?.planoAtual?.id === plano.id;
-    return (
-      <div
-        key={plano.id}
-        style={{
-          background: ehPlanoDoAluno ? "rgba(212,168,67,.06)" : "var(--ink2)",
-          border: `1px solid ${ehPlanoDoAluno ? "var(--gold)" : "var(--border)"}`,
-          padding: "32px 28px",
-          position: "relative",
-          transition: "border-color .25s, transform .25s",
-          cursor: "pointer",
-        }}
-        onMouseEnter={e => e.currentTarget.style.transform = "translateY(-4px)"}
-        onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
-        onClick={(e) => clicarPlano(e, plano)}
-      >
-        {/* número decorativo */}
-        <div style={{
-          position: "absolute", top: 20, right: 20,
-          fontFamily: "var(--cond)", fontSize: "3.5rem", fontWeight: 800,
-          color: "rgba(212,168,67,.1)", lineHeight: 1, userSelect: "none",
-        }}>
-          {String(i + 1).padStart(2, "0")}
-        </div>
-
-        {/* tags */}
-        <div style={{ marginBottom: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {ehPlanoDoAluno && (
-            <span style={{ background: "var(--gold)", color: "var(--ink)", fontSize: ".58rem",
-              fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", padding: "4px 10px" }}>
-              Seu plano
-            </span>
-          )}
-          {i === destaqueIdx && !ehPlanoDoAluno && (
-            <span style={{ background: "transparent", border: "1px solid rgba(212,168,67,.4)",
-              color: "var(--gold)", fontSize: ".58rem", fontWeight: 700,
-              letterSpacing: ".12em", textTransform: "uppercase", padding: "4px 10px" }}>
-              Mais popular
-            </span>
-          )}
-        </div>
-
-        {/* nome */}
-        <div style={{ fontFamily: "var(--cond)", fontSize: "1.5rem", fontWeight: 800,
-          textTransform: "uppercase", letterSpacing: ".05em", lineHeight: 1.1, marginBottom: 6 }}>
-          {plano.nome}
-        </div>
-
-        {/* duração */}
-        <div style={{ fontSize: ".68rem", color: "var(--muted)", letterSpacing: ".1em",
-          textTransform: "uppercase", marginBottom: 24 }}>
-          {plano.duracaomeses} {plano.duracaomeses === 1 ? "mês" : "meses"} de assessoria
-        </div>
-
-        {/* preço */}
-        <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 28 }}>
-          <span style={{ fontSize: ".85rem", color: "var(--gold)", fontFamily: "var(--cond)", fontWeight: 700 }}>R$</span>
-          <span style={{ fontFamily: "var(--cond)", fontSize: "2.8rem", fontWeight: 800, lineHeight: 1 }}>
-            {Number(plano.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-          </span>
-          <span style={{ fontSize: ".65rem", color: "var(--muted)", alignSelf: "flex-end", paddingBottom: 4 }}>/mês</span>
-        </div>
-
-        {/* botão */}
-        <button
-          onClick={(e) => { e.stopPropagation(); clicarPlano(e, plano); }}
-          style={{
-            width: "100%", padding: "13px",
-            background: ehPlanoDoAluno ? "transparent" : "var(--gold)",
-            color: ehPlanoDoAluno ? "var(--gold)" : "var(--ink)",
-            border: ehPlanoDoAluno ? "1px solid var(--gold)" : "none",
-            cursor: "pointer", fontFamily: "var(--sans)",
-            fontSize: ".72rem", fontWeight: 700,
-            letterSpacing: ".12em", textTransform: "uppercase",
-            transition: "background .2s",
-          }}
-        >
-          {ehPlanoDoAluno ? "Plano atual" : "Contratar →"}
-        </button>
-      </div>
-    );
-  })}
-</div>
-
-
-    {/* ── TABELA ── */}
-    <table className="planos-table">
-      <thead>
-        <tr>
-          <th style={{width:48}}>#</th>
-          <th>Plano</th>
-          <th>Duração</th>
-          <th>Valor / mês</th>
-          <th>Ação</th>
-        </tr>
-      </thead>
-      <tbody>
-        {planos.map((plano, i) => {
-          const ehPlanoDoAluno = aluno?.planoAtual?.id === plano.id;
-          return (
-            <tr
-              key={plano.id}
-              className={ehPlanoDoAluno ? "tr-active" : ""}
-              onClick={(e) => clicarPlano(e, plano)}
-            >
-              <td className="td-num">{String(i + 1).padStart(2, "0")}</td>
-              <td>
-                <div className="td-nome">
-                  {plano.nome}
-                  {ehPlanoDoAluno && <span className="td-tag-seu">Seu plano</span>}
-                  {i === destaqueIdx && !ehPlanoDoAluno && <span className="td-tag-popular">Popular</span>}
-                </div>
-              </td>
-              <td className="td-dur" style={{fontSize:".8rem",color:"var(--muted)"}}>
-                {plano.duracaomeses} {plano.duracaomeses === 1 ? "mês" : "meses"}
-              </td>
-              <td className="td-price">
-                <small>R$</small>
-                {Number(plano.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </td>
-              <td className="td-action">
-                <button
-                  className={`td-btn ${ehPlanoDoAluno ? "ghost" : ""}`}
-                  onClick={(e) => clicarPlano(e, plano)}
-                >
-                  {ehPlanoDoAluno ? "Plano atual" : "Contratar →"}
-                </button>
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
-
-    <div className="planos-note">
-      <span className="note-icon">⚡</span>
-      <p>
-        <strong>Como funciona:</strong> após o pagamento via Pix, você cria sua conta no SisRun
-        com o mesmo e-mail e entra em contato com o Danilo. O acesso ao grupo é liberado em
-        até <strong>24 horas</strong>. Sem taxa de adesão, sem contrato de fidelidade.
-      </p>
+{/* PLANOS */}
+<section className="planos-sec" id="planos">
+  <div className="sec-header">
+    <div>
+      <p className="sec-tag">Assessoria Online</p>
+      <h2 className="sec-h2">ESCOLHA<br />SEU PLANO</h2>
     </div>
-  </>
-)}
-        </section>
+    <p className="sec-note">Pagamento via Pix.<br />Acesso em até 24h.</p>
+  </div>
+
+  {erro && <p className="state-box">{erro}</p>}
+
+  {carregando ? (
+    <div className="state-box"><div className="dots"><span /><span /><span /></div></div>
+  ) : (
+    <>
+      {(() => {
+        // Ordem de preferência ao escolher o período padrão exibido no card
+        const ORDEM_PERIODOS = ["semestral", "mensal", "trimestral", "anual"];
+
+        // Agrupa os planos pelo campo "grupo" (FIT, INTENSE, POWER, PADRAO...)
+        const grupos = {};
+        planos.forEach((plano) => {
+          const chave = plano.grupo || "OUTROS";
+          const periodo = (plano.periodo || "MENSAL").toLowerCase();
+
+          if (!grupos[chave]) {
+            grupos[chave] = {
+              base: chave,
+              frequenciaSemanal: plano.frequenciaSemanal,
+              opcoes: {},
+            };
+          }
+          grupos[chave].opcoes[periodo] = plano;
+        });
+
+        const listaGrupos = Object.values(grupos);
+
+        return (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: 16,
+              marginBottom: 48,
+            }}
+          >
+            {listaGrupos.map((grupo, i) => {
+              // Períodos disponíveis para esse grupo, na ordem de preferência
+              const periodosDisponiveis = ORDEM_PERIODOS.filter(
+                (p) => grupo.opcoes[p]
+              );
+
+              const periodoAtual =
+                periodoSelecionado[grupo.base] &&
+                grupo.opcoes[periodoSelecionado[grupo.base]]
+                  ? periodoSelecionado[grupo.base]
+                  : periodosDisponiveis[0];
+
+              const planoAtivo = grupo.opcoes[periodoAtual];
+
+              const ehPlanoDoAluno = Object.values(grupo.opcoes).some(
+                (p) => aluno?.planoAtual?.id === p.id
+              );
+
+              const temMultiplos = periodosDisponiveis.length > 1;
+
+              const economia =
+                grupo.opcoes.mensal && grupo.opcoes.semestral
+                  ? Number(grupo.opcoes.mensal.valor) - Number(grupo.opcoes.semestral.valor)
+                  : 0;
+
+              if (!planoAtivo) return null;
+
+              return (
+                <div
+                  key={grupo.base}
+                  style={{
+                    background: ehPlanoDoAluno ? "rgba(212,168,67,.06)" : "var(--ink2)",
+                    border: `1px solid ${ehPlanoDoAluno ? "var(--gold)" : "var(--border)"}`,
+                    padding: "32px 28px",
+                    position: "relative",
+                    transition: "border-color .25s, transform .25s",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform = "translateY(-4px)"}
+                  onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+                >
+                  {/* número decorativo */}
+                  <div style={{
+                    position: "absolute", top: 20, right: 20,
+                    fontFamily: "var(--cond)", fontSize: "3.5rem", fontWeight: 800,
+                    color: "rgba(212,168,67,.1)", lineHeight: 1, userSelect: "none",
+                  }}>
+                    {String(i + 1).padStart(2, "0")}
+                  </div>
+
+                  {/* tags */}
+                  <div style={{ marginBottom: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {ehPlanoDoAluno && (
+                      <span style={{ background: "var(--gold)", color: "var(--ink)", fontSize: ".58rem",
+                        fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", padding: "4px 10px" }}>
+                        Seu plano
+                      </span>
+                    )}
+                    {i === destaqueIdx && !ehPlanoDoAluno && (
+                      <span style={{ background: "transparent", border: "1px solid rgba(212,168,67,.4)",
+                        color: "var(--gold)", fontSize: ".58rem", fontWeight: 700,
+                        letterSpacing: ".12em", textTransform: "uppercase", padding: "4px 10px" }}>
+                        Mais popular
+                      </span>
+                    )}
+                  </div>
+
+                  {/* nome do grupo */}
+                  <div style={{
+                    fontFamily: "var(--cond)", fontSize: "1.5rem", fontWeight: 800,
+                    textTransform: "uppercase", letterSpacing: ".05em", lineHeight: 1.1, marginBottom: 6
+                  }}>
+                    {grupo.base}
+                  </div>
+
+                  {/* frequência semanal */}
+                  {grupo.frequenciaSemanal != null && (
+                    <div style={{
+                      fontSize: ".72rem", color: "var(--gold)", fontWeight: 700,
+                      letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 20
+                    }}>
+                      {grupo.frequenciaSemanal}x por semana
+                    </div>
+                  )}
+
+                  {/* TOGGLE de períodos — gerado dinamicamente */}
+                  {temMultiplos && (
+                    <div style={{
+                      display: "flex", gap: 6, marginBottom: 20,
+                      border: "1px solid var(--border)", padding: 3,
+                    }}>
+                      {periodosDisponiveis.map((p) => (
+                        <button
+                          key={p}
+                          onClick={() =>
+                            setPeriodoSelecionado((s) => ({ ...s, [grupo.base]: p }))
+                          }
+                          style={{
+                            flex: 1, padding: "8px 10px", border: "none", cursor: "pointer",
+                            fontSize: ".64rem", fontWeight: 700, letterSpacing: ".08em",
+                            textTransform: "uppercase",
+                            background: periodoAtual === p ? "var(--gold)" : "transparent",
+                            color: periodoAtual === p ? "var(--ink)" : "var(--muted)",
+                            transition: "all .2s",
+                          }}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* duração do plano selecionado */}
+                  <div style={{
+                    fontSize: ".68rem", color: "var(--muted)", letterSpacing: ".1em",
+                    textTransform: "uppercase", marginBottom: 12
+                  }}>
+                    {planoAtivo.duracaomeses} {planoAtivo.duracaomeses === 1 ? "mês" : "meses"} de assessoria
+                  </div>
+
+                  {/* economia, só aparece na opção semestral quando existe comparação com mensal */}
+                  {periodoAtual === "semestral" && economia > 0 && (
+                    <div style={{
+                      fontSize: ".64rem", color: "#4cde8c", fontWeight: 700,
+                      letterSpacing: ".05em", marginBottom: 12
+                    }}>
+                      Economize R$ {economia.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês
+                    </div>
+                  )}
+
+                  {/* preço */}
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 28 }}>
+                    <span style={{ fontSize: ".85rem", color: "var(--gold)", fontFamily: "var(--cond)", fontWeight: 700 }}>R$</span>
+                    <span style={{ fontFamily: "var(--cond)", fontSize: "2.8rem", fontWeight: 800, lineHeight: 1 }}>
+                      {Number(planoAtivo.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </span>
+                    <span style={{ fontSize: ".65rem", color: "var(--muted)", alignSelf: "flex-end", paddingBottom: 4 }}>/mês</span>
+                  </div>
+
+                  {/* botão */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); clicarPlano(e, planoAtivo); }}
+                    style={{
+                      width: "100%", padding: "13px",
+                      background: ehPlanoDoAluno ? "transparent" : "var(--gold)",
+                      color: ehPlanoDoAluno ? "var(--gold)" : "var(--ink)",
+                      border: ehPlanoDoAluno ? "1px solid var(--gold)" : "none",
+                      cursor: "pointer", fontFamily: "var(--sans)",
+                      fontSize: ".72rem", fontWeight: 700,
+                      letterSpacing: ".12em", textTransform: "uppercase",
+                      transition: "background .2s",
+                    }}
+                  >
+                    {ehPlanoDoAluno ? "Plano atual" : "Contratar →"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+    </>
+  )}
+</section>
 
           {toast && (
             <div style={S.toast(toast.ok)}>

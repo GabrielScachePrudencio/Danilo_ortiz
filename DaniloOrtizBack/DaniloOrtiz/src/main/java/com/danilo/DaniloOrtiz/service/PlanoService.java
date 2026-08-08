@@ -23,6 +23,10 @@ public class PlanoService {
         return planos;
     }
 
+    public List<Plano> getAll(){
+        return pr.findAll();
+    }
+
     public Plano buscarPorId(Long id){
         return pr.findById(id);
     }
